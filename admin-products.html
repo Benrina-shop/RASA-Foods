@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Products — RASA Foods</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080300;--surface:#110700;--surface2:#1c0d00;--border:#2e1800;--accent:#f97316;--cream:#fef3c7;--muted:#8a6840}
+    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
+    .sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;padding:2rem 1.5rem}
+    .main-content{margin-left:260px;padding:2rem 3rem}
+    .nav-link{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;border-radius:12px;color:var(--muted);transition:all .2s;margin-bottom:.5rem}
+    .nav-link:hover, .nav-link.active{background:rgba(249,115,22,.1);color:var(--accent)}
+    .input-field{width:100%;padding:.8rem 1rem;border-radius:12px;background:var(--bg);border:1px solid var(--border);color:var(--cream);outline:none;margin-bottom:1rem}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center;padding:2rem}
+    .modal.open{display:flex}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="product-modal" class="modal">
+    <div class="bg-[var(--surface)] p-8 rounded-3xl border border-[var(--border)] w-full max-w-lg">
+      <h2 id="modal-title" class="text-2xl font-bold mb-6">Add New Product</h2>
+      <form id="product-form">
+        <input type="hidden" id="p-id">
+        <input type="text" id="p-name" placeholder="Product Name" required class="input-field">
+        <select id="p-cat" required class="input-field">
+            <option value="snacks">Snacks</option>
+            <option value="sweets">Sweets</option>
+            <option value="beverages">Beverages</option>
+            <option value="spices">Spices</option>
+            <option value="bakery">Bakery</option>
+            <option value="organic">Organic</option>
+        </select>
+        <input type="number" id="p-price" placeholder="Price (Rs.)" required class="input-field">
+        <input type="text" id="p-img" placeholder="Image URL" required class="input-field">
+        <textarea id="p-desc" placeholder="Description" class="input-field h-24"></textarea>
+        <div class="flex gap-4 mt-4">
+          <button type="button" onclick="closeModal()" class="flex-1 py-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl">Cancel</button>
+          <button type="submit" class="flex-1 py-3 bg-orange-500 text-white font-bold rounded-xl">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="font-display text-2xl font-bold mb-10"><span style="color:var(--accent)">R</span>ASA Admin</div>
+    <nav>
+      <a href="admin-dashboard.html" class="nav-link">Dashboard</a>
+      <a href="admin-products.html" class="nav-link active">Products</a>
+      <a href="admin-orders.html" class="nav-link">Orders</a>
+      <a href="index.html" class="nav-link mt-10 text-sm">← Live Site</a>
+    </nav>
+  </div>
+
+  <main class="main-content">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold" style="font-family:'Playfair Display',serif">Products</h1>
+      <button onclick="openModal()" class="px-6 py-3 bg-orange-500 text-white font-bold rounded-xl">+ Add Product</button>
+    </div>
+    
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden">
+      <table class="w-full text-left">
+        <thead class="bg-[var(--bg)] text-xs uppercase tracking-widest text-[var(--muted)]">
+          <tr>
+            <th class="p-4">Product</th>
+            <th class="p-4">Category</th>
+            <th class="p-4">Price</th>
+            <th class="p-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="products-table"></tbody>
+      </table>
+    </div>
+  </main>
+
+<script src="supabase-config.js"></script>
+<script>
+checkAdmin();
+let allProducts = [];
+
+async function loadProducts() {
+  const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+  if (data) {
+    allProducts = data;
+    document.getElementById('products-table').innerHTML = data.map(p => `
+      <tr class="border-t border-[var(--border)] hover:bg-[var(--surface2)]">
+        <td class="p-4">
+          <div class="flex items-center gap-3">
+            <img src="${p.image_url}" class="w-10 h-10 rounded-lg object-cover">
+            <span class="font-bold">${p.name}</span>
+          </div>
+        </td>
+        <td class="p-4 text-sm text-[var(--muted)] capitalize">${p.category_slug}</td>
+        <td class="p-4 font-bold text-[var(--accent)]">${formatPrice(p.price)}</td>
+        <td class="p-4 text-right">
+          <button onclick="editProduct(${p.id})" class="text-blue-400 mr-4">Edit</button>
+          <button onclick="deleteProduct(${p.id})" class="text-red-400">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+}
+
+function openModal(id = null) {
+  const modal = document.getElementById('product-modal');
+  const form = document.getElementById('product-form');
+  modal.classList.add('open');
+  if (id) {
+    const p = allProducts.find(x => x.id == id);
+    document.getElementById('modal-title').textContent = 'Edit Product';
+    document.getElementById('p-id').value = p.id;
+    document.getElementById('p-name').value = p.name;
+    document.getElementById('p-cat').value = p.category_slug;
+    document.getElementById('p-price').value = p.price;
+    document.getElementById('p-img').value = p.image_url;
+    document.getElementById('p-desc').value = p.description;
+  } else {
+    document.getElementById('modal-title').textContent = 'Add New Product';
+    form.reset();
+    document.getElementById('p-id').value = '';
+  }
+}
+
+function closeModal() { document.getElementById('product-modal').classList.remove('open'); }
+
+document.getElementById('product-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('p-id').value;
+  const productData = {
+    name: document.getElementById('p-name').value,
+    category_slug: document.getElementById('p-cat').value,
+    price: document.getElementById('p-price').value,
+    image_url: document.getElementById('p-img').value,
+    description: document.getElementById('p-desc').value
+  };
+
+  let error;
+  if (id) {
+    ({ error } = await supabase.from('products').update(productData).eq('id', id));
+  } else {
+    ({ error } = await supabase.from('products').insert(productData));
+  }
+
+  if (error) alert(error.message);
+  else {
+    closeModal();
+    loadProducts();
+  }
+};
+
+async function deleteProduct(id) {
+  if (confirm('Are you sure?')) {
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) alert(error.message);
+    else loadProducts();
+  }
+}
+
+function editProduct(id) { openModal(id); }
+
+loadProducts();
+</script>
+</body>
+</html>

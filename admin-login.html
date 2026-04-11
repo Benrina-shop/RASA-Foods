@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — RASA Foods</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080300;--surface:#110700;--border:#2e1800;--accent:#f97316;--cream:#fef3c7;--muted:#8a6840}
+    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
+    .input-field{width:100%;padding:.8rem 1rem;border-radius:12px;background:var(--bg);border:1px solid var(--border);color:var(--cream);outline:none;transition:border-color .2s}
+    .input-field:focus{border-color:var(--accent)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-md p-8 rounded-3xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold mb-2" style="font-family:'Playfair Display',serif">Admin Portal</h1>
+      <p class="text-sm text-[var(--muted)]">Manage your business from one place.</p>
+    </div>
+    <form id="login-form" class="space-y-4">
+      <input type="email" id="email" placeholder="Email Address" required class="input-field">
+      <input type="password" id="password" placeholder="Password" required class="input-field">
+      <button type="submit" class="w-full py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors">Sign In</button>
+    </form>
+    <div class="mt-6 text-center text-xs text-[var(--muted)]">© 2024 RASA Premium Foods</div>
+  </div>
+
+<script src="supabase-config.js"></script>
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const pass = document.getElementById('password').value;
+  
+  const { data, error } = await supabase.from('admins').select('*').eq('email', email).eq('password_hash', pass).single();
+  
+  if (data) {
+    localStorage.setItem('isAdmin', 'true');
+    localStorage.setItem('adminUser', JSON.stringify(data));
+    location.href = 'admin-dashboard.html';
+  } else {
+    alert('Invalid credentials');
+  }
+});
+</script>
+</body>
+</html>

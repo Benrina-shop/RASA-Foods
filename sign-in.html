@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Sign In | RASA Foods</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Playfair Display','serif'], body: ['DM Sans','sans-serif'] } } } }
+  </script>
+  <style>
+    :root { --bg: #080300; --surface: #110700; --surface2: #1c0d00; --border: #2e1800; --accent: #f97316; --gold: #f59e0b; --cream: #fef3c7; --muted: #8a6840; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+    .gbtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:.5rem}
+    .gbtn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:left .5s}
+    .gbtn:hover::before{left:100%}
+  </style>
+</head>
+<body>
+<div class="min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-md p-8 rounded-3xl bg-[var(--surface)] border border-[var(--border)] relative shadow-2xl">
+    <a href="index.html" class="absolute top-6 right-6 text-[var(--muted)] hover:text-[var(--accent)] transition-colors text-sm">✕</a>
+    <div class="text-center mb-8">
+      <div class="font-display text-4xl font-black mb-2"><span style="color:var(--accent)">R</span>ASA</div>
+      <p class="text-sm text-[var(--muted)]">Welcome back to your premium emporium.</p>
+    </div>
+    <form id="sign-in-form" class="space-y-5">
+      <div>
+        <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Email</label>
+        <input type="email" id="email" required placeholder="your@email.com" class="w-full p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] outline-none text-[var(--cream)] focus:border-[var(--accent)] transition-colors">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Password</label>
+        <input type="password" id="password" required placeholder="••••••••" class="w-full p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] outline-none text-[var(--cream)] focus:border-[var(--accent)] transition-colors">
+      </div>
+      <button type="submit" id="signin-btn" class="gbtn w-full py-4 rounded-xl font-bold text-white mt-4 bg-gradient-to-br from-[var(--accent)] to-[#ea580c]">Sign In</button>
+      <div class="text-center mt-6 space-y-3">
+        <a href="sign-up.html" class="block text-sm text-[var(--muted)] hover:text-[var(--accent)] transition-colors">Don't have an account? Sign up</a>
+        <div class="pt-4 border-t border-[var(--border)]">
+          <a href="admin-login.html" class="text-xs text-[var(--muted)] hover:text-orange-400">Admin Staff? Login here</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const supabaseUrl = 'https://yswekhygaebgvowdrmxk.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzd2VraHlnYWViZ3Zvd2RybXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1Njk0ODksImV4cCI6MjA5MTE0NTQ4OX0.Ou_il3hORcuIvsmUix4dH73lCy-CVRbAJAntEWM-Z1U';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  document.getElementById('sign-in-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const btn = document.getElementById('signin-btn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Signing in...';
+    btn.style.pointerEvents = 'none';
+    
+    const emailInput = document.getElementById('email').value.trim();
+    const passwordInput = document.getElementById('password').value.trim();
+
+    try {
+      // 1. Check if it's an admin
+      const { data: adminData, error: adminErr } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('email', emailInput)
+        .eq('password_hash', passwordInput);
+      
+      if (adminErr) throw adminErr;
+
+      if (adminData && adminData.length > 0) {
+        localStorage.setItem('isAdmin', 'true');
+        localStorage.setItem('adminUser', JSON.stringify(adminData[0]));
+        window.location.href = 'admin-dashboard.html';
+        return;
+      }
+
+      // 2. Check if it's a customer (Dummy check for now)
+      const { data: custData, error: custErr } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('email', emailInput);
+      
+      if (custErr) throw custErr;
+      
+      if (custData && custData.length > 0) {
+        localStorage.setItem('isCustomer', 'true');
+        localStorage.setItem('customerUser', JSON.stringify(custData[0]));
+        window.location.href = 'index.html';
+      } else {
+        alert('Account not found or invalid password.');
+        btn.textContent = originalText;
+        btn.style.pointerEvents = 'auto';
+      }
+    } catch (err) {
+      console.error("Auth error:", err);
+      alert('Error connecting to database: ' + err.message);
+      btn.textContent = originalText;
+      btn.style.pointerEvents = 'auto';
+    }
+  });
+</script>
+</body>
+</html>

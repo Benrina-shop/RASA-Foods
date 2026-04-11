@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — RASA Foods</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080300;--surface:#110700;--surface2:#1c0d00;--border:#2e1800;--accent:#f97316;--gold:#f59e0b;--cream:#fef3c7;--muted:#8a6840}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+    #navbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.2rem 1.5rem;background:rgba(8,3,0,.96);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+    .input-field{width:100%;padding:.8rem 1rem;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--cream);outline:none;transition:border-color .2s}
+    .input-field:focus{border-color:var(--accent)}
+    #summary-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:1.5rem;position:sticky;top:120px}
+    .loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="loader" class="loading-overlay"><div class="text-xl font-bold">Processing Order...</div></div>
+
+<nav id="navbar">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif"><span style="color:var(--accent)">R</span>ASA <span class="text-sm font-normal text-[var(--muted)]">Foods</span></a>
+  </div>
+</nav>
+
+<main class="pt-32 pb-24 px-6 min-h-screen">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+    <div class="md:col-span-2">
+      <h1 class="font-display text-4xl font-bold mb-8" style="font-family:'Playfair Display',serif">Checkout</h1>
+      
+      <div class="space-y-6">
+        <div class="p-6 bg-[var(--surface)] border border-[var(--border)] rounded-2xl">
+          <h2 class="text-xl font-bold mb-4">Customer Details</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <input type="text" id="fname" placeholder="First Name" class="input-field">
+            <input type="text" id="lname" placeholder="Last Name" class="input-field">
+            <input type="email" id="email" placeholder="Email Address" class="input-field col-span-2">
+            <input type="tel" id="phone" placeholder="Phone Number" class="input-field col-span-2">
+          </div>
+        </div>
+        
+        <div class="p-6 bg-[var(--surface)] border border-[var(--border)] rounded-2xl">
+          <h2 class="text-xl font-bold mb-4">Shipping Address</h2>
+          <div class="grid gap-4">
+            <input type="text" id="address" placeholder="Street Address" class="input-field">
+            <div class="grid grid-cols-2 gap-4">
+              <input type="text" id="city" placeholder="City" class="input-field">
+              <input type="text" id="postal" placeholder="Postal Code" class="input-field">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div>
+      <div id="summary-card">
+        <h2 class="font-display text-2xl font-bold mb-6" style="font-family:'Playfair Display',serif">Your Order</h2>
+        <div id="order-items" class="space-y-3 mb-6"></div>
+        <div class="pt-4 border-t border-[var(--border)] space-y-3 text-sm">
+          <div class="flex justify-between text-[var(--muted)]"><span>Subtotal</span><span id="subtotal">Rs. 0</span></div>
+          <div class="flex justify-between text-[var(--muted)]"><span>Delivery</span><span>Rs. 350</span></div>
+          <div class="flex justify-between font-bold text-lg text-[var(--cream)] pt-2"><span>Total</span><span id="total" class="text-[var(--accent)]">Rs. 0</span></div>
+        </div>
+        <button onclick="placeOrder()" class="w-full mt-8 py-4 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 transition-colors">Confirm & Pay (COD)</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="supabase-config.js"></script>
+<script>
+let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
+if (cart.length === 0) location.href = 'products.html';
+
+function renderSummary() {
+  const container = document.getElementById('order-items');
+  let subtotal = 0;
+  
+  container.innerHTML = cart.map(item => {
+    subtotal += item.price * item.qty;
+    return `
+      <div class="flex justify-between text-sm">
+        <span class="text-[var(--muted)]">${item.qty}x ${item.name}</span>
+        <span>${formatPrice(item.price * item.qty)}</span>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('subtotal').textContent = formatPrice(subtotal);
+  document.getElementById('total').textContent = formatPrice(subtotal + 350);
+}
+
+async function placeOrder() {
+  const fname = document.getElementById('fname').value;
+  const lname = document.getElementById('lname').value;
+  const email = document.getElementById('email').value;
+  const phone = document.getElementById('phone').value;
+  const address = document.getElementById('address').value;
+  const city = document.getElementById('city').value;
+  
+  if (!fname || !phone || !address) return alert('Please fill in required fields');
+  
+  document.getElementById('loader').style.display = 'flex';
+  
+  try {
+    const total = cart.reduce((s, i) => s + i.price * i.qty, 0) + 350;
+    const { data: order, error: orderErr } = await supabase.from('orders').insert({
+      customer_name: fname + ' ' + lname,
+      customer_email: email,
+      customer_phone: phone,
+      shipping_address: address + ', ' + city,
+      total_amount: total,
+      status: 'pending'
+    }).select().single();
+    
+    if (orderErr) throw orderErr;
+    
+    const items = cart.map(i => ({
+      order_id: order.id,
+      product_id: i.id,
+      quantity: i.qty,
+      price: i.price
+    }));
+    
+    const { error: itemsErr } = await supabase.from('order_items').insert(items);
+    if (itemsErr) throw itemsErr;
+    
+    localStorage.removeItem('rasa-cart');
+    localStorage.setItem('rasa-last-order', JSON.stringify({ id: order.id, total }));
+    location.href = 'thank-you.html';
+    
+  } catch (err) {
+    console.error(err);
+    alert('Order placement failed. Please try again.');
+    document.getElementById('loader').style.display = 'none';
+  }
+}
+
+renderSummary();
+</script>
+</body>
+</html>

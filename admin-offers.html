@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Offers | RASA Foods</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Playfair Display','serif'], body: ['DM Sans','sans-serif'] } } } }
+  </script>
+  <style>
+    :root { --bg: #080300; --surface: #110700; --surface2: #1c0d00; --border: #2e1800; --accent: #f97316; --gold: #f59e0b; --cream: #fef3c7; --muted: #8a6840; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+    .gbtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:.5rem}
+    .gbtn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:left .5s}
+    .gbtn:hover::before{left:100%}
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-sidebar { width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 2rem 1.5rem; flex-shrink: 0; }
+    .admin-content { flex: 1; padding: 2rem 3rem; overflow-y: auto; }
+    .admin-nav-link { display: flex; align-items: center; gap: 1rem; padding: .75rem 1rem; border-radius: .75rem; color: var(--muted); font-weight: 500; transition: all .2s; margin-bottom: .5rem; }
+    .admin-nav-link:hover, .admin-nav-link.active { background: rgba(249,115,22,.1); color: var(--accent); }
+    .admin-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 1.25rem; padding: 1.5rem; }
+    .admin-table { width: 100%; text-align: left; border-collapse: collapse; }
+    .admin-table th { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--muted); font-size: .875rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .admin-table td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: .875rem; }
+    .admin-table tr:last-child td { border-bottom: none; }
+    @media (max-width: 768px) {
+      .admin-layout { flex-direction: column; }
+      .admin-sidebar { width: 100%; padding: 1rem; border-right: none; border-bottom: 1px solid var(--border); }
+      .admin-content { padding: 1rem; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar hidden md:block">
+    <div class="font-display text-3xl font-black mb-10"><span style="color:var(--accent)">R</span>ASA <span class="text-sm font-normal text-[var(--muted)]">Admin</span></div>
+    <nav>
+      <a href="admin-dashboard.html" class="admin-nav-link">Dashboard</a>
+      <a href="admin-products.html" class="admin-nav-link">Products</a>
+      <a href="admin-orders.html" class="admin-nav-link">Orders</a>
+      <a href="admin-offers.html" class="admin-nav-link active">Offers & Promos</a>
+      <a href="index.html" class="admin-nav-link mt-8 text-sm">← Back to Store</a>
+      <button onclick="localStorage.removeItem('isAdmin'); window.location.href='admin-login.html'" class="admin-nav-link text-sm w-full text-left mt-2" style="background:transparent; border:none; cursor:pointer;">Logout</button>
+    </nav>
+  </aside>
+  <main class="admin-content">
+    <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
+      <h1 class="font-display text-3xl font-bold text-[var(--cream)]">Offers & Promo Codes</h1>
+      <button class="gbtn px-6 py-2 rounded-lg font-semibold text-white text-sm bg-gradient-to-br from-[var(--accent)] to-[#ea580c]">+ Create Promo</button>
+    </div>
+    <div class="admin-card overflow-x-auto">
+      <table class="admin-table min-w-[600px]">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Discount</th>
+            <th>Status</th>
+            <th>Expiry Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="font-mono bg-[var(--surface)] px-3 py-1 rounded border border-[var(--border)] text-[var(--cream)]">RASA40</span></td>
+            <td class="text-[var(--cream)]">40% OFF</td>
+            <td><span class="px-2 py-1 rounded-md text-xs bg-green-500/20 text-green-400">Active</span></td>
+            <td class="text-[var(--muted)]">Dec 31, 2024</td>
+            <td><button class="text-blue-400 hover:text-blue-300 mr-2 transition-colors">Edit</button> <button class="text-red-400 hover:text-red-300 transition-colors">Deactivate</button></td>
+          </tr>
+          <tr>
+            <td><span class="font-mono bg-[var(--surface)] px-3 py-1 rounded border border-[var(--border)] text-[var(--cream)]">WELCOME10</span></td>
+            <td class="text-[var(--cream)]">10% OFF</td>
+            <td><span class="px-2 py-1 rounded-md text-xs bg-green-500/20 text-green-400">Active</span></td>
+            <td class="text-[var(--muted)]">No Expiry</td>
+            <td><button class="text-blue-400 hover:text-blue-300 mr-2 transition-colors">Edit</button> <button class="text-red-400 hover:text-red-300 transition-colors">Deactivate</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>
