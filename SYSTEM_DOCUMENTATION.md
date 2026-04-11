@@ -9,8 +9,8 @@ This document provides a comprehensive overview of the RASA Foods premium e-comm
 - **Frontend**: HTML5, Vanilla JavaScript (ES6+), Tailwind CSS v4.
 - **Backend-as-a-Service**: Supabase (PostgreSQL, Authentication, Real-time Storage).
 - **Libraries**:
-    - `jspdf` & `jspdf-autotable`: For transaction report generation.
-    - `supabase-js`: Database communication.
+    - `jspdf` & `jspdf-autotable`: For professional transaction report generation.
+    - `supabase-js`: Direct database & storage communication.
     - `Google Fonts`: Playfair Display & DM Sans for typography.
 
 ---
@@ -18,100 +18,66 @@ This document provides a comprehensive overview of the RASA Foods premium e-comm
 ## 2. Platform Architecture
 
 ### A. Customer Storefront
-1. **Home (`index.html`)**: Interactive landing page with brand story, featured categories, and newsletter integration.
+1. **Home (`index.html`)**: Interactive landing page with brand story and featured categories.
 2. **Catalogue (`products.html`)**: 
-    - Advanced left-sidebar filtering.
-    - Multiple category selection (checkboxes).
-    - Price range slider (up to Rs. 10,000+).
-    - Real-time search by name/essence.
-    - Sort by Price/Newest.
+    - **Sidebar Filtering**: Permanent left-side filters for desktop.
+    - **Multi-Category Selection**: Select multiple groupings via checkboxes.
+    - **Price Control**: Range slider to filter by maximum budget.
+    - **Real-time Search**: Search bar for instant asset discovery.
 3. **Product Details (`product-detail.html`)**:
-    - Multi-image gallery with thumbnails.
-    - Dynamic inventory data.
-    - Interactive quantity selection.
+    - Multi-image gallery with thumbnails and zoom transitions.
+    - Dynamic strike-through pricing for deals.
 4. **Offers (`offers.html`)**:
-    - Real-time sync with database-driven promo codes.
-    - "Ongoing Deals" section for discounted products.
-5. **Basket (`cart.html`)**: Premium slide-out or full-page inventory management for the user.
-6. **Checkout (`checkout.html`)**:
-    - Step-based identification flow.
-    - Promo Code validation system (Real-time).
-    - WhatsApp Number integration.
-7. **Confirmation (`thank-you.html`)**:
-    - Immediate order verification.
-    - **One-click PDF Invoice Download** containing full transaction details.
+    - Database-driven Promo Code display.
+    - Ongoing Deals (Discounted items) summary.
+5. **Checkout Flow (`checkout.html`)**:
+    - **WhatsApp Identification**: Mandatory phone and optional WhatsApp field for communication.
+    - **Promo Logic**: Live validation of discount codes targeting the total settlement.
+6. **Post-Purchase (`thank-you.html`)**:
+    - **Instant PDF Invoice**: A button to generate a branded, itemized PDF report including Order ID, items, and delivery path.
 
 ---
 
 ## 3. Administrative Ecosystem (Admin Portal)
-Accessible via the footer link and protected via an `isAdmin` local verification.
 
 1. **Dashboard (`admin-dashboard.html`)**:
-    - Real-time revenue tracking.
-    - Order volume analytics.
-    - Recent transaction feed.
+    - Live tracking of global revenue and order density.
 2. **Inventory Management (`admin-products.html`)**:
-    - **Local Image Upload**: Direct upload to Supabase Storage.
-    - **Multi-Image Support**: Store multiple visual assets per item.
-    - **Category Management**: On-the-fly category creation.
-    - **Deal Management**: Set original vs. selling prices for strike-through effects.
-3. **Order Control (`admin-orders.html`)**:
-    - Detailed Modal View: View customer info, WhatsApp, address, and line items.
-    - Status Management: Update order lifecycle.
-    - Deletion/Archiving: Wipe records from the system.
-4. **Marketing Control (`admin-offers.html`)**:
-    - Create/Toggle/Delete promo codes (e.g., RASA40).
-    - Monitor discount impact.
+    - **Asset Sync**: Direct image upload to Supabase Storage.
+    - **Deal Logic**: Manage Original vs. Selling prices for front-end strike-throughs.
+3. **Order Flow & Logistics (`admin-orders.html`)**:
+    - **Advanced Filtering**: Categorize orders by status (Pending, Processing, Delivered) via UI tabs.
+    - **Order Search**: Locate specific transactions by Customer Name or ID.
+    - **Deep Review Modal**:
+        - Displays **Order Date & Time** precisely.
+        - Displays **WhatsApp Number** with direct identification.
+        - **WhatsApp Confirmation**: A dedicated green button that opens a pre-formatted message to the customer with full order details, requesting their confirmation.
+4. **Promo Management (`admin-offers.html`)**:
+    - Create and toggle the status of global marketing incentives.
 
 ---
 
 ## 4. Database Schema (Supabase)
 
 ### Table: `products`
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `id` | bigint | Primary Key |
-| `name` | text | Asset Name |
-| `description` | text | Detailed content |
-| `price` | numeric | Selling price |
-| `old_price` | numeric | Original price (for deals) |
-| `category_slug` | text | Relational link to categories |
-| `image_url` | text | Primary image link |
-| `images` | text[] | Array of secondary image links |
-| `is_new` | boolean | New arrival flag |
+- Handles multi-images (`images` array), tiered pricing (`price`, `old_price`), and categorization.
 
 ### Table: `orders`
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `id` | bigint | Primary Key |
-| `customer_name` | text | Full name |
-| `customer_email` | text | Email for comms |
-| `customer_phone` | text | Primary phone |
-| `whatsapp_number`| text | Secondary WhatsApp channel |
-| `shipping_address`| text | Full delivery path |
-| `total_amount` | numeric | Final settlement |
-| `status` | text | Pending/Fulfilled/etc. |
+- Stores customer identity, delivery paths, and communication channels (Phone + WhatsApp).
+- Includes status tracking and total settlement records.
+
+### Table: `order_items`
+- Maintains the relational link between specific orders and the quantity/price of assets purchased.
 
 ### Table: `promo_codes`
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `code` | text | Unique string (RASA40) |
-| `discount_percentage`| int | Percent reduction |
-| `is_active` | boolean | Status toggle |
+- Controls marketing discount logic and active states.
 
 ---
 
-## 5. Security & Storage
-- **Row Level Security (RLS)**: Enabled and configured for public read/write where required.
-- **Supabase Storage**: `products` bucket used for localized media assets.
-- **Storage Policies**: Public Access, Public Insert, and Public Update/Delete authorized for admin actions.
+## 5. Logistics & Communication
+- **Automated Messaging**: Use of `wa.me` API for admin-to-customer confirmation.
+- **Verified Shop Contact**: Default admin contact used in templates: `+94711289934`.
+- **Media Preservation**: Supabase Storage holds all high-resolution culinary photography.
 
 ---
-
-## 6. How to Extend
-1. **New Table**: Add to Supabase and update `supabase-config.js` if keys change.
-2. **Styling**: All styles are in-page or using Tailwind. Maintain the `--accent: #f97316` and `--gold: #f59e0b` harmony.
-3. **Email Hooks**: Can be added via Supabase Edge Functions for order notifications.
-
----
-**Maintained by RASA Development.**
+**Maintained by RASA Development — Last Updated: April 2026**
