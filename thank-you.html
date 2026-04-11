@@ -8,38 +8,136 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#080300;--surface:#110700;--border:#2e1800;--accent:#f97316;--cream:#fef3c7;--muted:#8a6840}
-    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
-    .success-icon{width:80px;height:80px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;display:flex;align-items:center;justify-content:center}
+    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh}
+    .success-icon{width:80px;height:80px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(34,197,94,0.3)}
+    .invoice-btn{background:var(--surface);border:1px solid var(--border);padding:1rem;border-radius:16px;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .3s}
+    .invoice-btn:hover{border-color:var(--accent);color:var(--accent)}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- PDF Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 pt-24">
+<body class="flex items-center justify-center p-6">
   <div class="max-w-md w-full text-center">
-    <div class="success-icon mx-auto mb-6">
+    <div class="success-icon mx-auto mb-8 animate-bounce">
       <svg width="40" height="40" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
     </div>
     <h1 class="text-4xl font-bold mb-4" style="font-family:'Playfair Display',serif">Order Placed!</h1>
-    <p class="text-[var(--muted)] mb-8">Thank you for your purchase. Your order has been successfully saved to our system.</p>
+    <p class="text-[var(--muted)] mb-10">Thank you for your purchase. Your culinary artifacts have been secured and are being prepared for transit.</p>
     
-    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 text-left mb-8">
-      <h3 class="font-bold mb-4 border-b border-[var(--border)] pb-2">Order Summary</h3>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between text-[var(--muted)]"><span>Order Total</span><span id="display-total" class="text-[var(--accent)] font-bold">...</span></div>
-        <div class="flex justify-between text-[var(--muted)]"><span>Frequency</span><span>Standard Delivery</span></div>
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-[32px] p-8 text-left mb-10 shadow-2xl">
+      <h3 class="font-bold mb-6 border-b border-[var(--border)] pb-4 text-xs uppercase tracking-widest text-orange-500">Transaction Summary</h3>
+      <div id="order-details" class="space-y-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-[var(--muted)]">Status</span>
+            <span class="text-green-500 font-bold uppercase tracking-widest text-[10px]">Confirmed (COD)</span>
+          </div>
+          <div class="flex justify-between text-sm border-t border-[var(--border)] pt-4">
+            <span class="text-[var(--muted)] font-bold">Total Amount</span>
+            <span id="display-total" class="text-white font-black">...</span>
+          </div>
       </div>
+      <button onclick="downloadPDF()" id="dl-btn" class="invoice-btn mt-8">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2"/></svg>
+        Download Full Report (PDF)
+      </button>
     </div>
 
-    <div class="flex gap-4">
-      <a href="index.html" class="flex-1 py-4 border border-[var(--border)] rounded-xl font-bold">Back to Home</a>
-      <a href="products.html" class="flex-1 py-4 bg-orange-500 text-white font-bold rounded-xl">Keep Shopping</a>
+    <div class="flex flex-col gap-4">
+      <a href="products.html" class="py-5 bg-orange-500 text-white font-black rounded-2xl shadow-xl shadow-orange-500/10 uppercase tracking-widest text-sm">Return to Emporium</a>
+      <a href="index.html" class="py-3 text-[var(--muted)] font-bold uppercase tracking-widest text-[10px] hover:text-white transition-colors">Back to Home</a>
     </div>
   </div>
 
 <script src="supabase-config.js"></script>
 <script>
 const lastOrder = JSON.parse(localStorage.getItem('rasa-last-order') || '{}');
-if (lastOrder.total) {
-  document.getElementById('display-total').textContent = formatPrice(lastOrder.total);
+let fullOrderData = null;
+
+async function fetchOrderDetails() {
+  if (!lastOrder.id) return;
+  
+  try {
+    const sb = getSupabase();
+    const { data: order, error } = await sb.from('orders').select('*, order_items(*, products(*))').eq('id', lastOrder.id).single();
+    if (order) {
+        fullOrderData = order;
+        document.getElementById('display-total').textContent = formatPrice(order.total_amount);
+    }
+  } catch (e) { console.error(e); }
 }
+
+async function downloadPDF() {
+  if (!fullOrderData) {
+      alert("Fetching data... please try again in a second.");
+      return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = jsPDF();
+
+  // Branding
+  doc.setFillColor(8, 3, 0);
+  doc.rect(0, 0, 210, 40, 'F');
+  doc.setTextColor(249, 115, 22);
+  doc.setFontSize(24);
+  doc.text('RASA FOODS', 20, 25);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.text('PREMIUM CULINARY ARTIFACTS', 20, 32);
+
+  // Order Info
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(18);
+  doc.text('INVOICE / RECEIPT', 20, 60);
+  
+  doc.setFontSize(10);
+  doc.text(`Order ID: #${fullOrderData.id}`, 20, 70);
+  doc.text(`Date: ${new Date(fullOrderData.created_at).toLocaleDateString()}`, 20, 75);
+  doc.text(`Payment: Cash on Delivery`, 20, 80);
+
+  // Customer Details
+  doc.setFontSize(12);
+  doc.text('DELIVERY TO:', 120, 60);
+  doc.setFontSize(10);
+  doc.text(`${fullOrderData.customer_name}`, 120, 70);
+  doc.text(`${fullOrderData.customer_phone}`, 120, 75);
+  if (fullOrderData.whatsapp_number) doc.text(`WA: ${fullOrderData.whatsapp_number}`, 120, 80);
+  doc.text(`${fullOrderData.customer_email}`, 120, 85);
+  doc.text(`${fullOrderData.shipping_address}`, 120, 90, { maxWidth: 70 });
+
+  // Items Table
+  const items = fullOrderData.order_items.map(i => [
+      i.products.name,
+      i.quantity.toString(),
+      formatPrice(i.unit_price),
+      formatPrice(i.quantity * i.unit_price)
+  ]);
+
+  doc.autoTable({
+    startY: 105,
+    head: [['Product Asset', 'Qty', 'Unit Price', 'Extension']],
+    body: items,
+    theme: 'striped',
+    headStyles: { fillColor: [249, 115, 22] },
+    columnStyles: { 3: { halign: 'right' } }
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 10;
+  
+  // Totals
+  doc.setFontSize(14);
+  doc.text(`Total Settlement: ${formatPrice(fullOrderData.total_amount)}`, 140, finalY, { align: 'right' });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(150, 150, 150);
+  doc.text('Thank you for choosing RASA. This is a computer-generated report.', 105, finalY + 30, { align: 'center' });
+
+  doc.save(`RASA_Order_${fullOrderData.id}.pdf`);
+}
+
+fetchOrderDetails();
 </script>
 </body>
 </html>

@@ -58,9 +58,13 @@
                 <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Email Communication</label>
                 <input type="email" id="email" placeholder="john@example.com" required class="input-field">
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-1">
                 <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Mobile Identification</label>
                 <input type="tel" id="phone" placeholder="+94 7X XXX XXXX" required class="input-field">
+            </div>
+            <div class="md:col-span-1">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">WhatsApp Number (Optional)</label>
+                <input type="tel" id="whatsapp" placeholder="+94 7X XXX XXXX" class="input-field">
             </div>
         </div>
       </section>
@@ -189,6 +193,7 @@ async function placeOrder() {
   const lname = document.getElementById('lname').value.trim();
   const email = document.getElementById('email').value.trim();
   const phone = document.getElementById('phone').value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim();
   const address = document.getElementById('address').value.trim();
   const city = document.getElementById('city').value.trim();
   
@@ -205,6 +210,7 @@ async function placeOrder() {
       customer_name: fname + ' ' + lname,
       customer_email: email,
       customer_phone: phone,
+      whatsapp_number: whatsapp,
       shipping_address: address + ', ' + city,
       total_amount: finalTotal,
       status: 'Pending'
