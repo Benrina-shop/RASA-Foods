@@ -42,6 +42,10 @@
                   <p class="font-bold text-white text-lg" id="m-cust-name">...</p>
                   <p class="text-sm text-[var(--muted)]" id="m-cust-email">...</p>
                   <p class="text-sm font-bold text-[var(--accent)]" id="m-cust-phone">...</p>
+                  <div id="m-whatsapp-container" class="hidden">
+                    <p class="text-[10px] uppercase font-bold text-green-500 mt-2">WhatsApp Available</p>
+                    <p class="text-sm font-bold text-green-500" id="m-cust-wa">...</p>
+                  </div>
               </div>
           </div>
           <div class="space-y-4">
@@ -184,6 +188,12 @@ async function viewOrder(id) {
     document.getElementById('m-cust-name').textContent = order.customer_name;
     document.getElementById('m-cust-email').textContent = order.customer_email || 'No email provided';
     document.getElementById('m-cust-phone').textContent = order.customer_phone;
+    if (order.whatsapp_number) {
+        document.getElementById('m-whatsapp-container').classList.remove('hidden');
+        document.getElementById('m-cust-wa').textContent = order.whatsapp_number;
+    } else {
+        document.getElementById('m-whatsapp-container').classList.add('hidden');
+    }
     document.getElementById('m-cust-addr').textContent = order.shipping_address;
     document.getElementById('m-total').textContent = formatPrice(order.total_amount);
     document.getElementById('m-status-select').value = order.status || 'Pending';
