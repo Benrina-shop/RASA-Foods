@@ -12,6 +12,8 @@
     #navbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,3,0,.96);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:1.2rem 1.5rem}
     .qty-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--cream)}
     .qty-btn:hover{background:var(--border)}
+    .thumbnail{width:80px;height:80px;border-radius:12px;overflow:hidden;border:2px solid transparent;cursor:pointer;transition:all .2s;opacity:.5}
+    .thumbnail.active{border-color:var(--accent);opacity:1}
     .badge{background:var(--accent);color:white;font-size:.7rem;padding:3px 10px;border-radius:20px;font-weight:700}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -21,7 +23,7 @@
   <div class="max-w-7xl mx-auto flex items-center justify-between">
     <a href="index.html" class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif"><span style="color:var(--accent)">R</span>ASA</a>
     <div class="flex items-center gap-6">
-      <a href="products.html" class="text-sm font-medium hover:text-[var(--accent)] text-[var(--muted)]">Back to Products</a>
+      <a href="products.html" class="text-xs font-bold uppercase tracking-widest hover:text-white text-[var(--muted)]">← Back to Catalogue</a>
       <a href="cart.html" class="relative p-2"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-[var(--accent)] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span></a>
     </div>
   </div>
@@ -29,11 +31,16 @@
 
 <div class="pt-32 pb-20 px-6">
   <div class="max-w-7xl mx-auto" id="product-container">
-    <div class="py-20 text-center text-[var(--muted)] animate-pulse">Loading product details...</div>
+    <div class="py-20 text-center text-[var(--muted)] animate-pulse">Synchronizing asset details...</div>
   </div>
 </div>
 
 <div id="toast" class="fixed bottom-6 right-6 z-50"></div>
+
+<footer class="py-16 px-6 border-t border-[var(--border)] bg-[var(--surface)] text-center">
+  <div class="font-display text-3xl font-black text-[var(--accent)] mb-6" style="font-family:'Playfair Display',serif">RASA</div>
+  <p class="text-[10px] text-[var(--muted)] uppercase tracking-widest opacity-40">© 2024 RASA Premium Foods. Handcrafted for excellence.</p>
+</footer>
 
 <script src="supabase-config.js"></script>
 <script>
@@ -56,54 +63,82 @@ async function loadProduct() {
     updateCartCount();
   } catch (err) {
     console.error(err);
-    document.getElementById('product-container').innerHTML = '<div class="py-20 text-center text-red-500 font-bold">⚠️ Product not found. <a href="products.html" class="underline">Go back</a></div>';
+    document.getElementById('product-container').innerHTML = '<div class="py-20 text-center text-red-500 font-bold">⚠️ Data sync failure. <a href="products.html" class="underline">Catalogue Home</a></div>';
   }
 }
 
 function renderProduct() {
   const container = document.getElementById('product-container');
+  const images = PRODUCT.images && PRODUCT.images.length ? PRODUCT.images : [PRODUCT.image_url];
+  
   container.innerHTML = `
-    <div class="grid md:grid-cols-2 gap-16 items-start">
-      <div class="rounded-3xl overflow-hidden border border-[var(--border)] sticky top-32">
-        <img src="${PRODUCT.image_url}" alt="${PRODUCT.name}" class="w-full aspect-square object-cover">
+    <div class="grid lg:grid-cols-2 gap-16 items-start">
+      <div class="space-y-6">
+          <div class="rounded-[40px] overflow-hidden border border-[var(--border)] bg-black/20 aspect-square">
+            <img id="main-img" src="${images[0]}" alt="${PRODUCT.name}" class="w-full h-full object-cover transition-opacity duration-300">
+          </div>
+          ${images.length > 1 ? `
+          <div class="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+            ${images.map((url, i) => `
+                <div class="thumbnail ${i === 0 ? 'active' : ''}" onclick="changeImg('${url}', this)">
+                    <img src="${url}" class="w-full h-full object-cover">
+                </div>
+            `).join('')}
+          </div>
+          ` : ''}
       </div>
-      <div class="space-y-8 text-[var(--cream)]">
+
+      <div class="space-y-10 text-[var(--cream)]">
         <div>
-          ${PRODUCT.badge ? `<span class="badge mb-4 inline-block">${PRODUCT.badge}</span>` : ''}
-          <p class="text-[var(--accent)] font-bold tracking-widest uppercase text-xs mb-2">${PRODUCT.category_slug}</p>
-          <h1 class="text-5xl font-bold mb-4 font-display" style="font-family:'Playfair Display',serif">${PRODUCT.name}</h1>
-          <div class="flex items-baseline gap-4 mb-6">
-            <span class="text-3xl font-black text-[var(--accent)]">${formatPrice(PRODUCT.price)}</span>
+          ${PRODUCT.badge ? `<span class="badge mb-6 inline-block">${PRODUCT.badge}</span>` : ''}
+          <p class="text-[var(--accent)] font-black tracking-[0.2em] uppercase text-[10px] mb-4">${PRODUCT.category_slug}</p>
+          <h1 class="text-5xl lg:text-6xl font-black mb-6 font-display leading-tight" style="font-family:'Playfair Display',serif">${PRODUCT.name}</h1>
+          <div class="flex items-baseline gap-4 mb-8">
+            <span class="text-4xl font-black text-white">${formatPrice(PRODUCT.price)}</span>
             ${PRODUCT.old_price ? `<span class="text-xl line-through text-[var(--muted)]">${formatPrice(PRODUCT.old_price)}</span>` : ''}
           </div>
-          <p class="text-[var(--muted)] leading-relaxed text-lg">${PRODUCT.description || 'Premium quality product sourced responsibly.'}</p>
+          <div class="p-8 rounded-[32px] bg-[var(--surface)] border border-[var(--border)] leading-relaxed text-[var(--muted)] text-lg">
+            ${PRODUCT.description || 'Our master artisans have meticulously curated this selection to embody the pinnacle of flavor and tradition.'}
+          </div>
         </div>
         
-        <div class="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-6">
-          <div class="flex items-center gap-6">
-            <span class="text-sm font-bold uppercase text-[var(--muted)]">Quantity</span>
-            <div class="flex items-center gap-3">
-              <button onclick="changeQty(-1)" class="qty-btn font-bold">−</button>
-              <span id="qty-display" class="w-8 text-center font-bold">${qty}</span>
-              <button onclick="changeQty(1)" class="qty-btn font-bold">+</button>
+        <div class="p-8 rounded-[32px] bg-gradient-to-br from-[#1c0d00] to-transparent border border-[var(--border)] space-y-8 shadow-2xl">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black uppercase tracking-widest text-[var(--muted)]">Order Volume</span>
+            <div class="flex items-center gap-6 bg-black/40 p-2 rounded-2xl border border-white/5">
+              <button onclick="changeQty(-1)" class="qty-btn font-bold">－</button>
+              <span id="qty-display" class="w-8 text-center font-black text-white">${qty}</span>
+              <button onclick="changeQty(1)" class="qty-btn font-bold">＋</button>
             </div>
           </div>
-          <button onclick="addToCart()" class="w-full py-5 rounded-xl bg-orange-500 text-white font-bold text-lg hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/10">Add to Cart</button>
+          <button onclick="addToCart()" class="w-full py-6 rounded-2xl bg-orange-500 text-white font-black text-lg hover:bg-orange-600 transition-all shadow-2xl shadow-orange-500/20 uppercase tracking-widest">Acquire Selection</button>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="p-4 rounded-xl border border-[var(--border)] text-center text-[var(--muted)]">
-            <div class="text-[var(--accent)] mb-1 text-xl font-bold">✓</div>
-            <div class="text-[10px] font-bold uppercase tracking-wider">Fast Delivery</div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="p-4 rounded-2xl border border-[var(--border)] text-center">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">Organic Origin</p>
           </div>
-          <div class="p-4 rounded-xl border border-[var(--border)] text-center text-[var(--muted)]">
-            <div class="text-[var(--accent)] mb-1 text-xl font-bold">✓</div>
-            <div class="text-[10px] font-bold uppercase tracking-wider">Premium Quality</div>
+          <div class="p-4 rounded-2xl border border-[var(--border)] text-center">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">Handcrafted</p>
+          </div>
+          <div class="p-4 rounded-2xl border border-[var(--border)] text-center">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">Swift Logistics</p>
           </div>
         </div>
       </div>
     </div>
   `;
+}
+
+function changeImg(url, el) {
+    const main = document.getElementById('main-img');
+    main.style.opacity = '0';
+    setTimeout(() => {
+        main.src = url;
+        main.style.opacity = '1';
+    }, 200);
+    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
 }
 
 function changeQty(d) {
@@ -123,12 +158,12 @@ function addToCart() {
   if (ex) ex.qty += qty; else cart.push({ ...PRODUCT, qty: qty });
   localStorage.setItem('rasa-cart', JSON.stringify(cart));
   updateCartCount();
-  showToast('🛒 Added to cart!');
+  showToast('🛒 Selection appended to basket.');
 }
 
 function showToast(m) {
   const t = document.createElement('div');
-  t.className = 'p-4 bg-orange-500 text-white rounded-2xl shadow-xl font-bold mb-2';
+  t.className = 'p-5 bg-orange-600 text-white rounded-2xl shadow-2xl font-bold mb-3 border border-orange-400/20 backdrop-blur-xl';
   t.textContent = m; document.getElementById('toast').appendChild(t);
   setTimeout(() => t.remove(), 2500);
 }
