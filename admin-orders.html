@@ -30,7 +30,11 @@
       <div class="flex justify-between items-start mb-8">
           <div>
               <h2 class="text-3xl font-black font-display mb-1" style="font-family:'Playfair Display',serif">Order Details</h2>
-              <p class="text-xs text-[var(--muted)] font-bold uppercase tracking-widest" id="m-order-id">ORD-XXXXXX</p>
+              <div class="flex items-center gap-3">
+                <p class="text-[10px] text-[var(--muted)] font-black uppercase tracking-widest" id="m-order-id">ORD-XXXXXX</p>
+                <span class="w-1 h-1 rounded-full bg-[var(--border)]"></span>
+                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest" id="m-order-date">May 12, 2024</p>
+              </div>
           </div>
           <button onclick="closeModal()" class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-white/5">✕</button>
       </div>
@@ -184,7 +188,12 @@ async function viewOrder(id) {
     const { data: items } = await sb.from('order_items').select('*, products(name, image_url)').eq('order_id', id);
 
     // Populate Modal
-    document.getElementById('m-order-id').textContent = `ORD-${id.split('-')[0].toUpperCase()}`;
+    const orderDate = new Date(order.created_at).toLocaleString('en-US', { 
+        year: 'numeric', month: 'short', day: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+    });
+    document.getElementById('m-order-id').textContent = `ORD-${id.toString().split('-')[0].toUpperCase()}`;
+    document.getElementById('m-order-date').textContent = `Placed on ${orderDate}`;
     document.getElementById('m-cust-name').textContent = order.customer_name;
     document.getElementById('m-cust-email').textContent = order.customer_email || 'No email provided';
     document.getElementById('m-cust-phone').textContent = order.customer_phone;
