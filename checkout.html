@@ -47,19 +47,19 @@
         </div>
         <div class="grid md:grid-cols-2 gap-4">
             <div>
-                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">First Name</label>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">First Name</label>
                 <input type="text" id="fname" placeholder="John" required class="input-field">
             </div>
             <div>
-                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Last Name</label>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Last Name</label>
                 <input type="text" id="lname" placeholder="Doe" required class="input-field">
             </div>
             <div class="md:col-span-2">
-                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Email Communication</label>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Email Communication</label>
                 <input type="email" id="email" placeholder="john@example.com" required class="input-field">
             </div>
             <div class="md:col-span-2">
-                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Mobile Identification</label>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Mobile Identification</label>
                 <input type="tel" id="phone" placeholder="+94 7X XXX XXXX" required class="input-field">
             </div>
         </div>
@@ -72,16 +72,16 @@
         </div>
         <div class="grid gap-4">
             <div>
-                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Street Address</label>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Street Address</label>
                 <input type="text" id="address" placeholder="123 Signature Way" required class="input-field">
             </div>
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">City / Province</label>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">City / Province</label>
                     <input type="text" id="city" placeholder="Colombo" required class="input-field">
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Postal Signature</label>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Postal Signature</label>
                     <input type="text" id="postal" placeholder="00100" required class="input-field">
                 </div>
             </div>
@@ -93,12 +93,23 @@
       <div id="summary-card">
         <h2 class="font-display text-2xl font-bold mb-8" style="font-family:'Playfair Display',serif">Order Artifacts</h2>
         <div id="order-items" class="space-y-4 mb-8"></div>
-        <div class="pt-6 border-t border-[var(--border)] space-y-4">
+        
+        <div class="mb-8 pt-6 border-t border-[var(--border)]">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-3 block">Promo Code</label>
+            <div class="flex gap-2">
+                <input type="text" id="coupon-input" placeholder="ENTER CODE" class="input-field mb-0 uppercase text-xs tracking-widest">
+                <button onclick="applyCoupon()" class="px-4 py-2 bg-white/5 border border-[var(--border)] rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-orange-500 transition-all">Apply</button>
+            </div>
+            <p id="coupon-msg" class="text-[9px] mt-2 font-bold uppercase tracking-widest"></p>
+        </div>
+
+        <div class="space-y-4 pt-6 border-t border-[var(--border)]">
           <div class="flex justify-between text-sm text-[var(--muted)]"><span>Subtotal</span><span id="subtotal" class="font-bold text-white">Rs. 0</span></div>
+          <div id="discount-row" class="flex justify-between text-sm text-green-500 hidden"><span>Incentive Discount</span><span id="discount-val">Rs. 0</span></div>
           <div class="flex justify-between text-sm text-[var(--muted)]"><span>Delivery</span><span class="font-bold text-white">Rs. 350</span></div>
           <div class="flex justify-between font-black text-xl text-[var(--accent)] pt-4 border-t border-[var(--border)]"><span>Total Settlement</span><span id="total">Rs. 0</span></div>
         </div>
-        <button onclick="placeOrder()" class="w-full mt-10 py-5 bg-orange-500 text-white font-black rounded-2xl hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/10">Authorize Order (COD)</button>
+        <button onclick="placeOrder()" class="w-full mt-10 py-5 bg-orange-500 text-white font-black rounded-2xl hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/10 uppercase tracking-widest">Authorize Order (COD)</button>
         <div class="flex items-center justify-center gap-2 mt-6">
             <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
             <span class="text-[10px] uppercase font-bold text-[var(--muted)] tracking-widest">Payment on Delivery Secured</span>
@@ -113,9 +124,12 @@
 let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
 if (cart.length === 0) location.href = 'products.html';
 
+let subtotal = 0;
+let discountPercent = 0;
+
 function renderSummary() {
   const container = document.getElementById('order-items');
-  let subtotal = 0;
+  subtotal = 0;
   
   container.innerHTML = cart.map(item => {
     subtotal += item.price * item.qty;
@@ -130,8 +144,44 @@ function renderSummary() {
     `;
   }).join('');
   
-  document.getElementById('subtotal').textContent = formatPrice(subtotal);
-  document.getElementById('total').textContent = formatPrice(subtotal + 350);
+  updateTotals();
+}
+
+function updateTotals() {
+    const discountAmount = (subtotal * discountPercent) / 100;
+    const total = (subtotal - discountAmount) + 350;
+    
+    document.getElementById('subtotal').textContent = formatPrice(subtotal);
+    if (discountPercent > 0) {
+        document.getElementById('discount-row').classList.remove('hidden');
+        document.getElementById('discount-val').textContent = `- ${formatPrice(discountAmount)}`;
+    } else {
+        document.getElementById('discount-row').classList.add('hidden');
+    }
+    document.getElementById('total').textContent = formatPrice(total);
+}
+
+async function applyCoupon() {
+    const code = document.getElementById('coupon-input').value.trim().toUpperCase();
+    const msg = document.getElementById('coupon-msg');
+    
+    if (!code) return;
+    
+    try {
+        const sb = getSupabase();
+        const { data, error } = await sb.from('promo_codes').select('*').eq('code', code).eq('is_active', true).single();
+        
+        if (error || !data) {
+            msg.textContent = 'Invalid or expired code';
+            msg.className = 'text-[9px] mt-2 font-bold uppercase tracking-widest text-red-500';
+            discountPercent = 0;
+        } else {
+            msg.textContent = `Applied: ${data.discount_percentage}% discount`;
+            msg.className = 'text-[9px] mt-2 font-bold uppercase tracking-widest text-green-500';
+            discountPercent = data.discount_percentage;
+        }
+        updateTotals();
+    } catch (e) { console.error(e); }
 }
 
 async function placeOrder() {
@@ -148,14 +198,15 @@ async function placeOrder() {
   
   try {
     const sb = getSupabase();
-    const total = cart.reduce((s, i) => s + i.price * i.qty, 0) + 350;
+    const discountAmount = (subtotal * discountPercent) / 100;
+    const finalTotal = (subtotal - discountAmount) + 350;
     
     const { data: order, error: orderErr } = await sb.from('orders').insert({
       customer_name: fname + ' ' + lname,
       customer_email: email,
       customer_phone: phone,
       shipping_address: address + ', ' + city,
-      total_amount: total,
+      total_amount: finalTotal,
       status: 'Pending'
     }).select().single();
     
@@ -172,7 +223,7 @@ async function placeOrder() {
     if (itemsErr) throw itemsErr;
     
     localStorage.removeItem('rasa-cart');
-    localStorage.setItem('rasa-last-order', JSON.stringify({ id: order.id, total }));
+    localStorage.setItem('rasa-last-order', JSON.stringify({ id: order.id, total: finalTotal }));
     location.href = 'thank-you.html';
     
   } catch (err) {
