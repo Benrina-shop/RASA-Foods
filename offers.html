@@ -10,10 +10,14 @@
     :root{--bg:#080300;--surface:#110700;--border:#2e1800;--accent:#f97316;--gold:#f59e0b;--cream:#fef3c7;--muted:#8a6840}
     body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
     #navbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,3,0,.96);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:1.2rem 1.5rem}
+    .nav-link{color:var(--muted);font-size:.875rem;font-weight:500;transition:all .2s}
+    .nav-link:hover{color:var(--cream)}
     .prod-card{border-radius:20px;background:var(--surface);border:1px solid var(--border);overflow:hidden;transition:all .3s ease;cursor:pointer}
-    .prod-card:hover{transform:translateY(-8px);border-color:var(--accent)}
+    .prod-card:hover{transform:translateY(-8px);border-color:var(--accent);box-shadow:0 20px 60px rgba(249,115,22,.15)}
     .badge{position:absolute;top:14px;right:14px;background:var(--accent);color:white;font-size:.75rem;padding:3px 10px;border-radius:20px;font-weight:700;z-index:2}
     .fu{opacity:0;transform:translateY(30px);transition:all .8s ease}.vis{opacity:1;transform:translateY(0)}
+    #mob-menu{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:2rem}
+    #mob-menu.open{display:flex}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -21,16 +25,35 @@
 <nav id="navbar">
   <div class="max-w-7xl mx-auto flex items-center justify-between">
     <a href="index.html" class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif"><span style="color:var(--accent)">R</span>ASA <span class="text-sm font-normal text-[var(--muted)]">Foods</span></a>
-    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
-      <a href="index.html" class="hover:text-[var(--accent)] transition-colors text-[var(--muted)]">Home</a>
-      <a href="products.html" class="hover:text-[var(--accent)] transition-colors text-[var(--muted)]">Products</a>
-      <a href="offers.html" class="text-[var(--accent)]">Offers</a>
+    <div class="hidden md:flex items-center gap-8">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="products.html" class="nav-link">Products</a>
+      <a href="offers.html" class="nav-link active" style="color:var(--accent)">Offers</a>
+      <a href="index.html#contact" class="nav-link">Contact</a>
     </div>
-    <a href="cart.html" class="relative p-2"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-[var(--accent)] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span></a>
+    <div class="flex items-center gap-4">
+      <a href="sign-in.html" class="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] nav-link hover:border-orange-500/50 transition-all">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <span class="text-xs font-bold uppercase tracking-wider hidden sm:inline">Sign In</span>
+      </a>
+      <a href="cart.html" class="relative p-2 nav-link">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <span id="cart-count" class="absolute -top-1 -right-1 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold bg-[var(--accent)]">0</span>
+      </a>
+      <button id="menu-toggle" class="md:hidden p-2 nav-link"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    </div>
   </div>
 </nav>
 
-<div class="pt-32 pb-20 px-6">
+<div id="mob-menu">
+  <button id="mob-close" class="absolute top-6 right-6 p-2 text-[var(--muted)]">✕</button>
+  <a href="index.html" class="text-2xl font-display">Home</a>
+  <a href="products.html" class="text-2xl font-display">Products</a>
+  <a href="offers.html" class="text-2xl font-display active">Offers</a>
+  <a href="sign-in.html" class="text-2xl font-display">Sign In</a>
+</div>
+
+<div class="pt-32 pb-20 px-6 min-h-screen">
   <div class="max-w-7xl mx-auto">
     <div class="text-center mb-16 fu">
       <h1 class="font-display text-5xl font-black mb-4" style="font-family:'Playfair Display',serif">Exclusive <em style="color:var(--accent)">Offers</em></h1>
@@ -59,6 +82,16 @@
     </div>
   </div>
 </div>
+
+<footer class="py-16 px-6 border-t border-[var(--border)] bg-[var(--surface)] text-center">
+  <div class="font-display text-3xl font-black text-[var(--accent)] mb-6" style="font-family:'Playfair Display',serif">RASA</div>
+  <div class="flex justify-center gap-8 mb-8 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
+      <a href="index.html" class="hover:text-white transition-colors">Home</a>
+      <a href="products.html" class="hover:text-white transition-colors">Products</a>
+      <a href="admin-login.html" class="hover:text-white transition-colors">Admin Portal</a>
+  </div>
+  <div class="text-[10px] text-[var(--muted)] uppercase tracking-widest opacity-40">© 2024 RASA Premium Foods. Handcrafted for excellence.</div>
+</footer>
 
 <div id="toast" class="fixed bottom-6 right-6 z-50"></div>
 
@@ -100,7 +133,7 @@ function renderOffers() {
         <div class="badge">-${disc}%</div>
         <img src="${p.image_url}" class="w-full h-64 object-cover" alt="${p.name}">
         <div class="p-6">
-          <p class="text-xs uppercase text-[var(--accent)] font-bold mb-1">${p.category_slug}</p>
+          <p class="text-[10px] uppercase text-[var(--accent)] font-bold mb-1">${p.category_slug}</p>
           <h3 class="font-bold text-lg mb-3 text-[var(--cream)]">${p.name}</h3>
           <div class="flex items-center justify-between">
             <div class="flex items-baseline gap-2">
@@ -115,7 +148,7 @@ function renderOffers() {
   }).join('');
 }
 
-function updateCartCount() { document.getElementById('cart-count').textContent = cart.reduce((s, i) => s + i.qty, 0); }
+function updateCartCount() { document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0)); }
 function addToCart(id, e) {
   if (e) e.stopPropagation();
   const p = PRODUCTS.find(x => x.id == id);
@@ -133,6 +166,9 @@ function showToast(m) {
   t.textContent = m; document.getElementById('toast').appendChild(t);
   setTimeout(() => t.remove(), 2500);
 }
+
+document.getElementById('menu-toggle').onclick = () => document.getElementById('mob-menu').classList.add('open');
+document.getElementById('mob-close').onclick = () => document.getElementById('mob-menu').classList.remove('open');
 
 const obs = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('vis')), { threshold: .1 });
 document.querySelectorAll('.fu').forEach(el => obs.observe(el));

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout — RASA Foods</title>
+  <title>Safe Checkout — RASA Foods</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
@@ -11,61 +11,98 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;overflow-x:hidden}
     #navbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.2rem 1.5rem;background:rgba(8,3,0,.96);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
-    .input-field{width:100%;padding:.8rem 1rem;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--cream);outline:none;transition:border-color .2s}
-    .input-field:focus{border-color:var(--accent)}
-    #summary-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:1.5rem;position:sticky;top:120px}
-    .loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000}
+    .input-field{width:100%;padding:1rem 1.25rem;border-radius:16px;background:var(--surface);border:1px solid var(--border);color:var(--cream);outline:none;transition:all .3s ease;font-size:.9rem}
+    .input-field:focus{border-color:var(--accent);background:var(--surface2)}
+    #summary-card{background:var(--surface);border:1px solid var(--border);border-radius:32px;padding:2rem;position:sticky;top:120px}
+    .loading-overlay{position:fixed;inset:0;background:rgba(8,3,0,.98);display:none;align-items:center;justify-content:center;z-index:1000}
+    .step-badge{width:24px;height:24px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div id="loader" class="loading-overlay"><div class="text-xl font-bold">Processing Order...</div></div>
+<div id="loader" class="loading-overlay">
+    <div class="text-center">
+        <div class="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+        <div class="text-xl font-black font-display" style="font-family:'Playfair Display',serif">Securing Order Portal...</div>
+        <p class="text-xs text-[var(--muted)] mt-2 uppercase tracking-widest font-bold">Please do not refresh</p>
+    </div>
+</div>
 
 <nav id="navbar">
   <div class="max-w-7xl mx-auto flex items-center justify-between">
     <a href="index.html" class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif"><span style="color:var(--accent)">R</span>ASA <span class="text-sm font-normal text-[var(--muted)]">Foods</span></a>
+    <a href="cart.html" class="text-xs font-bold uppercase tracking-widest text-[var(--muted)] hover:text-white transition-colors">← Return to Basket</a>
   </div>
 </nav>
 
 <main class="pt-32 pb-24 px-6 min-h-screen">
-  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
-    <div class="md:col-span-2">
-      <h1 class="font-display text-4xl font-bold mb-8" style="font-family:'Playfair Display',serif">Checkout</h1>
+  <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-12">
+    <div class="lg:col-span-2 space-y-10">
+      <h1 class="font-display text-4xl font-black mb-10" style="font-family:'Playfair Display',serif">Checkout</h1>
       
-      <div class="space-y-6">
-        <div class="p-6 bg-[var(--surface)] border border-[var(--border)] rounded-2xl">
-          <h2 class="text-xl font-bold mb-4">Customer Details</h2>
-          <div class="grid grid-cols-2 gap-4">
-            <input type="text" id="fname" placeholder="First Name" class="input-field">
-            <input type="text" id="lname" placeholder="Last Name" class="input-field">
-            <input type="email" id="email" placeholder="Email Address" class="input-field col-span-2">
-            <input type="tel" id="phone" placeholder="Phone Number" class="input-field col-span-2">
-          </div>
+      <section class="space-y-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="step-badge">1</div>
+            <h2 class="text-xl font-bold">Personal Identity</h2>
         </div>
-        
-        <div class="p-6 bg-[var(--surface)] border border-[var(--border)] rounded-2xl">
-          <h2 class="text-xl font-bold mb-4">Shipping Address</h2>
-          <div class="grid gap-4">
-            <input type="text" id="address" placeholder="Street Address" class="input-field">
-            <div class="grid grid-cols-2 gap-4">
-              <input type="text" id="city" placeholder="City" class="input-field">
-              <input type="text" id="postal" placeholder="Postal Code" class="input-field">
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">First Name</label>
+                <input type="text" id="fname" placeholder="John" required class="input-field">
             </div>
-          </div>
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Last Name</label>
+                <input type="text" id="lname" placeholder="Doe" required class="input-field">
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Email Communication</label>
+                <input type="email" id="email" placeholder="john@example.com" required class="input-field">
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Mobile Identification</label>
+                <input type="tel" id="phone" placeholder="+94 7X XXX XXXX" required class="input-field">
+            </div>
         </div>
-      </div>
+      </section>
+
+      <section class="space-y-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="step-badge">2</div>
+            <h2 class="text-xl font-bold">Shipping Logic</h2>
+        </div>
+        <div class="grid gap-4">
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Street Address</label>
+                <input type="text" id="address" placeholder="123 Signature Way" required class="input-field">
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">City / Province</label>
+                    <input type="text" id="city" placeholder="Colombo" required class="input-field">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Postal Signature</label>
+                    <input type="text" id="postal" placeholder="00100" required class="input-field">
+                </div>
+            </div>
+        </div>
+      </section>
     </div>
     
     <div>
       <div id="summary-card">
-        <h2 class="font-display text-2xl font-bold mb-6" style="font-family:'Playfair Display',serif">Your Order</h2>
-        <div id="order-items" class="space-y-3 mb-6"></div>
-        <div class="pt-4 border-t border-[var(--border)] space-y-3 text-sm">
-          <div class="flex justify-between text-[var(--muted)]"><span>Subtotal</span><span id="subtotal">Rs. 0</span></div>
-          <div class="flex justify-between text-[var(--muted)]"><span>Delivery</span><span>Rs. 350</span></div>
-          <div class="flex justify-between font-bold text-lg text-[var(--cream)] pt-2"><span>Total</span><span id="total" class="text-[var(--accent)]">Rs. 0</span></div>
+        <h2 class="font-display text-2xl font-bold mb-8" style="font-family:'Playfair Display',serif">Order Artifacts</h2>
+        <div id="order-items" class="space-y-4 mb-8"></div>
+        <div class="pt-6 border-t border-[var(--border)] space-y-4">
+          <div class="flex justify-between text-sm text-[var(--muted)]"><span>Subtotal</span><span id="subtotal" class="font-bold text-white">Rs. 0</span></div>
+          <div class="flex justify-between text-sm text-[var(--muted)]"><span>Delivery</span><span class="font-bold text-white">Rs. 350</span></div>
+          <div class="flex justify-between font-black text-xl text-[var(--accent)] pt-4 border-t border-[var(--border)]"><span>Total Settlement</span><span id="total">Rs. 0</span></div>
         </div>
-        <button onclick="placeOrder()" class="w-full mt-8 py-4 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 transition-colors">Confirm & Pay (COD)</button>
+        <button onclick="placeOrder()" class="w-full mt-10 py-5 bg-orange-500 text-white font-black rounded-2xl hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/10">Authorize Order (COD)</button>
+        <div class="flex items-center justify-center gap-2 mt-6">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+            <span class="text-[10px] uppercase font-bold text-[var(--muted)] tracking-widest">Payment on Delivery Secured</span>
+        </div>
       </div>
     </div>
   </div>
@@ -83,9 +120,12 @@ function renderSummary() {
   container.innerHTML = cart.map(item => {
     subtotal += item.price * item.qty;
     return `
-      <div class="flex justify-between text-sm">
-        <span class="text-[var(--muted)]">${item.qty}x ${item.name}</span>
-        <span>${formatPrice(item.price * item.qty)}</span>
+      <div class="flex justify-between items-center text-sm">
+        <div class="flex flex-col">
+            <span class="text-white font-bold">${item.name}</span>
+            <span class="text-[10px] uppercase font-bold text-[var(--muted)]">${item.qty} Unit(s)</span>
+        </div>
+        <span class="font-bold text-white">${formatPrice(item.price * item.qty)}</span>
       </div>
     `;
   }).join('');
@@ -95,20 +135,22 @@ function renderSummary() {
 }
 
 async function placeOrder() {
-  const fname = document.getElementById('fname').value;
-  const lname = document.getElementById('lname').value;
-  const email = document.getElementById('email').value;
-  const phone = document.getElementById('phone').value;
-  const address = document.getElementById('address').value;
-  const city = document.getElementById('city').value;
+  const fname = document.getElementById('fname').value.trim();
+  const lname = document.getElementById('lname').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const city = document.getElementById('city').value.trim();
   
-  if (!fname || !phone || !address) return alert('Please fill in required fields');
+  if (!fname || !phone || !address) return alert('Please complete the required identification fields.');
   
   document.getElementById('loader').style.display = 'flex';
   
   try {
+    const sb = getSupabase();
     const total = cart.reduce((s, i) => s + i.price * i.qty, 0) + 350;
-    const { data: order, error: orderErr } = await supabase.from('orders').insert({
+    
+    const { data: order, error: orderErr } = await sb.from('orders').insert({
       customer_name: fname + ' ' + lname,
       customer_email: email,
       customer_phone: phone,
@@ -126,7 +168,7 @@ async function placeOrder() {
       unit_price: i.price
     }));
     
-    const { error: itemsErr } = await supabase.from('order_items').insert(items);
+    const { error: itemsErr } = await sb.from('order_items').insert(items);
     if (itemsErr) throw itemsErr;
     
     localStorage.removeItem('rasa-cart');
@@ -135,7 +177,7 @@ async function placeOrder() {
     
   } catch (err) {
     console.error(err);
-    alert('Order placement failed. Please try again.');
+    alert('Synchronization failure. Please verify connection and try again.');
     document.getElementById('loader').style.display = 'none';
   }
 }
