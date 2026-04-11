@@ -15,12 +15,66 @@
     .nav-link:hover, .nav-link.active{background:rgba(249,115,22,.08);color:var(--accent)}
     .status-badge{padding:.3rem .8rem;border-radius:50px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;border:1px solid currentColor}
     .st-pending{color:#f59e0b;background:rgba(245,158,11,.05)}
+    .st-processing{color:#3b82f6;background:rgba(59,130,246,.05)}
     .st-delivered{color:#22c55e;background:rgba(34,197,94,.05)}
     .st-cancelled{color:#ef4444;background:rgba(239,68,68,.05)}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);z-index:1000;align-items:center;justify-content:center;padding:2rem}
+    .modal.open{display:flex}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+  <!-- VIEW ORDER MODAL -->
+  <div id="order-modal" class="modal">
+    <div class="bg-[var(--surface)] p-10 rounded-[40px] border border-[var(--border)] w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start mb-8">
+          <div>
+              <h2 class="text-3xl font-black font-display mb-1" style="font-family:'Playfair Display',serif">Order Details</h2>
+              <p class="text-xs text-[var(--muted)] font-bold uppercase tracking-widest" id="m-order-id">ORD-XXXXXX</p>
+          </div>
+          <button onclick="closeModal()" class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-white/5">✕</button>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-10 mb-10">
+          <div class="space-y-4">
+              <h4 class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Customer Identity</h4>
+              <div class="space-y-2">
+                  <p class="font-bold text-white text-lg" id="m-cust-name">...</p>
+                  <p class="text-sm text-[var(--muted)]" id="m-cust-email">...</p>
+                  <p class="text-sm font-bold text-[var(--accent)]" id="m-cust-phone">...</p>
+              </div>
+          </div>
+          <div class="space-y-4">
+              <h4 class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Fulfillment Location</h4>
+              <p class="text-sm leading-relaxed text-[var(--muted)]" id="m-cust-addr">...</p>
+          </div>
+      </div>
+
+      <div class="space-y-4 mb-10">
+          <h4 class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Itemized Collection</h4>
+          <div id="m-items" class="space-y-3">
+              <!-- Items load here -->
+          </div>
+      </div>
+
+      <div class="pt-8 border-t border-[var(--border)] flex justify-between items-end">
+          <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-1">Settlement Total</p>
+              <p class="text-3xl font-black text-white" id="m-total">Rs. 0</p>
+          </div>
+          <div class="flex gap-3">
+            <select id="m-status-select" onchange="updateModalStatus()" class="bg-[var(--bg)] border border-[var(--border)] text-sm p-3 rounded-xl font-bold outline-none">
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+      </div>
+    </div>
+  </div>
+
   <div class="sidebar flex flex-col justify-between">
     <div>
         <div class="font-display text-2xl font-black mb-12 flex items-center gap-2" style="font-family:'Playfair Display',serif">
@@ -48,7 +102,7 @@
   <main class="main-content">
     <div class="flex justify-between items-end mb-12">
       <div>
-          <h1 class="text-4xl font-black mb-2" style="font-family:'Playfair Display',serif">Orders</h1>
+          <h1 class="text-4xl font-black mb-2" style="font-family:'Playfair Display',serif">Transactions</h1>
           <p class="text-sm text-[var(--muted)]">Monitor and fulfill customer purchase requests.</p>
       </div>
       <button onclick="initOrders()" class="px-6 py-3 bg-[var(--surface2)] border border-[var(--border)] text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:border-orange-500 transition-all">Refresh Records</button>
@@ -58,11 +112,11 @@
       <table class="w-full text-left">
         <thead class="bg-white/5 text-[10px] uppercase tracking-[.2em] text-[var(--muted)] font-bold">
           <tr>
-            <th class="p-6">Transaction ID</th>
+            <th class="p-6">Trans ID</th>
             <th class="p-6">Customer Details</th>
             <th class="p-6 text-center">Lifecycle</th>
             <th class="p-6 text-right">Settlement</th>
-            <th class="p-6 text-right">Actions</th>
+            <th class="p-6 text-right">Operations</th>
           </tr>
         </thead>
         <tbody id="orders-table" class="divide-y divide-[var(--border)]">
@@ -75,6 +129,7 @@
 <script src="supabase-config.js"></script>
 <script>
 if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
+let CURRENT_ORDER_ID = null;
 
 async function initOrders() {
   try {
@@ -95,29 +150,77 @@ function renderTable(orders) {
         <td class="p-6 font-mono text-[10px] text-[var(--muted)]">#${o.id.split('-')[0].toUpperCase()}</td>
         <td class="p-6">
             <p class="font-bold text-white text-sm">${o.customer_name}</p>
-            <p class="text-[10px] text-[var(--muted)] font-medium">${o.customer_email || 'No email'} · ${o.customer_phone}</p>
+            <p class="text-[10px] text-[var(--muted)] font-medium">${o.customer_phone}</p>
         </td>
         <td class="p-6 text-center">
             <span class="status-badge st-${(o.status || 'Pending').toLowerCase()}">${o.status || 'Pending'}</span>
         </td>
         <td class="p-6 text-right font-black text-orange-500">${formatPrice(o.total_amount)}</td>
-        <td class="p-6 text-right">
-            <select onchange="updateStatus('${o.id}', this.value)" class="bg-[var(--bg)] border border-[var(--border)] text-[10px] p-2 rounded-lg font-bold outline-none">
-                <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
-                <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-            </select>
+        <td class="p-6 text-right space-x-4">
+            <button onclick="viewOrder('${o.id}')" class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] hover:text-white">View</button>
+            <button onclick="deleteOrder('${o.id}')" class="text-[10px] font-bold uppercase tracking-widest text-red-500">Delete</button>
         </td>
       </tr>
     `).join('');
 }
 
-async function updateStatus(id, newStatus) {
-  const { error } = await getSupabase().from('orders').update({ status: newStatus }).eq('id', id);
-  if (error) alert(err.message);
-  else initOrders();
+async function viewOrder(id) {
+    CURRENT_ORDER_ID = id;
+    const sb = getSupabase();
+    
+    // Fetch Order
+    const { data: order } = await sb.from('orders').select('*').eq('id', id).single();
+    if (!order) return;
+
+    // Fetch Order Items
+    const { data: items } = await sb.from('order_items').select('*, products(name, image_url)').eq('order_id', id);
+
+    // Populate Modal
+    document.getElementById('m-order-id').textContent = `ORD-${id.split('-')[0].toUpperCase()}`;
+    document.getElementById('m-cust-name').textContent = order.customer_name;
+    document.getElementById('m-cust-email').textContent = order.customer_email || 'No email provided';
+    document.getElementById('m-cust-phone').textContent = order.customer_phone;
+    document.getElementById('m-cust-addr').textContent = order.shipping_address;
+    document.getElementById('m-total').textContent = formatPrice(order.total_amount);
+    document.getElementById('m-status-select').value = order.status || 'Pending';
+
+    document.getElementById('m-items').innerHTML = (items || []).map(i => `
+        <div class="flex justify-between items-center p-4 bg-[var(--surface2)] border border-[var(--border)] rounded-2xl">
+            <div class="flex items-center gap-4">
+                <img src="${i.products?.image_url || ''}" class="w-10 h-10 rounded-lg object-cover">
+                <div>
+                    <p class="text-sm font-bold text-white">${i.products?.name || 'Unknown Product'}</p>
+                    <p class="text-[10px] text-[var(--muted)] uppercase font-bold">${i.quantity} x ${formatPrice(i.unit_price)}</p>
+                </div>
+            </div>
+            <p class="text-sm font-black text-orange-500">${formatPrice(i.quantity * i.unit_price)}</p>
+        </div>
+    `).join('');
+
+    document.getElementById('order-modal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('order-modal').classList.remove('open');
+}
+
+async function updateModalStatus() {
+    if (!CURRENT_ORDER_ID) return;
+    const status = document.getElementById('m-status-select').value;
+    const { error } = await getSupabase().from('orders').update({ status }).eq('id', CURRENT_ORDER_ID);
+    if (!error) initOrders();
+}
+
+async function deleteOrder(id) {
+    if (!confirm('ARCHIVE WARNING: Permanently delete this transaction record?')) return;
+    
+    const sb = getSupabase();
+    // Delete items first to avoid foreign key issues
+    await sb.from('order_items').delete().eq('order_id', id);
+    const { error } = await sb.from('orders').delete().eq('id', id);
+    
+    if (error) alert(error.message);
+    else initOrders();
 }
 
 initOrders();
