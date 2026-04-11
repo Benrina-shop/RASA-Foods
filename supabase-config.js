@@ -1,6 +1,6 @@
 // Supabase Configuration
 const SB_URL = 'https://yswekhygaebgvowdrmxk.supabase.co';
-const SB_KEY = 'sb_publishable_MU5IbIzhqi6W3rvj4pr3jw_vv7jFt6s';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzd2VraHlnYWViZ3Zvd2RybXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1Njk0ODksImV4cCI6MjA5MTE0NTQ4OX0.Ou_il3hORcuIvsmUix4dH73lCy-CVRbAJAntEWM-Z1U';
 const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
 // Helper to format currency

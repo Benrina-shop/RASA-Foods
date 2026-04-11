@@ -69,7 +69,7 @@ async function loadOrders() {
         <td class="p-4 text-right font-bold text-[var(--accent)]">${formatPrice(o.total_amount)}</td>
         <td class="p-4 text-right">
           <button onclick="updateStatus(${o.id}, '${o.status === 'pending' ? 'completed' : 'pending'}')" class="text-sm text-blue-400">
-            Mark as ${o.status === 'pending' ? 'Completed' : 'Pending'}
+            Mark as ${o.status === 'Pending' ? 'Completed' : 'Pending'}
           </button>
         </td>
       </tr>
@@ -78,7 +78,9 @@ async function loadOrders() {
 }
 
 async function updateStatus(id, status) {
-  const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+  const validStatuses = ['Pending','Processing','Shipped','Delivered','Cancelled'];
+  const newStatus = status === 'Pending' ? 'Processing' : 'Delivered';
+  const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', id);
   if (error) alert(error.message);
   else loadOrders();
 }
