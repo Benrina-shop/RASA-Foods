@@ -15,83 +15,47 @@
     .nav-link{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
     .nav-link:hover,.nav-link.active{color:var(--cream)}
 
-    .filter-drawer{position:fixed;top:0;right:-400px;width:400px;height:100vh;background:var(--surface);z-index:1000;padding:3rem;border-left:1px solid var(--border);transition:all .5s cubic-bezier(0.16, 1, 0.3, 1);box-shadow:-20px 0 60px rgba(0,0,0,.5)}
-    .filter-drawer.open{right:0}
-    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:999;display:none;opacity:0;transition:opacity .3s ease}
-    .drawer-overlay.open{display:block;opacity:1}
+    /* Sidebar Layout */
+    .catalog-container{display:grid;grid-template-columns:300px 1fr;gap:3rem;max-width:1400px;margin:0 auto;padding-top:120px;padding-bottom:100px}
+    .filters-sidebar{position:sticky;top:120px;height:fit-content;background:transparent}
+    
+    .filter-section{margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+    .filter-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:1.25rem}
 
-    .prod-card{position:relative;overflow:hidden;border-radius:24px;background:var(--surface);border:1px solid var(--border);transition:all .4s ease;cursor:pointer}
-    .prod-card:hover{transform:translateY(-8px);border-color:var(--accent);box-shadow:0 20px 60px rgba(249,115,22,.15)}
-    .prod-card-img{width:100%;aspect-ratio:3/4;object-fit:cover;transition:transform .6s}
+    .checkbox-item{display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px;font-size:13px;font-weight:500;color:var(--muted);transition:all .2s}
+    .checkbox-item:hover{color:var(--cream)}
+    .checkbox-item input{display:none}
+    .check-box{width:18px;height:18px;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .checkbox-item input:checked + .check-box{background:var(--accent);border-color:var(--accent)}
+    .checkbox-item input:checked + .check-box svg{display:block}
+    .checkbox-item svg{display:none;width:12px;height:12px;color:white}
+
+    .search-input-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.75rem 1rem;width:100%;margin-bottom:2rem;color:var(--cream);outline:none;font-size:13px;transition:border-color .3s}
+    .search-input-box:focus{border-color:var(--accent)}
+
+    input[type="range"] { -webkit-appearance:none; width:100%; background:var(--border); height:3px; border-radius:5px; outline:none; margin:15px 0 }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; background:var(--accent); border-radius:50%; cursor:pointer; border:2px solid var(--bg) }
+
+    /* Product Grid */
+    .prod-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;overflow:hidden;transition:all .3s ease;cursor:pointer}
+    .prod-card:hover{transform:translateY(-8px);border-color:var(--accent);box-shadow:0 15px 40px rgba(0,0,0,.4)}
+    .prod-card-img{width:100%;aspect-ratio:1/1;object-fit:cover;transition:transform .5s}
     .prod-card:hover .prod-card-img{transform:scale(1.05)}
 
-    .search-bar{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:.75rem 1.5rem;display:flex;items-center:center;gap:.75rem;width:100%;max-width:500px;transition:all .3s}
-    .search-bar:focus-within{border-color:var(--accent);background:var(--surface2)}
-    
-    input[type="range"] { -webkit-appearance:none; width:100%; background:var(--border); height:4px; border-radius:5px; outline:none }
-    input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; background:var(--accent); border-radius:50%; cursor:pointer }
+    .badge-sale{position:absolute;top:10px;right:10px;background:var(--accent);color:white;font-size:8px;padding:2px 8px;border-radius:10px;font-weight:900;z-index:2;text-transform:uppercase}
 
-    .badge-sale{position:absolute;top:14px;right:14px;background:var(--accent);color:white;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:900;z-index:2;text-transform:uppercase;letter-spacing:1px}
-    
-    #toast{position:fixed;bottom:2rem;right:2rem;z-index:2000}
+    #mob-filter-btn{display:none}
+
+    @media (max-width: 1024px) {
+        .catalog-container{grid-template-columns:1fr;padding:120px 20px 60px}
+        .filters-sidebar{display:none}
+        .filters-sidebar.open{display:block;position:fixed;inset:0;background:var(--bg);z-index:200;padding:80px 30px;overflow-y:auto}
+        #mob-filter-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:2rem;font-weight:bold;font-size:13px}
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
-<div id="drawer-overlay" class="drawer-overlay" onclick="toggleDrawer(false)"></div>
-<div id="filter-drawer" class="filter-drawer flex flex-col justify-between">
-    <div>
-        <div class="flex items-center justify-between mb-12">
-            <h2 class="text-3xl font-black font-display" style="font-family:'Playfair Display',serif">Refine Selection</h2>
-            <button onclick="toggleDrawer(false)" class="p-2 hover:text-orange-500 transition-colors">✕</button>
-        </div>
-
-        <div class="space-y-10">
-            <!-- Price Block -->
-            <div>
-                <div class="flex items-center justify-between mb-6">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">Price Ceiling</span>
-                    <span id="price-val" class="text-orange-500 font-black">Rs. 5,000</span>
-                </div>
-                <input type="range" id="price-range" min="0" max="10000" step="500" value="10000" oninput="updateFilters()">
-                <div class="flex justify-between text-[8px] text-[var(--muted)] font-black uppercase mt-2">
-                    <span>Rs. 0</span><span>Rs. 10,000+</span>
-                </div>
-            </div>
-
-            <!-- Tags Block -->
-            <div>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-4 block">Special Attributes</span>
-                <div class="space-y-3">
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" id="f-sale" onchange="updateFilters()" class="hidden peer">
-                        <div class="w-5 h-5 border border-[var(--border)] rounded-md peer-checked:bg-orange-500 peer-checked:border-orange-500 transition-all flex items-center justify-center text-[10px] text-white">✓</div>
-                        <span class="text-xs font-bold group-hover:text-white transition-colors">Ongoing Deals</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" id="f-new" onchange="updateFilters()" class="hidden peer">
-                        <div class="w-5 h-5 border border-[var(--border)] rounded-md peer-checked:bg-orange-500 peer-checked:border-orange-500 transition-all flex items-center justify-center text-[10px] text-white">✓</div>
-                        <span class="text-xs font-bold group-hover:text-white transition-colors">Newly Harvested</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Sort Block -->
-            <div>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-4 block">Sequence</span>
-                <select id="f-sort" onchange="updateFilters()" class="w-full bg-black/20 border border-[var(--border)] p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500">
-                    <option value="default">Default Arrangement</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                    <option value="newest">Newest Arrivals First</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <button onclick="resetFilters()" class="w-full py-4 border border-[var(--border)] rounded-2xl text-[10px] uppercase font-bold tracking-widest hover:bg-white/5 transition-all text-[var(--muted)]">Purge All Filters</button>
-</div>
 
 <nav id="navbar">
   <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -115,35 +79,76 @@
   </div>
 </nav>
 
-<div class="pt-32 pb-24 px-6 min-h-screen">
-  <div class="max-w-7xl mx-auto">
-    <!-- Search & Control Bar -->
-    <div class="flex flex-col md:flex-row gap-6 items-center justify-between mb-16">
-        <div class="search-bar group">
-            <svg width="18" height="18" fill="none" class="text-[var(--muted)] group-focus-within:text-orange-500" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
-            <input type="text" id="search-input" placeholder="Search by name, essence, or category..." class="bg-transparent border-none outline-none w-full text-sm font-medium placeholder:text-[var(--muted)]" oninput="updateFilters()">
+<div class="max-w-7xl mx-auto px-6">
+  <div class="catalog-container">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="filters-sidebar">
+        <button class="md:hidden absolute top-4 right-4 text-2xl" onclick="toggleSidebar(false)">✕</button>
+        
+        <h2 class="text-2xl font-black mb-10 font-display" style="font-family:'Playfair Display',serif">Catalogue</h2>
+
+        <div class="filter-section">
+            <h3 class="filter-title">Search</h3>
+            <input type="text" id="search-input" placeholder="Keyword or Essence..." class="search-input-box" oninput="updateFilters()">
         </div>
-        <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 md:pb-0" id="cat-filters">
-            <!-- Categories dynamic -->
-            <button onclick="filterCat('all')" class="px-6 py-2 rounded-full border border-[var(--border)] text-[10px] font-black uppercase tracking-widest hover:border-orange-500 transition-all whitespace-nowrap bg-orange-500 text-white" id="cat-all">All</button>
+
+        <div class="filter-section">
+            <h3 class="filter-title">Classification</h3>
+            <div id="category-list">
+                <label class="checkbox-item">
+                    <input type="checkbox" value="all" checked onchange="filterCat('all')">
+                    <div class="check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 13l4 4L19 7"/></svg></div>
+                    <span>All Collections</span>
+                </label>
+            </div>
         </div>
-        <button onclick="toggleDrawer(true)" class="flex items-center gap-3 px-8 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-2xl hover:border-orange-500 transition-all font-bold text-xs">
+
+        <div class="filter-section">
+            <h3 class="filter-title">Price Ceiling</h3>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold text-[var(--muted)]">MAX</span>
+                <span id="price-display" class="text-sm font-black text-white">Rs. 10,000</span>
+            </div>
+            <input type="range" id="price-range" min="0" max="10000" step="100" value="10000" oninput="updateFilters()">
+        </div>
+
+        <div class="filter-section">
+            <h3 class="filter-title">Preferences</h3>
+            <label class="checkbox-item">
+                <input type="checkbox" id="f-sale" onchange="updateFilters()">
+                <div class="check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 13l4 4L19 7"/></svg></div>
+                <span>Ongoing Deals</span>
+            </label>
+            <label class="checkbox-item mt-2">
+                <input type="checkbox" id="f-new" onchange="updateFilters()">
+                <div class="check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 13l4 4L19 7"/></svg></div>
+                <span>Newest Additions</span>
+            </label>
+        </div>
+
+        <button onclick="resetFilters()" class="text-[10px] font-bold uppercase tracking-[.2em] text-[var(--muted)] hover:text-orange-500 transition-all">✕ Reset Selection</button>
+    </aside>
+
+    <!-- Content -->
+    <main>
+        <button id="mob-filter-btn" onclick="toggleSidebar(true)">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-width="2"/></svg>
-            Advanced Filters
-            <span id="filter-count" class="hidden w-5 h-5 rounded-full bg-orange-500 text-[10px] text-white flex items-center justify-center">0</span>
+            Refine Catalogue
         </button>
-    </div>
 
-    <!-- Active Filter Chips -->
-    <div id="active-chips" class="flex flex-wrap gap-2 mb-8 hidden"></div>
-
-    <!-- Products Grid -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8" id="products-grid">
-        <div class="col-span-full py-24 text-center">
-            <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--muted)]">Syncing inventory...</p>
+        <div class="flex justify-between items-center mb-8">
+            <p id="result-count" class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">... Assets Found</p>
+            <select id="f-sort" onchange="updateFilters()" class="bg-transparent border-none text-[10px] font-black uppercase tracking-widest text-orange-500 outline-none cursor-pointer">
+                <option value="default">Default Sequence</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+            </select>
         </div>
-    </div>
+
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full py-20 text-center animate-pulse text-[var(--muted)]">Syncing inventory records...</div>
+        </div>
+    </main>
   </div>
 </div>
 
@@ -157,13 +162,13 @@
   <div class="text-[10px] text-[var(--muted)] uppercase tracking-widest opacity-40">© 2024 RASA Premium Foods. Handcrafted for excellence.</div>
 </footer>
 
-<div id="toast"></div>
+<div id="toast" class="fixed bottom-6 right-6 z-[2000]"></div>
 
 <script src="supabase-config.js"></script>
 <script>
 let ALL_PRODUCTS = [];
 let ALL_CATEGORIES = [];
-let currentCat = 'all';
+let selectedCats = ['all'];
 let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
 
 async function initPage() {
@@ -184,14 +189,35 @@ async function initPage() {
 }
 
 function renderCategories() {
-    const container = document.getElementById('cat-filters');
-    const existingCount = 1; // 'All' exists
-    container.innerHTML = `<button onclick="filterCat('all')" class="px-6 py-2 rounded-full border border-[var(--border)] text-[10px] font-black uppercase tracking-widest hover:border-orange-500 transition-all whitespace-nowrap ${currentCat === 'all' ? 'bg-orange-500 text-white border-orange-500' : ''}" id="cat-all">All</button>` + 
+    const list = document.getElementById('category-list');
+    list.innerHTML = `<label class="checkbox-item">
+        <input type="checkbox" value="all" ${selectedCats.includes('all') ? 'checked' : ''} onchange="filterCat('all')">
+        <div class="check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 13l4 4L19 7"/></svg></div>
+        <span>All Collections</span>
+    </label>` + 
     ALL_CATEGORIES.map(c => `
-        <button onclick="filterCat('${c.slug}')" class="px-6 py-2 rounded-full border border-[var(--border)] text-[10px] font-black uppercase tracking-widest hover:border-orange-500 transition-all whitespace-nowrap ${currentCat === c.slug ? 'bg-orange-500 text-white border-orange-500' : ''}">
-            ${c.name}
-        </button>
+        <label class="checkbox-item">
+            <input type="checkbox" value="${c.slug}" ${selectedCats.includes(c.slug) ? 'checked' : ''} onchange="filterCat('${c.slug}')">
+            <div class="check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 13l4 4L19 7"/></svg></div>
+            <span>${c.name}</span>
+        </label>
     `).join('');
+}
+
+function filterCat(slug) {
+    if (slug === 'all') {
+        selectedCats = ['all'];
+    } else {
+        if (selectedCats.includes('all')) selectedCats = [];
+        if (selectedCats.includes(slug)) {
+            selectedCats = selectedCats.filter(s => s !== slug);
+        } else {
+            selectedCats.push(slug);
+        }
+    }
+    if (selectedCats.length === 0) selectedCats = ['all'];
+    renderCategories();
+    updateFilters();
 }
 
 function updateFilters() {
@@ -201,90 +227,62 @@ function updateFilters() {
     const onlyNew = document.getElementById('f-new').checked;
     const sort = document.getElementById('f-sort').value;
     
-    document.getElementById('price-val').textContent = `Rs. ${maxPrice.toLocaleString()}`;
+    document.getElementById('price-display').textContent = `Rs. ${maxPrice.toLocaleString()}`;
 
     let filtered = ALL_PRODUCTS.filter(p => {
-        const matchesCat = currentCat === 'all' || p.category_slug === currentCat;
+        const matchesCat = selectedCats.includes('all') || selectedCats.includes(p.category_slug);
         const matchesSearch = p.name.toLowerCase().includes(search) || p.category_slug.toLowerCase().includes(search);
-        const matchesPrice = p.price <= maxPrice;
-        const matchesSale = !onlySale || (p.old_price && p.old_price > p.price);
-        const matchesNew = !onlyNew || p.is_new || (p.badge && p.badge.toLowerCase() === 'new');
+        const matchesPrice = Number(p.price) <= maxPrice;
+        const matchesSale = !onlySale || (p.old_price && Number(p.old_price) > Number(p.price));
+        const matchesNew = !onlyNew || p.is_new || (p.badge && p.badge.toLowerCase().includes('new'));
         
         return matchesCat && matchesSearch && matchesPrice && matchesSale && matchesNew;
     });
 
-    // Sorting
     if (sort === 'price-asc') filtered.sort((a,b) => a.price - b.price);
     else if (sort === 'price-desc') filtered.sort((a,b) => b.price - a.price);
-    else if (sort === 'newest') filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
+    document.getElementById('result-count').textContent = `${filtered.length} Assets Found`;
     renderGrid(filtered);
-    updateFilterCount();
 }
 
 function renderGrid(data) {
     const grid = document.getElementById('products-grid');
     if (data.length === 0) {
-        grid.innerHTML = '<div class="col-span-full py-24 text-center text-[var(--muted)]">Precision matching found no results. Try broadening your criteria.</div>';
+        grid.innerHTML = '<div class="col-span-full py-20 text-center text-[var(--muted)]">No matches found for your criteria.</div>';
         return;
     }
-
-    grid.innerHTML = data.map(p => {
-        const hasSale = p.old_price && p.old_price > p.price;
-        return `
-            <div class="prod-card" onclick="location.href='product-detail.html?id=${p.id}'">
-                ${hasSale ? `<div class="badge-sale">Deal</div>` : ''}
-                <img src="${p.image_url}" class="prod-card-img" alt="${p.name}" loading="lazy">
-                <div class="p-6">
-                    <p class="text-[10px] uppercase text-[var(--accent)] font-bold mb-1 italic tracking-widest">${p.category_slug}</p>
-                    <h3 class="font-bold text-sm mb-4 text-[var(--cream)] line-clamp-1">${p.name}</h3>
-                    <div class="flex items-center justify-between">
-                        <div class="flex flex-col">
-                            <span class="font-black text-[var(--accent)] text-lg">${formatPrice(p.price)}</span>
-                            ${hasSale ? `<span class="text-[10px] line-through text-[var(--muted)]">${formatPrice(p.old_price)}</span>` : ''}
-                        </div>
-                        <button onclick="addToCart(${p.id},event)" class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold shadow-lg shadow-orange-500/20 hover:scale-110 transition-all">+</button>
+    grid.innerHTML = data.map(p => `
+        <div class="prod-card relative" onclick="location.href='product-detail.html?id=${p.id}'">
+            ${(p.old_price && Number(p.old_price) > Number(p.price)) ? `<div class="badge-sale">OFFER</div>` : ''}
+            <img src="${p.image_url}" class="prod-card-img" alt="${p.name}">
+            <div class="p-4 md:p-6">
+                <p class="text-[9px] uppercase font-bold text-orange-500 mb-1 tracking-widest">${p.category_slug}</p>
+                <h3 class="font-bold text-sm mb-4 line-clamp-1">${p.name}</h3>
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <span class="font-black text-white text-base">${formatPrice(p.price)}</span>
+                        ${p.old_price ? `<span class="text-[9px] line-through text-[var(--muted)] mt-1">${formatPrice(p.old_price)}</span>` : ''}
                     </div>
+                    <button onclick="addToCart(${p.id},event)" class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold hover:scale-110 transition-all shadow-lg shadow-orange-500/20">+</button>
                 </div>
             </div>
-        `;
-    }).join('');
-}
-
-function filterCat(cat) {
-    currentCat = cat;
-    renderCategories();
-    updateFilters();
-}
-
-function toggleDrawer(open) {
-    document.getElementById('filter-drawer').classList.toggle('open', open);
-    document.getElementById('drawer-overlay').classList.toggle('open', open);
-}
-
-function updateFilterCount() {
-    let count = 0;
-    if (document.getElementById('price-range').value < 10000) count++;
-    if (document.getElementById('f-sale').checked) count++;
-    if (document.getElementById('f-new').checked) count++;
-    if (document.getElementById('f-sort').value !== 'default') count++;
-    
-    const el = document.getElementById('filter-count');
-    if (count > 0) {
-        el.textContent = count;
-        el.classList.remove('hidden');
-    } else el.classList.add('hidden');
+        </div>
+    `).join('');
 }
 
 function resetFilters() {
+    document.getElementById('search-input').value = '';
     document.getElementById('price-range').value = 10000;
     document.getElementById('f-sale').checked = false;
     document.getElementById('f-new').checked = false;
-    document.getElementById('f-sort').value = 'default';
-    document.getElementById('search-input').value = '';
-    currentCat = 'all';
+    selectedCats = ['all'];
     renderCategories();
     updateFilters();
+}
+
+function toggleSidebar(open) {
+    document.getElementById('sidebar').classList.toggle('open', open);
 }
 
 function updateCartCount() { document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0)); }
@@ -300,9 +298,8 @@ function addToCart(id, e) {
 }
 function showToast(msg) {
     const t = document.createElement('div');
-    t.className = 'p-4 bg-orange-500 text-white rounded-2xl shadow-xl font-bold mb-2 flex items-center gap-3 animate-bounce shadow-orange-500/20';
-    t.innerHTML = `<span>${msg}</span>`;
-    document.getElementById('toast').appendChild(t);
+    t.className = 'p-4 bg-orange-600 text-white rounded-xl shadow-2xl font-bold mb-2';
+    t.textContent = msg; document.getElementById('toast').appendChild(t);
     setTimeout(() => t.remove(), 2500);
 }
 
