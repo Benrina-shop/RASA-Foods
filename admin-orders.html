@@ -3,37 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Transactions — RASA Admin</title>
+  <title>Order Management — RASA Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#020100;--surface:#0a0501;--surface2:#110802;--border:#1f1105;--accent:#f97316;--cream:#fef3c7;--muted:#6b5a4d}
+    :root{--bg:#080300;--surface:#110700;--surface2:#1c0d00;--border:#2e1800;--accent:#f97316;--cream:#fef3c7;--muted:#8a6840}
     body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
-    .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;padding:2.5rem 1.5rem}
-    .main-content{margin-left:280px;padding:3rem 4rem;min-height:100vh}
-    .nav-link{display:flex;align-items:center;gap:1rem;padding:.85rem 1.25rem;border-radius:14px;color:var(--muted);transition:all .3s;margin-bottom:.5rem;font-weight:500;font-size:.9rem}
-    .nav-link:hover, .nav-link.active{background:rgba(249,115,22,.08);color:var(--accent)}
-    .status-badge{padding:.3rem .8rem;border-radius:50px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;border:1px solid currentColor}
-    .st-pending{color:#f59e0b;background:rgba(245,158,11,.05)}
-    .st-processing{color:#3b82f6;background:rgba(59,130,246,.05)}
-    .st-delivered{color:#22c55e;background:rgba(34,197,94,.05)}
-    .st-cancelled{color:#ef4444;background:rgba(239,68,68,.05)}
-    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);z-index:1000;align-items:center;justify-content:center;padding:2rem}
-    .modal.open{display:flex}
+    .nav-link{display:flex;align-items:center;gap:12px;padding:12px 20px;border-radius:12px;color:var(--muted);transition:all .3s;font-weight:500}
+    .nav-link:hover,.nav-link.active{background:var(--surface2);color:var(--accent)}
+    .table-container{background:var(--surface);border:1px solid var(--border);border-radius:24px;overflow:hidden}
+    .status-badge{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px;padding:4px 12px;border-radius:100px;display:inline-block}
+    .status-pending{background:rgba(245,158,11,.15);color:#f59e0b}
+    .status-delivered{background:rgba(34,197,94,.15);color:#22c55e}
+    .status-cancelled{background:rgba(239,68,68,.15);color:#ef4444}
+    .status-processing{background:rgba(59,130,246,.15);color:#3b82f6}
+    
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);z-index:1000;display:none;opacity:0;transition:opacity .4s ease}
+    .modal-overlay.open{display:flex;opacity:1}
+    .modal-content{background:var(--surface);width:100%;max-width:800px;margin:auto;max-height:90vh;overflow-y:auto;border:1px solid var(--border);border-radius:40px;padding:50px;position:relative;transform:translateY(20px);transition:transform .4s ease}
+    .modal-overlay.open .modal-content{transform:translateY(0)}
+
+    .tab-btn{padding:10px 20px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:2px solid transparent;transition:all .3s}
+    .tab-btn.active{color:var(--accent);border-color:var(--accent)}
+
+    .search-box{background:var(--surface2);border:1px solid var(--border);padding:10px 15px;border-radius:12px;width:300px;color:white;font-size:13px;outline:none;transition:border-color .3s}
+    .search-box:focus{border-color:var(--accent)}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-  <!-- VIEW ORDER MODAL -->
-  <div id="order-modal" class="modal">
-    <div class="bg-[var(--surface)] p-10 rounded-[40px] border border-[var(--border)] w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+<body class="min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="w-72 border-r border-[var(--border)] p-8 flex flex-col fixed h-full bg-[var(--bg)]">
+    <div class="mb-12">
+      <h1 class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif">RASA <span class="text-xs text-[var(--muted)]">Admin</span></h1>
+    </div>
+    
+    <nav class="space-y-2 flex-1">
+      <a href="admin-dashboard.html" class="nav-link"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-width="2"/></svg> Dashboard</a>
+      <a href="admin-products.html" class="nav-link"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-width="2"/></svg> Products</a>
+      <a href="admin-orders.html" class="nav-link active"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2"/></svg> Orders</a>
+      <a href="admin-offers.html" class="nav-link"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 00-2 2h2zM5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-width="2"/></svg> Offers</a>
+    </nav>
+
+    <a href="index.html" class="nav-link text-red-500/50 hover:text-red-500"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2"/></svg> Exit Portal</a>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 ml-72 p-12">
+    <div class="flex justify-between items-end mb-12">
+      <div>
+        <h2 class="text-4xl font-black mb-2" style="font-family:'Playfair Display',serif">Order Flow</h2>
+        <p class="text-[var(--muted)]">Monitoring trade transactions and logistics.</p>
+      </div>
+      <div class="flex gap-4 items-center">
+          <input type="text" id="order-search" placeholder="Search by ID or Customer..." class="search-box" oninput="applyFilters()">
+          <div class="flex bg-[var(--surface)] border border-[var(--border)] rounded-xl p-1">
+              <button onclick="filterStatus('all')" class="tab-btn active" data-tab="all">All</button>
+              <button onclick="filterStatus('Pending')" class="tab-btn" data-tab="Pending">Pending</button>
+              <button onclick="filterStatus('Processing')" class="tab-btn" data-tab="Processing">Processing</button>
+              <button onclick="filterStatus('Delivered')" class="tab-btn" data-tab="Delivered">Delivered</button>
+          </div>
+      </div>
+    </div>
+
+    <div class="table-container shadow-2xl">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-[var(--surface2)] border-b border-[var(--border)]">
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500">Order Token</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500">Beneficiary</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500">Status</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500 text-right">Settlement</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500 text-right">Chronology</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500"></th>
+          </tr>
+        </thead>
+        <tbody id="orders-list">
+          <!-- Orders load here -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- View Modal -->
+  <div id="order-modal" class="modal-overlay" onclick="if(event.target==this) closeModal()">
+    <div class="modal-content shadow-2xl">
       <div class="flex justify-between items-start mb-8">
           <div>
               <h2 class="text-3xl font-black font-display mb-1" style="font-family:'Playfair Display',serif">Order Details</h2>
               <div class="flex items-center gap-3">
                 <p class="text-[10px] text-[var(--muted)] font-black uppercase tracking-widest" id="m-order-id">ORD-XXXXXX</p>
                 <span class="w-1 h-1 rounded-full bg-[var(--border)]"></span>
-                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest" id="m-order-date">May 12, 2024</p>
+                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest" id="m-order-date">Date Placeholder</p>
               </div>
           </div>
           <button onclick="closeModal()" class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-white/5">✕</button>
@@ -60,9 +122,7 @@
 
       <div class="space-y-4 mb-10">
           <h4 class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Itemized Collection</h4>
-          <div id="m-items" class="space-y-3">
-              <!-- Items load here -->
-          </div>
+          <div id="m-items" class="space-y-3"></div>
       </div>
 
       <div class="pt-8 border-t border-[var(--border)] flex justify-between items-end">
@@ -83,170 +143,140 @@
     </div>
   </div>
 
-  <div class="sidebar flex flex-col justify-between">
-    <div>
-        <div class="font-display text-2xl font-black mb-12 flex items-center gap-2" style="font-family:'Playfair Display',serif">
-            <span class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white text-lg">R</span>
-            RASA <span class="text-xs font-normal opacity-40 tracking-widest uppercase">Admin</span>
-        </div>
-        <nav>
-          <a href="admin-dashboard.html" class="nav-link">
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-width="2"/></svg>
-              Dashboard
-          </a>
-          <a href="admin-products.html" class="nav-link">
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-width="2"/></svg>
-              Products
-          </a>
-          <a href="admin-orders.html" class="nav-link active">
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2"/></svg>
-              Orders
-          </a>
-          <a href="admin-offers.html" class="nav-link">
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" stroke-width="2"/></svg>
-              Offers
-          </a>
-        </nav>
-    </div>
-    <a href="index.html" class="nav-link">← Storefront</a>
-  </div>
+  <script src="supabase-config.js"></script>
+  <script>
+    let ALL_ORDERS = [];
+    let currentStatusFilter = 'all';
+    let CURRENT_ORDER_ID = null;
 
-  <main class="main-content">
-    <div class="flex justify-between items-end mb-12">
-      <div>
-          <h1 class="text-4xl font-black mb-2" style="font-family:'Playfair Display',serif">Transactions</h1>
-          <p class="text-sm text-[var(--muted)]">Monitor and fulfill customer purchase requests.</p>
-      </div>
-      <button onclick="initOrders()" class="px-6 py-3 bg-[var(--surface2)] border border-[var(--border)] text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:border-orange-500 transition-all">Refresh Records</button>
-    </div>
-    
-    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-3xl overflow-hidden">
-      <table class="w-full text-left">
-        <thead class="bg-white/5 text-[10px] uppercase tracking-[.2em] text-[var(--muted)] font-bold">
-          <tr>
-            <th class="p-6">Trans ID</th>
-            <th class="p-6">Customer Details</th>
-            <th class="p-6 text-center">Lifecycle</th>
-            <th class="p-6 text-right">Settlement</th>
-            <th class="p-6 text-right">Operations</th>
-          </tr>
-        </thead>
-        <tbody id="orders-table" class="divide-y divide-[var(--border)]">
-            <tr><td colspan="5" class="p-10 text-center text-[var(--muted)] animate-pulse">Syncing transactions...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </main>
-
-<script src="supabase-config.js"></script>
-<script>
-if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
-let CURRENT_ORDER_ID = null;
-
-async function initOrders() {
-  try {
-    if (typeof getSupabase !== 'function') return setTimeout(initOrders, 200);
-    var sb = getSupabase();
-    if (!sb) return setTimeout(initOrders, 200);
-
-    const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: false });
-    if (data) {
-        renderTable(data);
+    async function fetchOrders() {
+        if (typeof getSupabase !== 'function') return setTimeout(fetchOrders, 200);
+        const sb = getSupabase();
+        const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: false });
+        if (data) {
+            ALL_ORDERS = data;
+            applyFilters();
+        }
     }
-  } catch (err) { console.error(err); }
-}
 
-function renderTable(orders) {
-    document.getElementById('orders-table').innerHTML = orders.map(o => `
-      <tr class="hover:bg-white/5 transition-colors">
-        <td class="p-6 font-mono text-[10px] text-[var(--muted)]">#${o.id.split('-')[0].toUpperCase()}</td>
-        <td class="p-6">
-            <p class="font-bold text-white text-sm">${o.customer_name}</p>
-            <p class="text-[10px] text-[var(--muted)] font-medium">${o.customer_phone}</p>
-        </td>
-        <td class="p-6 text-center">
-            <span class="status-badge st-${(o.status || 'Pending').toLowerCase()}">${o.status || 'Pending'}</span>
-        </td>
-        <td class="p-6 text-right font-black text-orange-500">${formatPrice(o.total_amount)}</td>
-        <td class="p-6 text-right space-x-4">
-            <button onclick="viewOrder('${o.id}')" class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] hover:text-white">View</button>
-            <button onclick="deleteOrder('${o.id}')" class="text-[10px] font-bold uppercase tracking-widest text-red-500">Delete</button>
-        </td>
-      </tr>
-    `).join('');
-}
-
-async function viewOrder(id) {
-    CURRENT_ORDER_ID = id;
-    const sb = getSupabase();
-    
-    // Fetch Order
-    const { data: order } = await sb.from('orders').select('*').eq('id', id).single();
-    if (!order) return;
-
-    // Fetch Order Items
-    const { data: items } = await sb.from('order_items').select('*, products(name, image_url)').eq('order_id', id);
-
-    // Populate Modal
-    const orderDate = new Date(order.created_at).toLocaleString('en-US', { 
-        year: 'numeric', month: 'short', day: 'numeric', 
-        hour: '2-digit', minute: '2-digit' 
-    });
-    document.getElementById('m-order-id').textContent = `ORD-${id.toString().split('-')[0].toUpperCase()}`;
-    document.getElementById('m-order-date').textContent = `Placed on ${orderDate}`;
-    document.getElementById('m-cust-name').textContent = order.customer_name;
-    document.getElementById('m-cust-email').textContent = order.customer_email || 'No email provided';
-    document.getElementById('m-cust-phone').textContent = order.customer_phone;
-    if (order.whatsapp_number) {
-        document.getElementById('m-whatsapp-container').classList.remove('hidden');
-        document.getElementById('m-cust-wa').textContent = order.whatsapp_number;
-    } else {
-        document.getElementById('m-whatsapp-container').classList.add('hidden');
+    function filterStatus(status) {
+        currentStatusFilter = status;
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.tab === status);
+        });
+        applyFilters();
     }
-    document.getElementById('m-cust-addr').textContent = order.shipping_address;
-    document.getElementById('m-total').textContent = formatPrice(order.total_amount);
-    document.getElementById('m-status-select').value = order.status || 'Pending';
 
-    document.getElementById('m-items').innerHTML = (items || []).map(i => `
-        <div class="flex justify-between items-center p-4 bg-[var(--surface2)] border border-[var(--border)] rounded-2xl">
-            <div class="flex items-center gap-4">
-                <img src="${i.products?.image_url || ''}" class="w-10 h-10 rounded-lg object-cover">
-                <div>
-                    <p class="text-sm font-bold text-white">${i.products?.name || 'Unknown Product'}</p>
-                    <p class="text-[10px] text-[var(--muted)] uppercase font-bold">${i.quantity} x ${formatPrice(i.unit_price)}</p>
+    function applyFilters() {
+        const search = document.getElementById('order-search').value.toLowerCase();
+        let filtered = ALL_ORDERS;
+
+        if (currentStatusFilter !== 'all') {
+            filtered = filtered.filter(o => (o.status || 'Pending') === currentStatusFilter);
+        }
+
+        if (search) {
+            filtered = filtered.filter(o => 
+                o.customer_name.toLowerCase().includes(search) || 
+                o.id.toString().toLowerCase().includes(search)
+            );
+        }
+
+        renderOrders(filtered);
+    }
+
+    function renderOrders(data) {
+        const list = document.getElementById('orders-list');
+        list.innerHTML = data.map(o => `
+            <tr class="border-b border-[var(--border)] hover:bg-white/5 transition-colors group">
+              <td class="px-8 py-6 font-mono text-[10px] font-bold text-[var(--muted)] group-hover:text-orange-500">#ORD-${o.id.toString().substring(0,6)}</td>
+              <td class="px-8 py-6">
+                <p class="font-bold text-white text-sm">${o.customer_name}</p>
+                <p class="text-[10px] text-[var(--muted)] font-medium">${o.customer_email || 'No email'}</p>
+              </td>
+              <td class="px-8 py-6">
+                <span class="status-badge ${getStatusClass(o.status)}">${o.status || 'Pending'}</span>
+              </td>
+              <td class="px-8 py-6 text-right font-black text-orange-500">${formatPrice(o.total_amount)}</td>
+              <td class="px-8 py-6 text-right text-[10px] font-medium text-[var(--muted)]">${new Date(o.created_at).toLocaleDateString()}</td>
+              <td class="px-8 py-6 text-right space-x-2">
+                <button onclick="viewOrder('${o.id}')" class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] hover:text-white">Review</button>
+                <button onclick="deleteOrder('${o.id}')" class="text-[10px] font-bold uppercase tracking-widest text-red-500/50 hover:text-red-500">Wipe</button>
+              </td>
+            </tr>
+        `).join('');
+    }
+
+    function getStatusClass(s) {
+        if (!s) return 'status-pending';
+        s = s.toLowerCase();
+        if (s === 'delivered') return 'status-delivered';
+        if (s === 'cancelled') return 'status-cancelled';
+        if (s === 'processing' || s === 'shipped') return 'status-processing';
+        return 'status-pending';
+    }
+
+    async function viewOrder(id) {
+        CURRENT_ORDER_ID = id;
+        const sb = getSupabase();
+        const { data: order } = await sb.from('orders').select('*').eq('id', id).single();
+        if (!order) return;
+        const { data: items } = await sb.from('order_items').select('*, products(name, image_url)').eq('order_id', id);
+
+        const orderDate = new Date(order.created_at).toLocaleString('en-US', { 
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+        });
+
+        document.getElementById('m-order-id').textContent = `ORD-${id.toString().split('-')[0].toUpperCase()}`;
+        document.getElementById('m-order-date').textContent = `Placed on ${orderDate}`;
+        document.getElementById('m-cust-name').textContent = order.customer_name;
+        document.getElementById('m-cust-email').textContent = order.customer_email || 'No email provided';
+        document.getElementById('m-cust-phone').textContent = order.customer_phone;
+        
+        if (order.whatsapp_number) {
+            document.getElementById('m-whatsapp-container').classList.remove('hidden');
+            document.getElementById('m-cust-wa').textContent = order.whatsapp_number;
+        } else {
+            document.getElementById('m-whatsapp-container').classList.add('hidden');
+        }
+
+        document.getElementById('m-cust-addr').textContent = order.shipping_address;
+        document.getElementById('m-total').textContent = formatPrice(order.total_amount);
+        document.getElementById('m-status-select').value = order.status || 'Pending';
+
+        document.getElementById('m-items').innerHTML = (items || []).map(i => `
+            <div class="flex justify-between items-center p-4 bg-[var(--surface2)] border border-[var(--border)] rounded-2xl">
+                <div class="flex items-center gap-4">
+                    <img src="${i.products?.image_url || ''}" class="w-10 h-10 rounded-lg object-cover">
+                    <div>
+                        <p class="text-sm font-bold text-white">${i.products?.name || 'Asset Deleted'}</p>
+                        <p class="text-[10px] text-[var(--muted)] uppercase font-bold">${i.quantity} x ${formatPrice(i.unit_price)}</p>
+                    </div>
                 </div>
+                <p class="text-sm font-black text-orange-500">${formatPrice(i.quantity * i.unit_price)}</p>
             </div>
-            <p class="text-sm font-black text-orange-500">${formatPrice(i.quantity * i.unit_price)}</p>
-        </div>
-    `).join('');
+        `).join('');
 
-    document.getElementById('order-modal').classList.add('open');
-}
+        document.getElementById('order-modal').classList.add('open');
+    }
 
-function closeModal() {
-    document.getElementById('order-modal').classList.remove('open');
-}
+    function closeModal() { document.getElementById('order-modal').classList.remove('open'); }
 
-async function updateModalStatus() {
-    if (!CURRENT_ORDER_ID) return;
-    const status = document.getElementById('m-status-select').value;
-    const { error } = await getSupabase().from('orders').update({ status }).eq('id', CURRENT_ORDER_ID);
-    if (!error) initOrders();
-}
+    async function updateModalStatus() {
+        const newStatus = document.getElementById('m-status-select').value;
+        const sb = getSupabase();
+        await sb.from('orders').update({ status: newStatus }).eq('id', CURRENT_ORDER_ID);
+        fetchOrders();
+    }
 
-async function deleteOrder(id) {
-    if (!confirm('ARCHIVE WARNING: Permanently delete this transaction record?')) return;
-    
-    const sb = getSupabase();
-    // Delete items first to avoid foreign key issues
-    await sb.from('order_items').delete().eq('order_id', id);
-    const { error } = await sb.from('orders').delete().eq('id', id);
-    
-    if (error) alert(error.message);
-    else initOrders();
-}
+    async function deleteOrder(id) {
+        if (!confirm('Permanently wipe this transaction record?')) return;
+        const sb = getSupabase();
+        await sb.from('orders').delete().eq('id', id);
+        fetchOrders();
+    }
 
-initOrders();
-</script>
+    fetchOrders();
+  </script>
 </body>
 </html>
