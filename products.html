@@ -47,7 +47,7 @@
 </nav>
 
 <div id="mob-menu">
-  <button id="mob-close" class="absolute top-6 right-6 p-2 text-[var(--muted)]"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+  <button id="mob-close" class="absolute top-6 right-6 p-2 text-[var(--muted)]">✕</button>
   <a href="index.html" class="text-2xl">Home</a>
   <a href="products.html" class="text-2xl active">Products</a>
 </div>
@@ -65,7 +65,7 @@
         <button onclick="filterCat('organic')" class="filter-btn" data-cat="organic">Organic</button>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="products-grid">
-        <div class="col-span-full py-20 text-center text-[var(--muted)]">Loading premium products...</div>
+        <div class="col-span-full py-20 text-center text-[var(--muted)] animate-pulse">Loading premium products...</div>
     </div>
   </div>
 </div>
@@ -79,8 +79,11 @@ let currentCat = 'all';
 
 async function loadProducts() {
   try {
-    if (typeof supabase === 'undefined') return setTimeout(loadProducts, 500);
-    const { data, error } = await supabase.from('products').select('*');
+    if (typeof getSupabase !== 'function') return setTimeout(loadProducts, 200);
+    var sb = getSupabase();
+    if (!sb) return setTimeout(loadProducts, 200);
+
+    const { data, error } = await sb.from('products').select('*');
     if (error) throw error;
     ALL_PRODUCTS = data;
     
@@ -88,7 +91,7 @@ async function loadProducts() {
     if(urlCat) filterCat(urlCat); else render();
   } catch (err) {
     console.error(err);
-    document.getElementById('products-grid').innerHTML = '<div class="col-span-full py-10 text-center text-red-400">Error loading products.</div>';
+    document.getElementById('products-grid').innerHTML = '<div class="col-span-full py-10 text-center text-red-500 font-bold">⚠️ Connection Error.</div>';
   }
 }
 
@@ -97,7 +100,7 @@ function render() {
   const grid = document.getElementById('products-grid');
   
   if (!filtered.length) {
-    grid.innerHTML = '<div class="col-span-full py-20 text-center text-[var(--muted)]">No products found here.</div>';
+    grid.innerHTML = '<div class="col-span-full py-20 text-center text-[var(--muted)]">No products found in this category.</div>';
     return;
   }
 
@@ -109,7 +112,7 @@ function render() {
         <p class="text-xs uppercase text-[var(--accent)] mb-1">${p.category_slug}</p>
         <h3 class="font-semibold text-sm mb-2 text-[var(--cream)]">${p.name}</h3>
         <div class="flex items-center justify-between">
-          <span class="font-bold text-sm text-[var(--accent)]">${typeof formatPrice === 'function' ? formatPrice(p.price) : 'Rs. '+p.price}</span>
+          <span class="font-bold text-sm text-[var(--accent)]">${formatPrice(p.price)}</span>
           <button onclick="addToCart(${p.id},event)" class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">+</button>
         </div>
       </div>

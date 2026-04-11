@@ -10,7 +10,7 @@
     :root{--bg:#080300;--surface:#110700;--border:#2e1800;--accent:#f97316;--cream:#fef3c7;--muted:#8a6840}
     body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
     #navbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,3,0,.96);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:1.2rem 1.5rem}
-    .qty-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .qty-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--cream)}
     .qty-btn:hover{background:var(--border)}
     .badge{background:var(--accent);color:white;font-size:.7rem;padding:3px 10px;border-radius:20px;font-weight:700}
   </style>
@@ -21,15 +21,15 @@
   <div class="max-w-7xl mx-auto flex items-center justify-between">
     <a href="index.html" class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif"><span style="color:var(--accent)">R</span>ASA</a>
     <div class="flex items-center gap-6">
-      <a href="products.html" class="text-sm font-medium hover:text-[var(--accent)]">Back to Products</a>
-      <a href="cart.html" class="relative p-2"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2"/></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-[var(--accent)] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">0</span></a>
+      <a href="products.html" class="text-sm font-medium hover:text-[var(--accent)] text-[var(--muted)]">Back to Products</a>
+      <a href="cart.html" class="relative p-2"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-[var(--accent)] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span></a>
     </div>
   </div>
 </nav>
 
 <div class="pt-32 pb-20 px-6">
   <div class="max-w-7xl mx-auto" id="product-container">
-    <div class="py-20 text-center text-[var(--muted)]">Loading product details...</div>
+    <div class="py-20 text-center text-[var(--muted)] animate-pulse">Loading product details...</div>
   </div>
 </div>
 
@@ -45,15 +45,18 @@ async function loadProduct() {
   if (!id) return location.href = 'products.html';
 
   try {
-    if (typeof supabase === 'undefined') return setTimeout(loadProduct, 500);
-    const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+    if (typeof getSupabase !== 'function') return setTimeout(loadProduct, 200);
+    var sb = getSupabase();
+    if (!sb) return setTimeout(loadProduct, 200);
+
+    const { data, error } = await sb.from('products').select('*').eq('id', id).single();
     if (error) throw error;
     PRODUCT = data;
     renderProduct();
     updateCartCount();
   } catch (err) {
     console.error(err);
-    document.getElementById('product-container').innerHTML = '<div class="py-20 text-center text-red-400">Product not found. <a href="products.html" class="underline">Go back</a></div>';
+    document.getElementById('product-container').innerHTML = '<div class="py-20 text-center text-red-500 font-bold">⚠️ Product not found. <a href="products.html" class="underline">Go back</a></div>';
   }
 }
 
@@ -64,14 +67,14 @@ function renderProduct() {
       <div class="rounded-3xl overflow-hidden border border-[var(--border)] sticky top-32">
         <img src="${PRODUCT.image_url}" alt="${PRODUCT.name}" class="w-full aspect-square object-cover">
       </div>
-      <div class="space-y-8">
+      <div class="space-y-8 text-[var(--cream)]">
         <div>
           ${PRODUCT.badge ? `<span class="badge mb-4 inline-block">${PRODUCT.badge}</span>` : ''}
           <p class="text-[var(--accent)] font-bold tracking-widest uppercase text-xs mb-2">${PRODUCT.category_slug}</p>
           <h1 class="text-5xl font-bold mb-4 font-display" style="font-family:'Playfair Display',serif">${PRODUCT.name}</h1>
           <div class="flex items-baseline gap-4 mb-6">
-            <span class="text-3xl font-black text-[var(--accent)]">${typeof formatPrice === 'function' ? formatPrice(PRODUCT.price) : 'Rs. '+PRODUCT.price}</span>
-            ${PRODUCT.old_price ? `<span class="text-xl line-through text-[var(--muted)]">${typeof formatPrice === 'function' ? formatPrice(PRODUCT.old_price) : 'Rs. '+PRODUCT.old_price}</span>` : ''}
+            <span class="text-3xl font-black text-[var(--accent)]">${formatPrice(PRODUCT.price)}</span>
+            ${PRODUCT.old_price ? `<span class="text-xl line-through text-[var(--muted)]">${formatPrice(PRODUCT.old_price)}</span>` : ''}
           </div>
           <p class="text-[var(--muted)] leading-relaxed text-lg">${PRODUCT.description || 'Premium quality product sourced responsibly.'}</p>
         </div>
@@ -80,22 +83,22 @@ function renderProduct() {
           <div class="flex items-center gap-6">
             <span class="text-sm font-bold uppercase text-[var(--muted)]">Quantity</span>
             <div class="flex items-center gap-3">
-              <button onclick="changeQty(-1)" class="qty-btn">-</button>
+              <button onclick="changeQty(-1)" class="qty-btn font-bold">−</button>
               <span id="qty-display" class="w-8 text-center font-bold">${qty}</span>
-              <button onclick="changeQty(1)" class="qty-btn">+</button>
+              <button onclick="changeQty(1)" class="qty-btn font-bold">+</button>
             </div>
           </div>
           <button onclick="addToCart()" class="w-full py-5 rounded-xl bg-orange-500 text-white font-bold text-lg hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/10">Add to Cart</button>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <div class="p-4 rounded-xl border border-[var(--border)] text-center">
-            <div class="text-[var(--accent)] mb-1">✓</div>
-            <div class="text-xs font-bold uppercase tracking-wider">Fast Delivery</div>
+          <div class="p-4 rounded-xl border border-[var(--border)] text-center text-[var(--muted)]">
+            <div class="text-[var(--accent)] mb-1 text-xl font-bold">✓</div>
+            <div class="text-[10px] font-bold uppercase tracking-wider">Fast Delivery</div>
           </div>
-          <div class="p-4 rounded-xl border border-[var(--border)] text-center">
-            <div class="text-[var(--accent)] mb-1">✓</div>
-            <div class="text-xs font-bold uppercase tracking-wider">Fresh Quality</div>
+          <div class="p-4 rounded-xl border border-[var(--border)] text-center text-[var(--muted)]">
+            <div class="text-[var(--accent)] mb-1 text-xl font-bold">✓</div>
+            <div class="text-[10px] font-bold uppercase tracking-wider">Premium Quality</div>
           </div>
         </div>
       </div>
@@ -105,12 +108,13 @@ function renderProduct() {
 
 function changeQty(d) {
   qty = Math.max(1, qty + d);
-  document.getElementById('qty-display').textContent = qty;
+  const display = document.getElementById('qty-display');
+  if (display) display.textContent = qty;
 }
 
 function updateCartCount() {
   const cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
-  document.getElementById('cart-count').textContent = cart.reduce((s, i) => s + i.qty, 0);
+  document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0));
 }
 
 function addToCart() {

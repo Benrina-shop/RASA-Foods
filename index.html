@@ -22,10 +22,6 @@
     .hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1800&q=80');background-size:cover;background-position:center;opacity:.2;transform:scale(1.05);animation:bgZoom 20s ease-in-out infinite alternate}
     @keyframes bgZoom{to{transform:scale(1)}}
     .hero-grad{position:absolute;inset:0;background:linear-gradient(105deg,rgba(8,3,0,.97) 45%,rgba(8,3,0,.5) 100%)}
-    .marquee-wrap{overflow:hidden;background:var(--accent)}
-    .marquee-inner{display:flex;animation:marquee 24s linear infinite;white-space:nowrap}
-    .marquee-inner:hover{animation-play-state:paused}
-    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
     .prod-card{position:relative;overflow:hidden;border-radius:20px;background:var(--surface);border:1px solid var(--border);transition:all .4s cubic-bezier(.175,.885,.32,1.275);cursor:pointer}
     .prod-card:hover{transform:translateY(-10px);border-color:var(--accent);box-shadow:0 24px 70px rgba(249,115,22,.2)}
     .prod-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;transition:transform .6s ease}
@@ -35,21 +31,17 @@
     .badge-pop{background:linear-gradient(135deg,#f59e0b,#d97706)}
     .fu{opacity:0;transform:translateY(32px);transition:opacity .7s ease,transform .7s ease}
     .fu.vis{opacity:1;transform:translateY(0)}
-    .stat-num{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,4vw,3.5rem);font-weight:900;background:linear-gradient(135deg,var(--accent),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     .divider{width:52px;height:3px;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:2px;margin:.8rem 0 2.2rem}
-    .divider-c{margin:.8rem auto 2.2rem}
-    .gbtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:.5rem}
     #mob-menu{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:2rem}
     #mob-menu.open{display:flex}
     @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <nav id="navbar">
   <div class="max-w-7xl mx-auto flex items-center justify-between">
-    <a href="index.html" class="font-display text-2xl font-bold"><span style="color:var(--accent)">R</span>ASA <span class="text-sm font-normal" style="color:var(--muted)">Foods</span></a>
+    <a href="index.html" class="font-display text-2xl font-bold"><span style="color:var(--accent)">R</span>ASA <span class="text-sm font-normal text-[var(--muted)]">Foods</span></a>
     <div class="hidden md:flex items-center gap-8">
       <a href="index.html" class="nav-link active">Home</a>
       <a href="products.html" class="nav-link">Products</a>
@@ -58,9 +50,6 @@
       <a href="#contact" class="nav-link">Contact</a>
     </div>
     <div class="flex items-center gap-3">
-      <a href="sign-in.html" class="p-2 nav-link hover:text-orange-400" title="Sign In">
-        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-      </a>
       <a href="cart.html" class="relative p-2 nav-link">
         <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         <span id="cart-count" class="absolute -top-1 -right-1 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold" style="background:var(--accent)">0</span>
@@ -73,26 +62,24 @@
 </nav>
 
 <div id="mob-menu">
-  <button id="mob-close" class="absolute top-6 right-6 p-2" style="color:var(--muted)"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-  <span class="font-display text-4xl font-black" style="color:var(--accent)">RASA</span>
-  <a href="index.html" class="font-display text-3xl hover:text-orange-400">Home</a>
-  <a href="products.html" class="font-display text-3xl hover:text-orange-400">Products</a>
-  <a href="offers.html" class="font-display text-3xl hover:text-orange-400">Offers</a>
-  <a href="cart.html" class="font-display text-3xl hover:text-orange-400">Cart</a>
-  <a href="#contact" class="font-display text-3xl hover:text-orange-400" onclick="document.getElementById('mob-menu').classList.remove('open')">Contact</a>
+  <button id="mob-close" class="absolute top-6 right-6 p-2 text-[var(--muted)]">✕</button>
+  <a href="index.html" class="text-3xl font-display">Home</a>
+  <a href="products.html" class="text-3xl font-display">Products</a>
+  <a href="offers.html" class="text-3xl font-display">Offers</a>
+  <a href="cart.html" class="text-3xl font-display">Cart</a>
 </div>
 
 <section class="hero">
   <div class="hero-bg"></div><div class="hero-grad"></div>
   <div class="relative z-10 max-w-7xl mx-auto px-6 w-full pt-24 pb-16">
     <div class="max-w-3xl">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-8 fu" style="background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.25);color:var(--accent)">
-        <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background:var(--accent)"></span>Premium Quality Since 2010
+      <div class="fu inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-8" style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);color:var(--accent)">
+        <span class="w-1.5 h-1.5 rounded-full animate-pulse bg-orange-500"></span>Premium Quality Experience
       </div>
-      <h1 class="font-display font-black leading-[1.05] mb-6 fu delay1" style="font-size:clamp(3rem,6.5vw,5.5rem)">Taste the<br><em style="color:var(--accent);font-style:italic">Finest</em><br>Flavors of RASA</h1>
-      <p class="text-lg leading-relaxed mb-10 max-w-lg fu delay2 text-[var(--muted)]">Handpicked premium food products from Sri Lanka's finest farms. Pure, authentic, and extraordinary taste in every bite.</p>
-      <div class="flex flex-wrap gap-4 fu delay3">
-        <a href="products.html" class="gbtn px-10 py-4 rounded-full font-bold text-white bg-orange-500 shadow-lg shadow-orange-500/20 hover:scale-105 transition-all">Explore Products</a>
+      <h1 class="fu delay1 font-display font-black leading-[1.05] mb-6" style="font-size:clamp(3rem,6vw,5.5rem)">Deliciously<br><em style="color:var(--accent);font-style:italic">Authentic</em><br>Sri Lankan Food</h1>
+      <p class="fu delay2 text-lg leading-relaxed mb-10 text-[var(--muted)]">Finest selection of chocolates, spices, organic oils and bakery products delivered directly to your doorstep.</p>
+      <div class="fu delay3 flex flex-wrap gap-4">
+        <a href="products.html" class="px-10 py-4 rounded-full font-bold text-white bg-orange-500 hover:bg-orange-600 transition-all">Shop Collection</a>
         <a href="offers.html" class="px-10 py-4 rounded-full font-bold border border-white/20 hover:bg-white/5 transition-all">View Offers</a>
       </div>
     </div>
@@ -101,12 +88,17 @@
 
 <section class="py-24 px-6 bg-[var(--surface)]">
   <div class="max-w-7xl mx-auto">
-    <div class="flex justify-between items-end mb-12 fu">
-      <div><p class="text-xs font-bold tracking-[.25em] uppercase mb-2" style="color:var(--accent)">Selected for You</p><h2 class="font-display font-bold text-4xl">Best Sellers</h2><div class="divider"></div></div>
-      <a href="products.html" class="text-sm font-medium text-[var(--muted)] hover:text-[var(--accent)]">Browse All →</a>
+    <div class="flex justify-between items-end mb-12">
+      <div class="fu">
+        <p class="text-xs font-bold tracking-[.25em] uppercase mb-2 text-[var(--accent)]">Customer Favorites</p>
+        <h2 class="font-display font-bold text-4xl">Best Sellers</h2>
+        <div class="divider"></div>
+      </div>
+      <a href="products.html" class="fu mb-8 text-sm font-medium text-[var(--muted)] hover:text-white transition-colors">See All Products →</a>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 fu" id="bs-grid">
-        <div class="col-span-full py-20 text-center text-[var(--muted)] animate-pulse">Gathering products...</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="bs-grid">
+        <!-- Products will load here -->
+        <div class="col-span-full py-20 text-center text-[var(--muted)] animate-pulse">Loading amazing products...</div>
     </div>
   </div>
 </section>
@@ -115,69 +107,85 @@
   <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-16">
     <div class="fu">
       <p class="text-xs font-bold tracking-[.25em] uppercase mb-2 text-[var(--accent)]">Inquiries</p>
-      <h2 class="font-display font-bold text-4xl mb-4">Get in Touch</h2><div class="divider"></div>
-      <p class="text-[var(--muted)] mb-10">We would love to hear from you. For wholesale or support, reach out today.</p>
+      <h2 class="font-display font-bold text-4xl mb-4">Contact Us</h2><div class="divider"></div>
+      <p class="text-[var(--muted)] mb-10">Reach out for bulk orders or support.</p>
       <div class="space-y-4">
-        <div class="flex items-center gap-4 p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
-            <div class="text-[var(--accent)]">📍</div><div><div class="text-xs uppercase opacity-40 font-bold">Visit Us</div><div class="text-sm font-bold">123 Galle Road, Colombo</div></div>
+        <div class="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center gap-4">
+            <span class="text-xl">📍</span><div><div class="text-[10px] uppercase font-bold opacity-40">Location</div><div class="text-sm font-bold">Colombo, Sri Lanka</div></div>
         </div>
-        <div class="flex items-center gap-4 p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
-            <div class="text-[var(--accent)]">📧</div><div><div class="text-xs uppercase opacity-40 font-bold">Email Us</div><div class="text-sm font-bold">hello@rasafoods.lk</div></div>
+        <div class="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center gap-4">
+            <span class="text-xl">📧</span><div><div class="text-[10px] uppercase font-bold opacity-40">Email</div><div class="text-sm font-bold">hello@rasafoods.lk</div></div>
         </div>
       </div>
     </div>
     <div class="bg-[var(--surface)] p-10 rounded-3xl border border-[var(--border)] fu delay1">
-      <form class="space-y-4" onsubmit="event.preventDefault(); showToast('✅ Message Sent!'); this.reset();">
-        <input type="text" placeholder="Your Name" class="w-full bg-[var(--bg)] border border-[var(--border)] p-4 rounded-xl outline-none focus:border-[var(--accent)] text-sm" required>
-        <input type="email" placeholder="Your Email" class="w-full bg-[var(--bg)] border border-[var(--border)] p-4 rounded-xl outline-none focus:border-[var(--accent)] text-sm" required>
-        <textarea placeholder="Message" rows="4" class="w-full bg-[var(--bg)] border border-[var(--border)] p-4 rounded-xl outline-none focus:border-[var(--accent)] text-sm" required></textarea>
-        <button type="submit" class="w-full py-4 rounded-xl font-bold bg-orange-500 text-white hover:bg-orange-600">Send Message</button>
-      </form>
+        <form class="space-y-4" onsubmit="event.preventDefault(); alert('Message sent!'); this.reset();">
+            <input type="text" placeholder="Name" class="w-full bg-[var(--bg)] border border-[var(--border)] p-4 rounded-xl outline-none focus:border-[var(--accent)] text-sm" required>
+            <input type="email" placeholder="Email" class="w-full bg-[var(--bg)] border border-[var(--border)] p-4 rounded-xl outline-none focus:border-[var(--accent)] text-sm" required>
+            <textarea placeholder="Message" rows="4" class="w-full bg-[var(--bg)] border border-[var(--border)] p-4 rounded-xl outline-none focus:border-[var(--accent)] text-sm" required></textarea>
+            <button class="w-full py-4 rounded-xl font-bold bg-orange-500 text-white hover:bg-orange-600 transition-colors">Submit</button>
+        </form>
     </div>
   </div>
 </section>
 
 <footer class="py-12 px-6 border-t border-[var(--border)] text-center">
   <div class="font-display text-2xl font-black text-[var(--accent)] mb-4">RASA</div>
-  <div class="text-xs text-[var(--muted)]">© 2024 RASA Foods. All rights reserved.</div>
   <div id="toast" class="fixed bottom-6 right-6 z-50"></div>
+  <div class="text-xs text-[var(--muted)]">© 2024 RASA Foods. All rights reserved.</div>
 </footer>
 
 <script src="supabase-config.js"></script>
 <script>
 let PRODUCTS = [];
 async function initStore() {
+  console.log('Initializing Store...');
   try {
-    if (typeof supabase === 'undefined' || !supabase) {
-        if (window.supabase) {
-            supabase = window.supabase.createClient(SB_URL, SB_KEY);
-        } else {
-            console.warn('Retrying Supabase init...');
-            return setTimeout(initStore, 500);
-        }
+    // 1. Ensure Supabase is ready
+    if (typeof getSupabase !== 'function') {
+        console.warn('Config not loaded yet...');
+        return setTimeout(initStore, 200);
     }
-    const { data, error } = await supabase.from('products').select('*');
+    
+    var sb = getSupabase();
+    if (!sb) {
+        console.warn('Waiting for window.supabase...');
+        return setTimeout(initStore, 200);
+    }
+
+    // 2. Fetch Data
+    const { data, error } = await sb.from('products').select('*');
     if (error) throw error;
+    
+    console.log('Products fetched:', data.length);
     PRODUCTS = data;
     render();
     updateCartCount();
   } catch (err) {
-    console.error(err);
-    document.getElementById('bs-grid').innerHTML = '<div class="col-span-full py-10 text-red-400">Check connection and try again.</div>';
+    console.error('Store init error:', err);
+    document.getElementById('bs-grid').innerHTML = '<div class="col-span-full py-10 text-red-500 font-bold">⚠️ Connection Error. Please refresh.</div>';
   }
 }
 
 function render() {
   const grid = document.getElementById('bs-grid');
-  if (grid) grid.innerHTML = PRODUCTS.slice(0, 8).map(p => `
+  if (!grid) return;
+  
+  if (PRODUCTS.length === 0) {
+    grid.innerHTML = '<div class="col-span-full py-20 text-center text-[var(--muted)]">No products found in database.</div>';
+    return;
+  }
+
+  grid.innerHTML = PRODUCTS.slice(0, 8).map(p => `
     <div class="prod-card" onclick="location.href='product-detail.html?id=${p.id}'">
+      ${p.badge ? `<div class="badge ${p.badge_type === 'new' ? 'badge-new' : p.badge_type === 'pop' ? 'badge-pop' : ''}">${p.badge}</div>` : ''}
       <img src="${p.image_url}" class="prod-card-img" alt="${p.name}" loading="lazy">
       <div class="p-4">
         <p class="text-[10px] uppercase text-[var(--accent)] font-bold mb-1">${p.category_slug}</p>
-        <h3 class="font-bold text-sm mb-2">${p.name}</h3>
+        <h3 class="font-bold text-sm mb-2 text-[var(--cream)]">${p.name}</h3>
         <div class="flex items-center justify-between">
-          <span class="font-bold text-[var(--accent)]">${typeof formatPrice === 'function' ? formatPrice(p.price) : 'Rs.'+p.price}</span>
-          <button onclick="addToCart(${p.id},event)" class="w-8 h-8 rounded-full bg-orange-500 text-white font-bold">+</button>
+          <span class="font-bold text-[var(--accent)]">${formatPrice(p.price)}</span>
+          <button onclick="addToCart(${p.id},event)" class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold shadow-lg shadow-orange-500/20">+</button>
         </div>
       </div>
     </div>
@@ -198,7 +206,7 @@ function addToCart(id, e) {
 }
 function showToast(m) {
   const t = document.createElement('div');
-  t.className = 'p-4 bg-orange-500 text-white rounded-2xl shadow-xl font-bold mb-2';
+  t.className = 'p-4 bg-orange-500 text-white rounded-2xl shadow-xl font-bold mb-2 animate-slideIn';
   t.textContent = m; document.getElementById('toast').appendChild(t);
   setTimeout(() => t.remove(), 2500);
 }
