@@ -58,8 +58,14 @@
             </div>
 
             <div class="col-span-2 md:col-span-1">
-                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Valuation (Rs.)</label>
-                <input type="number" id="p-price" placeholder="1500" required class="input-field">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Selling Price (Rs.)</label>
+                <input type="number" id="p-price" placeholder="1200" required class="input-field">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Original Price (Rs.) - Optional</label>
+                <input type="number" id="p-old-price" placeholder="1500" class="input-field">
+                <p class="text-[8px] text-[var(--muted)] -mt-2 uppercase font-bold tracking-widest">Leave empty if no deal active</p>
             </div>
         </div>
 
@@ -233,6 +239,7 @@ function openModal(id = null) {
         document.getElementById('p-name').value = p.name;
         document.getElementById('p-cat-select').value = p.category_slug;
         document.getElementById('p-price').value = p.price;
+        document.getElementById('p-old-price').value = p.old_price || '';
         document.getElementById('p-desc').value = p.description || '';
         
         // Show existing images as previews
@@ -293,6 +300,7 @@ document.getElementById('product-form').onsubmit = async (e) => {
             name: document.getElementById('p-name').value,
             category_slug: cat_slug,
             price: document.getElementById('p-price').value,
+            old_price: document.getElementById('p-old-price').value || null,
             image_url: uploadedUrls[0] || '',
             images: uploadedUrls,
             description: document.getElementById('p-desc').value
