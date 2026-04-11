@@ -91,17 +91,17 @@
     
     <div>
       <div id="summary-card">
-        <h2 class="font-display text-2xl font-bold mb-8" style="font-family:'Playfair Display',serif">Order Artifacts</h2>
-        <div id="order-items" class="space-y-4 mb-8"></div>
-        
-        <div class="mb-8 pt-6 border-t border-[var(--border)]">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-3 block">Promo Code</label>
+        <div class="mb-8 p-6 bg-orange-500/5 rounded-2xl border border-dashed border-orange-500/20">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-3 block">Have an Offer Code?</label>
             <div class="flex gap-2">
-                <input type="text" id="coupon-input" placeholder="ENTER CODE" class="input-field mb-0 uppercase text-xs tracking-widest">
-                <button onclick="applyCoupon()" class="px-4 py-2 bg-white/5 border border-[var(--border)] rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-orange-500 transition-all">Apply</button>
+                <input type="text" id="coupon-input" placeholder="e.g. RASA40" class="input-field mb-0 uppercase text-xs tracking-widest">
+                <button onclick="applyCoupon()" class="px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-orange-600 transition-all">Apply</button>
             </div>
             <p id="coupon-msg" class="text-[9px] mt-2 font-bold uppercase tracking-widest"></p>
         </div>
+
+        <h2 class="font-display text-2xl font-bold mb-8" style="font-family:'Playfair Display',serif">Order Artifacts</h2>
+        <div id="order-items" class="space-y-4 mb-8"></div>
 
         <div class="space-y-4 pt-6 border-t border-[var(--border)]">
           <div class="flex justify-between text-sm text-[var(--muted)]"><span>Subtotal</span><span id="subtotal" class="font-bold text-white">Rs. 0</span></div>
