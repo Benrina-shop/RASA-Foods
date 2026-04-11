@@ -128,7 +128,10 @@ function render() {
         <p class="text-[10px] uppercase text-[var(--accent)] font-bold mb-1">${p.category_slug}</p>
         <h3 class="font-bold text-sm mb-2 text-[var(--cream)]">${p.name}</h3>
         <div class="flex items-center justify-between">
-          <span class="font-black text-[var(--accent)]">${formatPrice(p.price)}</span>
+          <div class="flex flex-col">
+            <span class="font-black text-[var(--accent)] text-xs md:text-base">${formatPrice(p.price)}</span>
+            ${p.old_price && p.old_price > p.price ? `<span class="text-[9px] line-through text-[var(--muted)] decoration-orange-500/30">${formatPrice(p.old_price)}</span>` : ''}
+          </div>
           <button onclick="addToCart(${p.id},event)" class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold shadow-lg shadow-orange-500/20">+</button>
         </div>
       </div>

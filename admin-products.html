@@ -299,8 +299,8 @@ document.getElementById('product-form').onsubmit = async (e) => {
         const productData = {
             name: document.getElementById('p-name').value,
             category_slug: cat_slug,
-            price: document.getElementById('p-price').value,
-            old_price: document.getElementById('p-old-price').value || null,
+            price: parseFloat(document.getElementById('p-price').value),
+            old_price: document.getElementById('p-old-price').value ? parseFloat(document.getElementById('p-old-price').value) : null,
             image_url: uploadedUrls[0] || '',
             images: uploadedUrls,
             description: document.getElementById('p-desc').value
