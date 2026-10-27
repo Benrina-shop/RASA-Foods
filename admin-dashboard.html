@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard — GOGO MART</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#020100;--surface:#0a0501;--surface2:#110802;--border:#1f1105;--accent:#f97316;--cream:#fef3c7;--muted:#6b5a4d}
-    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
+    body{background:var(--bg);color:var(--cream);font-family:'Plus Jakarta Sans', sans-serif}
     .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;padding:2.5rem 1.5rem}
     .main-content{margin-left:280px;padding:3rem 4rem;min-height:100vh}
     .nav-link{display:flex;align-items:center;gap:1rem;padding:.85rem 1.25rem;border-radius:14px;color:var(--muted);transition:all .3s;margin-bottom:.5rem;font-weight:500;font-size:.9rem}
@@ -21,7 +21,7 @@
 <body>
   <div class="sidebar flex flex-col justify-between">
     <div>
-      <div class="font-display text-2xl font-black mb-12 flex items-center gap-3" style="font-family:'Playfair Display',serif">
+      <div class="font-display text-2xl font-black mb-12 flex items-center gap-3" style="font-family:'Plus Jakarta Sans', sans-serif">
         <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-orange-500/40">
         <span>GOGO <span class="text-xs font-normal opacity-40 tracking-widest uppercase">Admin</span></span>
       </div>
@@ -53,7 +53,7 @@
   <main class="main-content">
     <div class="flex justify-between items-center mb-10">
         <div>
-            <h1 class="text-4xl font-black mb-2" style="font-family:'Playfair Display',serif">Dashboard</h1>
+            <h1 class="text-4xl font-black mb-2" style="font-family:'Plus Jakarta Sans', sans-serif">Dashboard</h1>
             <p class="text-sm text-[var(--muted)]">Welcome back to GOGO MART control panel.</p>
         </div>
         <div id="admin-info" class="text-right">
@@ -82,7 +82,7 @@
 
     <div class="grid lg:grid-cols-2 gap-10">
       <div class="space-y-6">
-        <h3 class="font-bold text-xl font-display flex items-center gap-2" style="font-family:'Playfair Display',serif">Recent Invoices</h3>
+        <h3 class="font-bold text-xl font-display flex items-center gap-2" style="font-family:'Plus Jakarta Sans', sans-serif">Recent Invoices</h3>
         <div id="recent-orders" class="space-y-3">
             <div class="p-8 text-center text-[var(--muted)] border border-dashed border-[var(--border)] rounded-2xl">Searching records...</div>
         </div>
@@ -90,7 +90,7 @@
       </div>
       
       <div class="stat-card h-fit">
-          <h3 class="font-bold text-xl mb-6 font-display" style="font-family:'Playfair Display',serif">Operational Shortcuts</h3>
+          <h3 class="font-bold text-xl mb-6 font-display" style="font-family:'Plus Jakarta Sans', sans-serif">Operational Shortcuts</h3>
           <div class="grid grid-cols-1 gap-4">
               <button onclick="location.href='admin-products.html'" class="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center gap-4 hover:border-orange-500/50 transition-all text-left">
                   <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 text-xl">+</div>

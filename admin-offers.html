@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Marketing — GOGO MART Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#020100;--surface:#0a0501;--surface2:#110802;--border:#1f1105;--accent:#f97316;--cream:#fef3c7;--muted:#6b5a4d}
-    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
+    body{background:var(--bg);color:var(--cream);font-family:'Plus Jakarta Sans', sans-serif}
     .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;padding:2.5rem 1.5rem}
     .main-content{margin-left:280px;padding:3rem 4rem;min-height:100vh}
     .nav-link{display:flex;align-items:center;gap:1rem;padding:.85rem 1.25rem;border-radius:14px;color:var(--muted);transition:all .3s;margin-bottom:.5rem;font-weight:500;font-size:.9rem}
@@ -27,7 +27,7 @@
 <body>
   <div id="offer-modal" class="modal">
     <div class="bg-[var(--surface)] p-10 rounded-3xl border border-[var(--border)] w-full max-w-md shadow-2xl">
-      <h2 id="modal-title" class="text-3xl font-black mb-8 font-display" style="font-family:'Playfair Display',serif">New Promo Code</h2>
+      <h2 id="modal-title" class="text-3xl font-black mb-8 font-display" style="font-family:'Plus Jakarta Sans', sans-serif">New Promo Code</h2>
       <form id="offer-form">
         <input type="hidden" id="o-id">
         <div>
@@ -52,7 +52,7 @@
 
   <div class="sidebar flex flex-col justify-between">
     <div>
-        <div class="font-display text-2xl font-black mb-12 flex items-center gap-3" style="font-family:'Playfair Display',serif">
+        <div class="font-display text-2xl font-black mb-12 flex items-center gap-3" style="font-family:'Plus Jakarta Sans', sans-serif">
             <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-orange-500/40">
             <span>GOGO <span class="text-xs font-normal opacity-40 tracking-widest uppercase">Admin</span></span>
         </div>
@@ -69,7 +69,7 @@
   <main class="main-content">
     <div class="flex justify-between items-end mb-12">
       <div>
-          <h1 class="text-4xl font-black mb-2" style="font-family:'Playfair Display',serif">Marketing</h1>
+          <h1 class="text-4xl font-black mb-2" style="font-family:'Plus Jakarta Sans', sans-serif">Marketing</h1>
           <p class="text-sm text-[var(--muted)]">Manage promo codes and customer incentives.</p>
       </div>
       <button onclick="openModal()" class="px-8 py-4 bg-orange-500 text-white font-black rounded-2xl shadow-xl shadow-orange-500/10 hover:scale-105 transition-all">+ New Code</button>

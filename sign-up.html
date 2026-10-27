@@ -5,14 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Account | GOGO MART</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
-    tailwind.config = { theme: { extend: { fontFamily: { display: ['Playfair Display','serif'], body: ['DM Sans','sans-serif'] } } } }
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Plus Jakarta Sans','serif'], body: ['Plus Jakarta Sans','sans-serif'] } } } }
   </script>
   <style>
-    :root { --bg: #080300; --surface: #110700; --surface2: #1c0d00; --border: #2e1800; --accent: #f97316; --gold: #f59e0b; --cream: #fef3c7; --muted: #8a6840; }
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --pink: #ec4899;
+      --yellow: #f59e0b;
+      --gold: #f59e0b;
+      --cream: #0f172a;
+      --muted: #64748b;
+    }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+    body{background:var(--bg);color:var(--cream);font-family:'Plus Jakarta Sans', sans-serif;overflow-x:hidden}
     .gbtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:.5rem}
     .gbtn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:left .5s}
     .gbtn:hover::before{left:100%}
@@ -24,28 +35,28 @@
   <div class="w-full max-w-md p-8 rounded-3xl bg-[var(--surface)] border border-[var(--border)] relative">
     <a href="index.html" class="absolute top-6 right-6 text-[var(--muted)] hover:text-[var(--accent)] transition-colors text-sm">✕</a>
     <div class="text-center mb-8">
-      <img src="logo.png" alt="GOGO MART Logo" class="w-16 h-16 object-contain rounded-full mx-auto mb-3 shadow-md border border-orange-500/30">
+      <img src="logo.png" alt="GOGO MART Logo" class="w-16 h-16 object-contain rounded-full mx-auto mb-3 shadow-md border border-blue-200">
       <div class="font-display text-3xl font-black mb-1"><span style="color:var(--accent)">GOGO</span> MART</div>
       <p class="text-sm text-[var(--muted)]">Create your account for a premium experience.</p>
     </div>
     <form id="sign-up-form" class="space-y-4">
       <div>
         <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Full Name</label>
-        <input type="text" required class="w-full p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] outline-none text-[var(--cream)] focus:border-[var(--accent)] transition-colors">
+        <input type="text" required class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Email</label>
-        <input type="email" required class="w-full p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] outline-none text-[var(--cream)] focus:border-[var(--accent)] transition-colors">
+        <input type="email" required class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Password</label>
-        <input type="password" required class="w-full p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] outline-none text-[var(--cream)] focus:border-[var(--accent)] transition-colors">
+        <input type="password" required class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Confirm Password</label>
-        <input type="password" required class="w-full p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] outline-none text-[var(--cream)] focus:border-[var(--accent)] transition-colors">
+        <input type="password" required class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
       </div>
-      <button type="submit" class="gbtn w-full py-4 rounded-xl font-bold text-white mt-4 bg-gradient-to-br from-[var(--accent)] to-[#ea580c]">Create Account</button>
+      <button type="submit" class="gbtn w-full py-4 rounded-xl font-bold text-white mt-4 bg-gradient-to-r from-blue-600 to-pink-500 shadow-lg shadow-blue-500/20">Create Account</button>
       <div class="text-center mt-6">
         <a href="sign-in.html" class="text-sm text-[var(--muted)] hover:text-[var(--accent)] transition-colors">Already have an account? Sign in</a>
       </div>
