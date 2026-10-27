@@ -179,15 +179,20 @@
               <input type="text" id="address" placeholder="123 Signature Way" required class="input-field">
             </div>
             <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2 block">City / Province</label>
+              <label class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2 block">City /
+                Province</label>
               <input type="text" id="city" placeholder="e.g. Colombo, Kandy, Galle" required class="input-field">
             </div>
             <div class="pt-2">
-              <label class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2 block flex items-center justify-between">
+              <label
+                class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2 block flex items-center justify-between">
                 <span>Special Note (Optional)</span>
-                <span class="text-[9px] text-slate-400 font-normal lowercase tracking-normal">e.g. delivery time, landmarks, special requests</span>
+                <span class="text-[9px] text-slate-400 font-normal lowercase tracking-normal">e.g. delivery time,
+                  landmarks, special requests</span>
               </label>
-              <textarea id="special-note" rows="3" placeholder="Add any special instructions or delivery preferences here..." class="input-field resize-none"></textarea>
+              <textarea id="special-note" rows="3"
+                placeholder="Add any special instructions or delivery preferences here..."
+                class="input-field resize-none"></textarea>
             </div>
           </div>
         </section>
@@ -208,20 +213,20 @@
             <p id="coupon-msg" class="text-[9px] mt-2 font-bold uppercase tracking-widest"></p>
           </div>
 
-          <h2 class="font-display text-2xl font-bold mb-8" style="font-family:'Plus Jakarta Sans', sans-serif">Order
-            Artifacts</h2>
+          <h2 class="font-display text-2xl font-bold mb-8" style="font-family:'Plus Jakarta Sans', sans-serif">Your
+            Order</h2>
           <div id="order-items" class="space-y-4 mb-8"></div>
 
-          <div class="space-y-4 pt-6 border-t border-[var(--border)]">
-            <div class="flex justify-between text-sm text-[var(--muted)]"><span>Subtotal</span><span id="subtotal"
-                class="font-bold text-white">Rs. 0</span></div>
-            <div id="discount-row" class="flex justify-between text-sm text-green-500 hidden"><span>Incentive
+          <div class="space-y-4 pt-6 border-t border-slate-200">
+            <div class="flex justify-between text-sm text-slate-600"><span>Subtotal</span><span id="subtotal"
+                class="font-bold text-slate-900">Rs. 0</span></div>
+            <div id="discount-row" class="flex justify-between text-sm text-green-600 hidden"><span>Incentive
                 Discount</span><span id="discount-val">Rs. 0</span></div>
-            <div class="flex justify-between text-sm text-[var(--muted)]"><span>Delivery</span><span
-                class="font-bold text-white">Rs. 350</span></div>
+            <div class="flex justify-between text-sm text-slate-600"><span>Delivery</span><span
+                class="font-bold text-slate-900">Rs. 350</span></div>
             <div
-              class="flex justify-between font-black text-xl text-[var(--accent)] pt-4 border-t border-[var(--border)]">
-              <span>Total Settlement</span><span id="total">Rs. 0</span>
+              class="flex justify-between font-black text-xl text-blue-600 pt-4 border-t border-slate-200">
+              <span class="text-slate-900">Total Settlement</span><span id="total">Rs. 0</span>
             </div>
           </div>
           <button onclick="placeOrder()"
@@ -250,14 +255,18 @@
       subtotal = 0;
 
       container.innerHTML = cart.map(item => {
-        subtotal += item.price * item.qty;
+        const itemTotal = item.price * item.qty;
+        subtotal += itemTotal;
         return `
-      <div class="flex justify-between items-center text-sm">
-        <div class="flex flex-col">
-            <span class="text-white font-bold">${item.name}</span>
-            <span class="text-[10px] uppercase font-bold text-[var(--muted)]">${item.qty} Unit(s)</span>
+      <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-slate-100/70">
+        <img src="${item.image_url || 'logo.png'}" alt="${item.name}" class="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0">
+        <div class="flex-1 min-w-0">
+          <h4 class="font-bold text-sm text-slate-900 truncate">${item.name}</h4>
+          <p class="text-xs text-slate-500 mt-0.5">${formatPrice(item.price)} × <span class="font-bold text-blue-600">${item.qty}</span></p>
         </div>
-        <span class="font-bold text-white">${formatPrice(item.price * item.qty)}</span>
+        <div class="text-right shrink-0">
+          <span class="font-black text-slate-900 text-sm">${formatPrice(itemTotal)}</span>
+        </div>
       </div>
     `;
       }).join('');
@@ -321,7 +330,7 @@
         const discountAmount = (subtotal * discountPercent) / 100;
         const finalTotal = (subtotal - discountAmount) + 350;
 
-        const formattedAddress = note 
+        const formattedAddress = note
           ? `${address}, ${city} [Special Note: ${note}]`
           : `${address}, ${city}`;
 
