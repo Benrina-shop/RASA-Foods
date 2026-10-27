@@ -83,8 +83,36 @@ async function loadProduct() {
   }
 }
 
+
+function getStockInfo(stock) {
+  const s = Number(stock !== undefined && stock !== null ? stock : 0);
+  if (s <= 0) {
+    return {
+      statusText: 'Out of Stock',
+      badgeHtml: '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-600 border border-red-200"><span class="w-2 h-2 rounded-full bg-red-500"></span>Out of stock</span>',
+      isOut: true,
+      maxQty: 0
+    };
+  } else if (s < 5) {
+    return {
+      statusText: `Only ${s} Left!`,
+      badgeHtml: `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-700 border border-amber-200 animate-pulse"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Only ${s} item(s) left in stock!</span>`,
+      isOut: false,
+      maxQty: s
+    };
+  } else {
+    return {
+      statusText: 'In Stock',
+      badgeHtml: '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-700 border border-emerald-200"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>In Stock</span>',
+      isOut: false,
+      maxQty: s
+    };
+  }
+}
+
 function renderProduct() {
   const container = document.getElementById('product-container');
+  const stockInfo = getStockInfo(PRODUCT.stock);
   const images = PRODUCT.images && PRODUCT.images.length ? PRODUCT.images : [PRODUCT.image_url];
   
   container.innerHTML = `
@@ -109,9 +137,12 @@ function renderProduct() {
           ${PRODUCT.badge ? `<span class="badge mb-4 inline-block">${PRODUCT.badge}</span>` : ''}
           <p class="text-blue-600 font-black tracking-[0.2em] uppercase text-xs mb-3">${PRODUCT.category_slug}</p>
           <h1 class="text-4xl lg:text-5xl font-black mb-6 font-display leading-tight text-slate-900" style="font-family:'Plus Jakarta Sans', sans-serif">${PRODUCT.name}</h1>
-          <div class="flex items-baseline gap-4 mb-6">
-            <span class="text-4xl font-black text-blue-600">${formatPrice(PRODUCT.price)}</span>
-            ${PRODUCT.old_price ? `<span class="text-xl line-through text-slate-400">${formatPrice(PRODUCT.old_price)}</span>` : ''}
+          <div class="flex items-center gap-4 mb-3">
+            <div class="flex items-baseline gap-4">
+              <span class="text-4xl font-black text-blue-600">${formatPrice(PRODUCT.price)}</span>
+              ${PRODUCT.old_price ? `<span class="text-xl line-through text-slate-400">${formatPrice(PRODUCT.old_price)}</span>` : ''}
+            </div>
+            <div>${stockInfo.badgeHtml}</div>
           </div>
           <div class="p-6 rounded-3xl bg-white border border-slate-200/90 leading-relaxed text-slate-600 text-base shadow-sm">
             ${PRODUCT.description || 'Quality guaranteed. Carefully packed and delivered fresh to your doorstep by GOGO MART.'}
@@ -127,16 +158,26 @@ function renderProduct() {
               <button onclick="changeQty(1)" class="qty-btn">＋</button>
             </div>
           </div>
-                    <div class="grid sm:grid-cols-2 gap-4">
-            <button onclick="addToCart()" class="w-full py-4 rounded-2xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-black text-base transition-all flex items-center justify-center gap-2">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-              Add To Cart
+                    ${stockInfo.isOut ? `
+            <div class="p-4 rounded-2xl bg-red-50 border border-red-200 text-center">
+              <p class="text-sm font-black text-red-600">This item is currently Out of Stock.</p>
+              <p class="text-xs text-slate-500 mt-1">Please check back later or explore other products.</p>
+            </div>
+            <button disabled class="w-full py-4 rounded-2xl bg-slate-200 text-slate-400 font-black text-base cursor-not-allowed">
+              Currently Unavailable
             </button>
-            <button onclick="buyNow()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-pink-500 to-amber-500 hover:opacity-95 text-white font-black text-base transition-all shadow-xl shadow-blue-500/25 flex items-center justify-center gap-2">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              Buy Now
-            </button>
-          </div>
+          ` : `
+            <div class="grid sm:grid-cols-2 gap-4">
+              <button onclick="addToCart()" class="w-full py-4 rounded-2xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-black text-base transition-all flex items-center justify-center gap-2">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                Add To Cart
+              </button>
+              <button onclick="buyNow()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-pink-500 to-amber-500 hover:opacity-95 text-white font-black text-base transition-all shadow-xl shadow-blue-500/25 flex items-center justify-center gap-2">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Buy Now
+              </button>
+            </div>
+          `}
         </div>
 
         <div class="grid grid-cols-3 gap-4">
@@ -170,6 +211,11 @@ function changeImg(url, el) {
 }
 
 function changeQty(d) {
+  const maxStock = PRODUCT && PRODUCT.stock !== undefined ? PRODUCT.stock : 999;
+  if (d > 0 && qty >= maxStock) {
+    showToast('⚠️ Max stock limit reached: ' + maxStock);
+    return;
+  }
   qty = Math.max(1, qty + d);
   const display = document.getElementById('qty-display');
   if (display) display.textContent = qty;

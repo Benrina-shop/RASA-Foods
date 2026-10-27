@@ -404,6 +404,19 @@
         const { error: itemsErr } = await sb.from('order_items').insert(items);
         if (itemsErr) throw itemsErr;
 
+        // Automatically deduct stock for purchased items
+        for (const item of cart) {
+          try {
+            const { data: currentP } = await sb.from('products').select('stock').eq('id', item.id).single();
+            if (currentP && currentP.stock !== undefined && currentP.stock !== null) {
+              const newStock = Math.max(0, currentP.stock - item.qty);
+              await sb.from('products').update({ stock: newStock }).eq('id', item.id);
+            }
+          } catch (stkErr) {
+            console.warn('Stock update skipped for item ' + item.id, stkErr);
+          }
+        }
+
         localStorage.removeItem('rasa-cart');
         localStorage.setItem('rasa-last-order', JSON.stringify({ id: order.id, total: finalTotal }));
         location.href = 'thank-you.html';

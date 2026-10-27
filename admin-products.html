@@ -67,6 +67,12 @@
                 <input type="number" id="p-old-price" placeholder="1500" class="input-field">
                 <p class="text-[8px] text-[var(--muted)] -mt-2 uppercase font-bold tracking-widest">Leave empty if no deal active</p>
             </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Stock Inventory (Units)</label>
+                <input type="number" id="p-stock" placeholder="e.g. 50" min="0" required class="input-field">
+                <p class="text-[8px] text-[var(--muted)] -mt-2 uppercase font-bold tracking-widest">Units available for sale</p>
+            </div>
         </div>
 
         <div>
@@ -169,6 +175,18 @@ function updateCategoryDropdown() {
     select.innerHTML = allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
 }
 
+
+function renderStockBadge(stock) {
+    const s = Number(stock !== undefined && stock !== null ? stock : 0);
+    if (s <= 0) {
+        return '<span class="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full text-[10px] font-black uppercase tracking-wider">Out of Stock (0)</span>';
+    } else if (s < 5) {
+        return `<span class="px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full text-[10px] font-black uppercase tracking-wider">Only ${s} Left!</span>`;
+    } else {
+        return `<span class="px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full text-[10px] font-black uppercase tracking-wider">In Stock (${s})</span>`;
+    }
+}
+
 function renderTable() {
     document.getElementById('products-table').innerHTML = allProducts.map(p => `
       <tr class="hover:bg-white/5 transition-colors">
@@ -182,7 +200,10 @@ function renderTable() {
           </div>
         </td>
         <td class="p-6"><span class="px-3 py-1 bg-white/5 rounded-full text-[10px] uppercase font-bold text-[var(--muted)] tracking-wider">${p.category_slug}</span></td>
-        <td class="p-6 font-black text-orange-500">${formatPrice(p.price)}</td>
+        <td class="p-6 font-black text-blue-600">${formatPrice(p.price)}</td>
+        <td class="p-6">
+          ${renderStockBadge(p.stock)}
+        </td>
         <td class="p-6 text-right">
           <button onclick="editProduct(${p.id})" class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] hover:text-white mr-6">Modify</button>
           <button onclick="deleteProduct(${p.id})" class="text-[10px] font-bold uppercase tracking-widest text-red-500">Remove</button>
@@ -240,6 +261,7 @@ function openModal(id = null) {
         document.getElementById('p-cat-select').value = p.category_slug;
         document.getElementById('p-price').value = p.price;
         document.getElementById('p-old-price').value = p.old_price || '';
+        document.getElementById('p-stock').value = p.stock !== undefined && p.stock !== null ? p.stock : 50;
         document.getElementById('p-desc').value = p.description || '';
         
         // Show existing images as previews
@@ -254,6 +276,7 @@ function openModal(id = null) {
         document.getElementById('modal-title').textContent = 'New Collection Item';
         document.getElementById('product-form').reset();
         document.getElementById('p-id').value = '';
+        document.getElementById('p-stock').value = '50';
     }
 }
 
@@ -296,11 +319,13 @@ document.getElementById('product-form').onsubmit = async (e) => {
         }
 
         // 3. Save Product
+        const stockVal = parseInt(document.getElementById('p-stock').value);
         const productData = {
             name: document.getElementById('p-name').value,
             category_slug: cat_slug,
             price: parseFloat(document.getElementById('p-price').value),
             old_price: document.getElementById('p-old-price').value ? parseFloat(document.getElementById('p-old-price').value) : null,
+            stock: isNaN(stockVal) ? 0 : Math.max(0, stockVal),
             image_url: uploadedUrls[0] || '',
             images: uploadedUrls,
             description: document.getElementById('p-desc').value
