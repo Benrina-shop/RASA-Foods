@@ -140,11 +140,16 @@ function renderProduct() {
             <span class="text-blue-600 font-black tracking-[0.2em] uppercase text-xs">${PRODUCT.category_slug}</span>
             <span class="text-slate-300">•</span>
             <a href="#reviews-section" class="flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:text-amber-600 transition-colors">
-              <span class="flex items-center text-amber-400">
-                ${renderStarRating(calcAvgRating())}
-              </span>
-              <span class="text-slate-700 font-extrabold ml-1">${calcAvgRating().toFixed(1)}</span>
-              <span class="text-slate-400 font-medium">(${REVIEWS.length} ${REVIEWS.length === 1 ? 'Review' : 'Reviews'})</span>
+              ${REVIEWS.length > 0 ? `
+                <span class="flex items-center text-amber-400">
+                  ${renderStarRating(calcAvgRating())}
+                </span>
+                <span class="text-slate-700 font-extrabold ml-1">${calcAvgRating().toFixed(1)}</span>
+                <span class="text-slate-400 font-medium">(${REVIEWS.length} ${REVIEWS.length === 1 ? 'Review' : 'Reviews'})</span>
+              ` : `
+                <span class="flex items-center text-slate-300">★★★★★</span>
+                <span class="text-blue-600 font-medium hover:underline">Be the first to review</span>
+              `}
             </a>
           </div>
           <h1 class="text-4xl lg:text-5xl font-black mb-6 font-display leading-tight text-slate-900" style="font-family:'Plus Jakarta Sans', sans-serif">${PRODUCT.name}</h1>
@@ -221,14 +226,14 @@ function renderProduct() {
         </div>
         <div class="flex items-center gap-5 p-4 px-6 bg-slate-50 border border-slate-200 rounded-3xl">
           <div class="text-center">
-            <span class="text-4xl font-black text-slate-900">${calcAvgRating().toFixed(1)}</span>
-            <span class="text-xs text-slate-400 block font-bold">out of 5</span>
+            <span class="text-4xl font-black text-slate-900">${REVIEWS.length > 0 ? calcAvgRating().toFixed(1) : '—'}</span>
+            <span class="text-xs text-slate-400 block font-bold">${REVIEWS.length > 0 ? 'out of 5' : 'No ratings'}</span>
           </div>
           <div class="border-l border-slate-200 pl-5">
             <div class="flex items-center text-amber-400 text-base mb-1">
               ${renderStarRating(calcAvgRating())}
             </div>
-            <span class="text-xs font-bold text-slate-500">Based on ${REVIEWS.length} review(s)</span>
+            <span class="text-xs font-bold text-slate-500">${REVIEWS.length > 0 ? `Based on ${REVIEWS.length} review(s)` : 'Awaiting first review'}</span>
           </div>
         </div>
       </div>
@@ -372,34 +377,15 @@ async function loadReviews(prodId) {
     console.warn('Reviews table not available in DB, using local reviews', err);
   }
 
-  // LocalStorage fallback
-  const local = JSON.parse(localStorage.getItem('gogo-reviews-' + prodId) || '[]');
-  if (local.length > 0) {
-    REVIEWS = local;
-  } else {
-    // Default seed reviews so user immediately sees reviews
-    REVIEWS = [
-      {
-        id: 1,
-        author_name: 'Nimasha Fernando',
-        rating: 5,
-        comment: 'Super fresh and very tasty! The delivery was also on time. Highly recommend to everyone.',
-        created_at: new Date(Date.now() - 86400000 * 2).toISOString()
-      },
-      {
-        id: 2,
-        author_name: 'Damith Bandara',
-        rating: 4,
-        comment: 'Great packaging and good quality. Will definitely purchase again from GOGO MART.',
-        created_at: new Date(Date.now() - 86400000 * 5).toISOString()
-      }
-    ];
-    localStorage.setItem('gogo-reviews-' + prodId, JSON.stringify(REVIEWS));
-  }
+  // Clear legacy seed dummy reviews from localStorage if they contain sample names
+  let local = JSON.parse(localStorage.getItem('gogo-reviews-' + prodId) || '[]');
+  local = local.filter(r => r.author_name !== 'Nimasha Fernando' && r.author_name !== 'Damith Bandara');
+  localStorage.setItem('gogo-reviews-' + prodId, JSON.stringify(local));
+  REVIEWS = local;
 }
 
 function calcAvgRating() {
-  if (!REVIEWS || REVIEWS.length === 0) return PRODUCT && PRODUCT.rating ? Number(PRODUCT.rating) : 5.0;
+  if (!REVIEWS || REVIEWS.length === 0) return 0;
   const sum = REVIEWS.reduce((acc, r) => acc + Number(r.rating || 5), 0);
   return sum / REVIEWS.length;
 }
