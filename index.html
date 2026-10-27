@@ -376,9 +376,8 @@
     <div class="flex justify-center gap-8 mb-8 text-[11px] font-bold uppercase tracking-widest text-slate-500">
       <a href="products.html" class="hover:text-blue-600 transition-colors">Products</a>
       <a href="offers.html" class="hover:text-pink-600 transition-colors">Offers</a>
-      <a href="admin-login.html" class="hover:text-blue-600 transition-colors">Admin Portal</a>
     </div>
-    <div class="text-xs text-slate-400 uppercase tracking-widest">© 2024 GOGO MART. Freshly delivered for you.</div>
+    <div class="text-xs text-slate-400 uppercase tracking-widest">© 2026 GOGO MART. Your Trusted Online Store.</div>
     <div id="toast" class="fixed bottom-6 right-6 z-50"></div>
   </footer>
 
@@ -441,7 +440,7 @@
 
     let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
     function updateCartCount() { document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0)); }
-        function buyNow(id, e) {
+    function buyNow(id, e) {
       if (e) e.stopPropagation();
       const p = PRODUCTS.find(x => x.id == id);
       if (!p) return;
