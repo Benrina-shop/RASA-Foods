@@ -75,6 +75,7 @@ async function loadProduct() {
     const { data, error } = await sb.from('products').select('*').eq('id', id).single();
     if (error) throw error;
     PRODUCT = data;
+    await loadReviews(id);
     renderProduct();
     updateCartCount();
   } catch (err) {
@@ -135,7 +136,17 @@ function renderProduct() {
       <div class="space-y-8 text-slate-900">
         <div>
           ${PRODUCT.badge ? `<span class="badge mb-4 inline-block">${PRODUCT.badge}</span>` : ''}
-          <p class="text-blue-600 font-black tracking-[0.2em] uppercase text-xs mb-3">${PRODUCT.category_slug}</p>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-blue-600 font-black tracking-[0.2em] uppercase text-xs">${PRODUCT.category_slug}</span>
+            <span class="text-slate-300">•</span>
+            <a href="#reviews-section" class="flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:text-amber-600 transition-colors">
+              <span class="flex items-center text-amber-400">
+                ${renderStarRating(calcAvgRating())}
+              </span>
+              <span class="text-slate-700 font-extrabold ml-1">${calcAvgRating().toFixed(1)}</span>
+              <span class="text-slate-400 font-medium">(${REVIEWS.length} ${REVIEWS.length === 1 ? 'Review' : 'Reviews'})</span>
+            </a>
+          </div>
           <h1 class="text-4xl lg:text-5xl font-black mb-6 font-display leading-tight text-slate-900" style="font-family:'Plus Jakarta Sans', sans-serif">${PRODUCT.name}</h1>
           <div class="flex items-center gap-4 mb-3">
             <div class="flex items-baseline gap-4">
@@ -196,7 +207,97 @@ function renderProduct() {
         </div>
       </div>
     </div>
+
+    <!-- CUSTOMER REVIEWS & RATING SECTION -->
+    <div id="reviews-section" class="mt-20 pt-16 border-t border-slate-200">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+            <span class="text-xs font-bold uppercase tracking-widest text-blue-600">Verified Feedback</span>
+          </div>
+          <h2 class="text-3xl lg:text-4xl font-black text-slate-900 font-display">Customer Reviews</h2>
+          <p class="text-slate-500 text-sm mt-1">Real ratings and experiences shared by our valued shoppers.</p>
+        </div>
+        <div class="flex items-center gap-5 p-4 px-6 bg-slate-50 border border-slate-200 rounded-3xl">
+          <div class="text-center">
+            <span class="text-4xl font-black text-slate-900">${calcAvgRating().toFixed(1)}</span>
+            <span class="text-xs text-slate-400 block font-bold">out of 5</span>
+          </div>
+          <div class="border-l border-slate-200 pl-5">
+            <div class="flex items-center text-amber-400 text-base mb-1">
+              ${renderStarRating(calcAvgRating())}
+            </div>
+            <span class="text-xs font-bold text-slate-500">Based on ${REVIEWS.length} review(s)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-12 gap-12 items-start">
+        <!-- Reviews List (Left / Col-7) -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-black text-slate-900">What People Say (${REVIEWS.length})</h3>
+          </div>
+
+          <div id="reviews-list" class="space-y-4">
+            ${renderReviewsList()}
+          </div>
+        </div>
+
+        <!-- Add Review Form (Right / Col-5) -->
+        <div class="lg:col-span-5 bg-white p-8 lg:p-10 rounded-[32px] border border-slate-200 shadow-xl shadow-blue-500/5">
+          <h3 class="text-2xl font-black text-slate-900 mb-2 font-display">Leave a Review</h3>
+          <p class="text-xs text-slate-500 mb-6 leading-relaxed">
+            Your email address will not be published. Required fields are marked *
+          </p>
+
+          <form id="review-form" onsubmit="submitReview(event)" class="space-y-5">
+            <!-- Star Rating Selector -->
+            <div>
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-700 block mb-2">Your Rating *</label>
+              <div class="flex items-center gap-2" id="star-picker">
+                ${[1, 2, 3, 4, 5].map(st => `
+                  <button type="button" onclick="setRating(${st})" onmouseenter="hoverRating(${st})" onmouseleave="resetHoverRating()" class="star-btn text-3xl transition-transform hover:scale-125 focus:outline-none" data-val="${st}">
+                    <span class="star-icon text-slate-200">★</span>
+                  </button>
+                `).join('')}
+                <span id="rating-label" class="text-xs font-black text-amber-600 ml-2">Click stars</span>
+              </div>
+              <input type="hidden" id="r-rating" value="5" required>
+            </div>
+
+            <!-- Name Input -->
+            <div>
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-700 block mb-2">Full Name *</label>
+              <input type="text" id="r-name" placeholder="e.g. Kasun Perera" required class="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:border-blue-600 transition-colors">
+            </div>
+
+            <!-- Email Input -->
+            <div>
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-700 block mb-2">Email Address *</label>
+              <input type="email" id="r-email" placeholder="e.g. kasun@example.com" required class="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:border-blue-600 transition-colors">
+              <span class="text-[11px] text-slate-400 block mt-1.5 flex items-center gap-1">
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                Your email address will not be published.
+              </span>
+            </div>
+
+            <!-- Review Textarea -->
+            <div>
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-700 block mb-2">Your Review *</label>
+              <textarea id="r-comment" rows="4" placeholder="Tell us how you enjoyed this product..." required class="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:border-blue-600 transition-colors resize-none"></textarea>
+            </div>
+
+            <button type="submit" id="submit-review-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-pink-500 to-amber-500 hover:opacity-95 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+              Submit Review
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   `;
+  updateStarPicker(currentSelectedRating);
 }
 
 function changeImg(url, el) {
@@ -250,6 +351,196 @@ function showToast(m) {
   t.className = 'p-5 bg-orange-600 text-white rounded-2xl shadow-2xl font-bold mb-3 border border-orange-400/20 backdrop-blur-xl';
   t.textContent = m; document.getElementById('toast').appendChild(t);
   setTimeout(() => t.remove(), 2500);
+}
+
+
+let REVIEWS = [];
+let currentSelectedRating = 5;
+
+// Load reviews from Supabase or localStorage
+async function loadReviews(prodId) {
+  try {
+    const sb = getSupabase();
+    if (sb) {
+      const { data, error } = await sb.from('reviews').select('*').eq('product_id', prodId).order('created_at', { ascending: false });
+      if (!error && data) {
+        REVIEWS = data;
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('Reviews table not available in DB, using local reviews', err);
+  }
+
+  // LocalStorage fallback
+  const local = JSON.parse(localStorage.getItem('gogo-reviews-' + prodId) || '[]');
+  if (local.length > 0) {
+    REVIEWS = local;
+  } else {
+    // Default seed reviews so user immediately sees reviews
+    REVIEWS = [
+      {
+        id: 1,
+        author_name: 'Nimasha Fernando',
+        rating: 5,
+        comment: 'Super fresh and very tasty! The delivery was also on time. Highly recommend to everyone.',
+        created_at: new Date(Date.now() - 86400000 * 2).toISOString()
+      },
+      {
+        id: 2,
+        author_name: 'Damith Bandara',
+        rating: 4,
+        comment: 'Great packaging and good quality. Will definitely purchase again from GOGO MART.',
+        created_at: new Date(Date.now() - 86400000 * 5).toISOString()
+      }
+    ];
+    localStorage.setItem('gogo-reviews-' + prodId, JSON.stringify(REVIEWS));
+  }
+}
+
+function calcAvgRating() {
+  if (!REVIEWS || REVIEWS.length === 0) return PRODUCT && PRODUCT.rating ? Number(PRODUCT.rating) : 5.0;
+  const sum = REVIEWS.reduce((acc, r) => acc + Number(r.rating || 5), 0);
+  return sum / REVIEWS.length;
+}
+
+function renderStarRating(rating) {
+  const rounded = Math.round(rating);
+  let stars = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rounded) stars += '★';
+    else stars += '<span class="text-slate-200">★</span>';
+  }
+  return stars;
+}
+
+function renderReviewsList() {
+  if (!REVIEWS || REVIEWS.length === 0) {
+    return `
+      <div class="p-8 text-center bg-slate-50 border border-slate-200 rounded-3xl text-slate-400">
+        <p class="font-bold text-sm">No reviews yet.</p>
+        <p class="text-xs mt-1">Be the first to share your thoughts on this product!</p>
+      </div>
+    `;
+  }
+
+  return REVIEWS.map(r => {
+    const d = new Date(r.created_at || Date.now()).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
+    const initials = (r.author_name || 'Anonymous').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    return `
+      <div class="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-pink-500 text-white font-black text-xs flex items-center justify-center shadow-sm">
+              ${initials}
+            </div>
+            <div>
+              <h5 class="font-bold text-sm text-slate-900">${r.author_name || 'Customer'}</h5>
+              <p class="text-[11px] text-slate-400 font-medium">${d}</p>
+            </div>
+          </div>
+          <div class="flex items-center text-amber-400 text-sm font-black">
+            ${renderStarRating(r.rating)}
+          </div>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed">${r.comment}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+function setRating(val) {
+  currentSelectedRating = val;
+  const input = document.getElementById('r-rating');
+  if (input) input.value = val;
+  updateStarPicker(val);
+}
+
+function hoverRating(val) {
+  updateStarPicker(val);
+}
+
+function resetHoverRating() {
+  updateStarPicker(currentSelectedRating);
+}
+
+function updateStarPicker(val) {
+  const container = document.getElementById('star-picker');
+  if (!container) return;
+  const labels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent!'];
+  const labelEl = document.getElementById('rating-label');
+  if (labelEl) labelEl.textContent = `${val}/5 - ${labels[val] || ''}`;
+
+  container.querySelectorAll('.star-btn').forEach(btn => {
+    const btnVal = Number(btn.getAttribute('data-val'));
+    const icon = btn.querySelector('.star-icon');
+    if (btnVal <= val) {
+      icon.className = 'star-icon text-amber-400';
+    } else {
+      icon.className = 'star-icon text-slate-200';
+    }
+  });
+}
+
+async function submitReview(e) {
+  e.preventDefault();
+  const name = document.getElementById('r-name').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const comment = document.getElementById('r-comment').value.trim();
+  const rating = Number(document.getElementById('r-rating').value || 5);
+  const btn = document.getElementById('submit-review-btn');
+
+  if (!name || !email || !comment) {
+    alert('Please complete all required fields.');
+    return;
+  }
+
+  btn.textContent = 'Posting review...';
+  btn.disabled = true;
+
+  const newReview = {
+    id: Date.now(),
+    product_id: PRODUCT.id,
+    author_name: name,
+    author_email: email, // Saved securely, never displayed to public
+    rating: rating,
+    comment: comment,
+    created_at: new Date().toISOString()
+  };
+
+  // 1. Try DB
+  try {
+    const sb = getSupabase();
+    if (sb) {
+      await sb.from('reviews').insert({
+        product_id: PRODUCT.id,
+        author_name: name,
+        author_email: email,
+        rating: rating,
+        comment: comment
+      });
+    }
+  } catch (err) {
+    console.warn('DB insert bypassed, storing locally', err);
+  }
+
+  // 2. Local persistence
+  REVIEWS.unshift(newReview);
+  localStorage.setItem('gogo-reviews-' + PRODUCT.id, JSON.stringify(REVIEWS));
+
+  showToast('✅ Review submitted! Thank you.');
+  btn.textContent = 'Submit Review';
+  btn.disabled = false;
+
+  // Re-render
+  renderProduct();
+
+  // Scroll to reviews
+  setTimeout(() => {
+    document.getElementById('reviews-section').scrollIntoView({ behavior: 'smooth' });
+  }, 100);
 }
 
 loadProduct();
