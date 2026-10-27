@@ -68,7 +68,7 @@
         <h2 class="font-display text-2xl font-bold mb-8" style="font-family:'Plus Jakarta Sans', sans-serif">Summary</h2>
         <div class="space-y-5 mb-8 text-sm">
           <div class="flex justify-between text-slate-500"><span>Subtotal</span><span id="subtotal" class="text-slate-900 font-bold">Rs. 0</span></div>
-          <div class="flex justify-between text-slate-500"><span>Express Delivery</span><span class="text-slate-900 font-bold">Rs. 350</span></div>
+          <div class="flex justify-between text-slate-500"><span>Express Delivery</span><span class="text-slate-900 font-bold">Rs. 399</span></div>
           <div class="pt-6 border-t border-slate-100 flex justify-between font-black text-xl"><span>Net Total</span><span id="total" class="text-blue-600">Rs. 0</span></div>
         </div>
         <button onclick="location.href='checkout.html'" class="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-pink-500 hover:to-pink-600 text-white font-bold rounded-2xl transition-all shadow-xl shadow-blue-500/20">Proceed to Checkout</button>
@@ -154,7 +154,7 @@ function removeItem(idx) {
 
 function updateSummary(sub) {
   document.getElementById('subtotal').textContent = formatPrice(sub);
-  const total = sub > 0 ? sub + 350 : 0;
+  const total = sub > 0 ? sub + 399 : 0;
   document.getElementById('total').textContent = formatPrice(total);
 }
 

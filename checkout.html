@@ -223,7 +223,7 @@
             <div id="discount-row" class="flex justify-between text-sm text-green-600 hidden"><span>Incentive
                 Discount</span><span id="discount-val">Rs. 0</span></div>
             <div class="flex justify-between text-sm text-slate-600"><span>Delivery</span><span
-                class="font-bold text-slate-900">Rs. 350</span></div>
+                class="font-bold text-slate-900">Rs. 399</span></div>
             <div
               class="flex justify-between font-black text-xl text-blue-600 pt-4 border-t border-slate-200">
               <span class="text-slate-900">Total Settlement</span><span id="total">Rs. 0</span>
@@ -313,7 +313,7 @@
 
     function updateTotals() {
       const discountAmount = (subtotal * discountPercent) / 100;
-      const total = (subtotal - discountAmount) + 350;
+      const total = (subtotal - discountAmount) + 399;
 
       document.getElementById('subtotal').textContent = formatPrice(subtotal);
       if (discountPercent > 0) {
@@ -365,7 +365,7 @@
       try {
         const sb = getSupabase();
         const discountAmount = (subtotal * discountPercent) / 100;
-        const finalTotal = (subtotal - discountAmount) + 350;
+        const finalTotal = (subtotal - discountAmount) + 399;
 
         const formattedAddress = note
           ? `${address}, ${city} [Special Note: ${note}]`

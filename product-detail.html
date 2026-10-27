@@ -181,10 +181,11 @@ function updateCartCount() {
 }
 
 function buyNow() {
-  if (!CURRENT_PRODUCT) return;
-  const ex = cart.find(x => x.id == CURRENT_PRODUCT.id);
+  if (!PRODUCT) return;
+  const cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
+  const ex = cart.find(x => x.id == PRODUCT.id);
   if (ex) ex.qty += qty;
-  else cart.push({ ...CURRENT_PRODUCT, qty });
+  else cart.push({ ...PRODUCT, qty: qty });
   localStorage.setItem('rasa-cart', JSON.stringify(cart));
   updateCartCount();
   window.location.href = 'checkout.html';
