@@ -1,9 +1,9 @@
-# RASA Foods — System Documentation
+# GOGO MART — System Documentation
 
-This document provides a comprehensive overview of the RASA Foods premium e-commerce platform, detailing its architecture, features, and database structure.
+This document provides a comprehensive overview of the GOGO MART premium e-commerce platform, detailing its architecture, features, and database structure.
 
 ## 1. Project Overview
-**RASA Foods** is a high-end, luxury e-commerce platform designed for premium culinary assets. It prioritizes a high-fidelity visual experience with a modern dark-gold aesthetic and professional management tools.
+**GOGO MART** is a high-end e-commerce platform designed for premium culinary and daily consumer assets. It prioritizes a high-fidelity visual experience with a modern dark-gold aesthetic and professional management tools.
 
 ### Technology Stack
 - **Frontend**: HTML5, Vanilla JavaScript (ES6+), Tailwind CSS v4.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thank You — RASA Foods</title>
+  <title>Thank You — GOGO MART</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
@@ -20,11 +20,12 @@
 </head>
 <body class="flex items-center justify-center p-6">
   <div class="max-w-md w-full text-center">
-    <div class="success-icon mx-auto mb-8 animate-bounce">
+    <img src="logo.png" alt="GOGO MART Logo" class="w-20 h-20 object-contain rounded-full mx-auto mb-6 shadow-xl border border-orange-500/40">
+    <div class="success-icon mx-auto mb-6 animate-bounce">
       <svg width="40" height="40" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
     </div>
     <h1 class="text-4xl font-bold mb-4" style="font-family:'Playfair Display',serif">Order Placed!</h1>
-    <p class="text-[var(--muted)] mb-10">Thank you for your purchase. Your culinary artifacts have been secured and are being prepared for transit.</p>
+    <p class="text-[var(--muted)] mb-10">Thank you for shopping with GOGO MART. Your items have been secured and are being prepared for transit.</p>
     
     <div class="bg-[var(--surface)] border border-[var(--border)] rounded-[32px] p-8 text-left mb-10 shadow-2xl">
       <h3 class="font-bold mb-6 border-b border-[var(--border)] pb-4 text-xs uppercase tracking-widest text-orange-500">Transaction Summary</h3>
@@ -82,10 +83,10 @@ async function downloadPDF() {
   doc.rect(0, 0, 210, 40, 'F');
   doc.setTextColor(249, 115, 22);
   doc.setFontSize(24);
-  doc.text('RASA FOODS', 20, 25);
+  doc.text('GOGO MART', 20, 25);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
-  doc.text('PREMIUM CULINARY ARTIFACTS', 20, 32);
+  doc.text('PREMIUM ONLINE STORE', 20, 32);
 
   // Order Info
   doc.setTextColor(0, 0, 0);
@@ -132,9 +133,9 @@ async function downloadPDF() {
   
   doc.setFontSize(10);
   doc.setTextColor(150, 150, 150);
-  doc.text('Thank you for choosing RASA. This is a computer-generated report.', 105, finalY + 30, { align: 'center' });
+  doc.text('Thank you for choosing GOGO MART. This is a computer-generated report.', 105, finalY + 30, { align: 'center' });
 
-  doc.save(`RASA_Order_${fullOrderData.id}.pdf`);
+  doc.save(`GOGO_MART_Order_${fullOrderData.id}.pdf`);
 }
 
 fetchOrderDetails();

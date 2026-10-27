@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Safe Checkout — RASA Foods</title>
+  <title>Safe Checkout — GOGO MART</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
@@ -30,7 +30,10 @@
 
 <nav id="navbar">
   <div class="max-w-7xl mx-auto flex items-center justify-between">
-    <a href="index.html" class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif"><span style="color:var(--accent)">R</span>ASA <span class="text-sm font-normal text-[var(--muted)]">Foods</span></a>
+    <a href="index.html" class="flex items-center gap-3 font-display text-2xl font-bold" style="font-family:'Playfair Display',serif">
+      <img src="logo.png" alt="GOGO MART Logo" class="w-10 h-10 object-contain rounded-full shadow-md border border-orange-500/30">
+      <span><span style="color:var(--accent)">GOGO</span> <span class="text-sm font-semibold tracking-wider text-[var(--muted)]">MART</span></span>
+    </a>
     <a href="cart.html" class="text-xs font-bold uppercase tracking-widest text-[var(--muted)] hover:text-white transition-colors">← Return to Basket</a>
   </div>
 </nav>
@@ -98,7 +101,7 @@
         <div class="mb-8 p-6 bg-orange-500/5 rounded-2xl border border-dashed border-orange-500/20">
             <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-3 block">Have an Offer Code?</label>
             <div class="flex gap-2">
-                <input type="text" id="coupon-input" placeholder="e.g. RASA40" class="input-field mb-0 uppercase text-xs tracking-widest">
+                <input type="text" id="coupon-input" placeholder="e.g. GOGO40" class="input-field mb-0 uppercase text-xs tracking-widest">
                 <button onclick="applyCoupon()" class="px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-orange-600 transition-all">Apply</button>
             </div>
             <p id="coupon-msg" class="text-[9px] mt-2 font-bold uppercase tracking-widest"></p>

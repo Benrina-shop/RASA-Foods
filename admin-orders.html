@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Management — RASA Admin</title>
+  <title>Order Management — GOGO MART Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
@@ -35,8 +35,9 @@
 
   <!-- Sidebar -->
   <aside class="w-72 border-r border-[var(--border)] p-8 flex flex-col fixed h-full bg-[var(--bg)]">
-    <div class="mb-12">
-      <h1 class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif">RASA <span class="text-xs text-[var(--muted)]">Admin</span></h1>
+    <div class="mb-12 flex items-center gap-3">
+      <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-orange-500/40">
+      <h1 class="font-display text-2xl font-bold" style="font-family:'Playfair Display',serif">GOGO <span class="text-xs text-[var(--muted)]">Admin</span></h1>
     </div>
     
     <nav class="space-y-2 flex-1">
@@ -291,15 +292,15 @@
         
         const itemStrings = order.order_items.map(i => `- ${i.products.name} (x${i.quantity})`).join('\n');
         
-        const message = `*RASA FOODS — Order Confirmation*\n\n` +
+        const message = `*GOGO MART — Order Confirmation*\n\n` +
             `Hello ${order.customer_name}!\n` +
-            `We received your premium culinary order.\n\n` +
+            `We received your order.\n\n` +
             `*Order ID:* #ORD-${order.id.toString().substring(0,8).toUpperCase()}\n` +
             `*Items:*\n${itemStrings}\n\n` +
             `*Total Settlement:* ${formatPrice(order.total_amount)}\n` +
             `*Delivery Address:* ${order.shipping_address}\n\n` +
             `*Shop Info:*\nWhatsApp: +94711289934\n\n` +
-            `Please confirm if this is correct so we can initiate the transit. Thank you for choosing RASA!`;
+            `Please confirm if this is correct so we can initiate the transit. Thank you for choosing GOGO MART!`;
 
         const encodedMsg = encodeURIComponent(message);
         window.open(`https://wa.me/${cleanPhone.startsWith('94') ? cleanPhone : '94'+cleanPhone}?text=${encodedMsg}`, '_blank');
