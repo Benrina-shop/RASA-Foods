@@ -611,6 +611,7 @@
     if (document.getElementById('mob-close')) document.getElementById('mob-close').onclick = () => document.getElementById('mob-menu').classList.remove('open');
 
     initStore();
+    loadPopularCategories();
     loadHeroCoverBanners();
     loadHeroAds();
 
@@ -827,30 +828,32 @@
       const container = document.getElementById('popular-cats-slider');
       if (!container) return;
 
-      try {
-        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-        if (sb) {
-          const { data } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
-          if (data && data.image_url) {
-            try {
-              POPULAR_CATEGORIES = JSON.parse(data.image_url);
-              renderPopularCategories();
-              return;
-            } catch (err) {}
-          }
-        }
-      } catch (e) {
-        console.warn('DB categories load fallback');
-      }
-
+      // Render default or local categories immediately to avoid any loading delay
       const local = JSON.parse(localStorage.getItem('gogo-popular-categories') || 'null');
       if (local && local.length > 0) {
         POPULAR_CATEGORIES = local;
       } else {
         POPULAR_CATEGORIES = DEFAULT_POPULAR_CATS;
       }
-
       renderPopularCategories();
+
+      // In background, fetch custom categories from Supabase if configured
+      try {
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          const { data, error } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
+          if (data && data.image_url) {
+            const parsed = JSON.parse(data.image_url);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              POPULAR_CATEGORIES = parsed;
+              localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
+              renderPopularCategories();
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('DB categories load fallback');
+      }
     }
 
     function renderPopularCategories() {
