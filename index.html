@@ -609,10 +609,13 @@
     if (document.getElementById('menu-toggle')) document.getElementById('menu-toggle').onclick = () => document.getElementById('mob-menu').classList.add('open');
     if (document.getElementById('mob-close')) document.getElementById('mob-close').onclick = () => document.getElementById('mob-menu').classList.remove('open');
 
-    initStore();
-    loadPopularCategories();
-    loadHeroCoverBanners();
-    loadHeroAds();
+    // Initialize components after all declarations
+    window.addEventListener('DOMContentLoaded', () => {
+      initStore();
+      loadPopularCategories();
+      loadHeroCoverBanners();
+      loadHeroAds();
+    });
 
     // Cover Banners Management (Full-Width Hero Cover Images)
     let COVER_BANNERS = [];
