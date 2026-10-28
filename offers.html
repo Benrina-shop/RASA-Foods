@@ -156,6 +156,45 @@ function renderPromos() {
     `).join('');
 }
 
+
+let hoverTimers = {};
+function startHoverCarousel(id) {
+  const p = PRODUCTS.find(x => x.id == id);
+  if (!p) return;
+  let imgs = [];
+  if (Array.isArray(p.images) && p.images.length > 0) {
+    imgs = p.images.filter(x => x && typeof x === 'string' && x.trim().length > 0);
+  }
+  if (imgs.length <= 1) return;
+  let currentIdx = 0;
+  const imgEl = document.getElementById('card-img-' + id);
+  if (!imgEl) return;
+  if (hoverTimers[id]) clearInterval(hoverTimers[id]);
+  hoverTimers[id] = setInterval(() => {
+    currentIdx = (currentIdx + 1) % imgs.length;
+    imgEl.style.opacity = '0.5';
+    setTimeout(() => {
+      imgEl.src = imgs[currentIdx];
+      imgEl.style.opacity = '1';
+    }, 120);
+  }, 850);
+}
+
+function stopHoverCarousel(id) {
+  if (hoverTimers[id]) {
+    clearInterval(hoverTimers[id]);
+    delete hoverTimers[id];
+  }
+  const p = PRODUCTS.find(x => x.id == id);
+  if (!p) return;
+  const imgEl = document.getElementById('card-img-' + id);
+  if (imgEl) {
+    let firstImg = (Array.isArray(p.images) && p.images.length > 0) ? p.images[0] : (p.image_url || 'logo.png');
+    imgEl.src = firstImg;
+    imgEl.style.opacity = '1';
+  }
+}
+
 function renderDiscounts() {
   const saleProducts = PRODUCTS.filter(p => p.old_price && Number(p.old_price) > Number(p.price));
   const grid = document.getElementById('sale-grid');
@@ -168,9 +207,9 @@ function renderDiscounts() {
   grid.innerHTML = saleProducts.map(p => {
     const disc = Math.round(((Number(p.old_price) - Number(p.price)) / Number(p.old_price)) * 100);
     return `
-      <div class="prod-card relative" onclick="location.href='product-detail.html?id=${p.id}'">
+      <div class="prod-card relative" onmouseenter="startHoverCarousel(${p.id})" onmouseleave="stopHoverCarousel(${p.id})" onclick="location.href='product-detail.html?id=${p.id}'">
         <div class="badge">-${disc}%</div>
-        <img src="${p.image_url}" class="w-full h-64 object-cover" alt="${p.name}">
+        <img id="card-img-${p.id}" src="${p.image_url}" class="w-full h-64 object-cover transition-opacity duration-300" alt="${p.name}">
         <div class="p-6">
           <p class="text-[10px] uppercase text-[var(--accent)] font-bold mb-1 tracking-widest">${p.category_slug}</p>
           <h3 class="font-bold text-lg mb-3 text-[var(--cream)]">${p.name}</h3>
