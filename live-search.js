@@ -1,3 +1,8 @@
+/**
+ * live-search.js — GOGO MART Instant Live Search
+ * Responsive desktop and mobile header search bar with instant dropdown
+ */
+
 var LIVE_SEARCH_PRODUCTS = [];
 
 async function initLiveSearchData() {
@@ -13,11 +18,13 @@ async function initLiveSearchData() {
   }
 }
 
-function handleLiveSearch(query) {
+function handleLiveSearch(query, isMobile) {
   query = (query || '').trim().toLowerCase();
-  var dropdown = document.getElementById('live-search-dropdown');
-  var resultsContainer = document.getElementById('live-search-results');
-  var viewAllLink = document.getElementById('view-all-search-link');
+  var suffix = isMobile ? '-mob' : '';
+  var dropdown = document.getElementById('live-search-dropdown' + suffix) || document.getElementById('live-search-dropdown');
+  var resultsContainer = document.getElementById('live-search-results' + suffix) || document.getElementById('live-search-results');
+  var viewAllLink = document.getElementById('view-all-search-link' + suffix) || document.getElementById('view-all-search-link');
+
   if (!dropdown || !resultsContainer) return;
 
   if (query.length === 0) {
@@ -66,7 +73,7 @@ function handleLiveSearch(query) {
 
 function handleNavSearch(e, form) {
   if (e && e.preventDefault) e.preventDefault();
-  var input = form ? form.querySelector('input[name="q"]') : document.getElementById('nav-search-input');
+  var input = form ? form.querySelector('input[name="q"]') : (document.getElementById('nav-search-input-mob') || document.getElementById('nav-search-input'));
   var query = input ? input.value.trim() : '';
   if (query) {
     window.location.href = 'products.html?q=' + encodeURIComponent(query);
@@ -78,10 +85,18 @@ function handleNavSearch(e, form) {
 
 // Close dropdown on outside click
 document.addEventListener('click', function(e) {
-  var container = document.getElementById('nav-search-container');
-  var dropdown = document.getElementById('live-search-dropdown');
-  if (container && dropdown && !container.contains(e.target)) {
-    dropdown.classList.add('hidden');
+  var dropdowns = document.querySelectorAll('[id^="live-search-dropdown"]');
+  var containers = document.querySelectorAll('[id^="nav-search-container"]');
+  var clickedInside = false;
+
+  containers.forEach(function(c) {
+    if (c.contains(e.target)) clickedInside = true;
+  });
+
+  if (!clickedInside) {
+    dropdowns.forEach(function(d) {
+      d.classList.add('hidden');
+    });
   }
 });
 
@@ -91,4 +106,3 @@ if (document.readyState === 'loading') {
 } else {
   initLiveSearchData();
 }
-

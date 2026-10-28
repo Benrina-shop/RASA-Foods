@@ -80,6 +80,17 @@
     </div>
   </div>
 </nav>
+  <!-- Mobile Menu Drawer -->
+  <div id="mob-menu" class="fixed inset-0 bg-white z-[2000] flex flex-col justify-center items-center gap-6" style="transform:translateY(-100%); transition:transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+    <button onclick="document.getElementById('mob-menu').style.transform='translateY(-100%)'" class="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 text-2xl font-bold">✕</button>
+    <img src="logo.png" alt="GOGO MART" class="w-20 h-20 object-contain rounded-full shadow-lg border border-blue-400 mb-2">
+    <div class="font-display text-2xl font-black mb-4 text-slate-900"><span style="color:var(--accent)">GOGO</span> <span class="text-pink-500">MART</span></div>
+    <a href="index.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Home</a>
+    <a href="products.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Products</a>
+    <a href="offers.html" class="text-2xl font-bold text-slate-800 hover:text-pink-600">Offers</a>
+    <a href="contact.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Contact</a>
+    <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
+  </div>
 
 <main class="pt-32 pb-24 px-6 min-h-screen">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-12">

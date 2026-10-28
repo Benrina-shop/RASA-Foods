@@ -78,7 +78,7 @@
       <a href="index.html" class="nav-link">Home</a>
       <a href="products.html" class="nav-link active">Products</a>
       <a href="offers.html" class="nav-link">Offers</a>
-      <a href="index.html#contact" class="nav-link">Contact</a>
+      <a href="contact.html" class="nav-link">Contact</a>
     </div>
       <!-- Global Live Search Bar with Instant Dropdown -->
       <div class="hidden sm:flex flex-1 max-w-md mx-6 relative" id="nav-search-container">
@@ -113,9 +113,21 @@
         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         <span id="cart-count" class="absolute -top-1 -right-1 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold bg-pink-500 shadow-md">0</span>
       </a>
+      <button onclick="document.getElementById(\'mob-menu\').style.transform=\'translateY(0)\'" class="md:hidden p-2 text-slate-700" aria-label="Open menu"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     </div>
   </div>
 </nav>
+  <!-- Mobile Menu Drawer -->
+  <div id="mob-menu" class="fixed inset-0 bg-white z-[2000] flex flex-col justify-center items-center gap-6" style="transform:translateY(-100%); transition:transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+    <button onclick="document.getElementById('mob-menu').style.transform='translateY(-100%)'" class="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 text-2xl font-bold">✕</button>
+    <img src="logo.png" alt="GOGO MART" class="w-20 h-20 object-contain rounded-full shadow-lg border border-blue-400 mb-2">
+    <div class="font-display text-2xl font-black mb-4 text-slate-900"><span style="color:var(--accent)">GOGO</span> <span class="text-pink-500">MART</span></div>
+    <a href="index.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Home</a>
+    <a href="products.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Products</a>
+    <a href="offers.html" class="text-2xl font-bold text-slate-800 hover:text-pink-600">Offers</a>
+    <a href="contact.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Contact</a>
+    <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
+  </div>
 
 <div class="max-w-7xl mx-auto px-6">
   <div class="catalog-container">
