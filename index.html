@@ -499,6 +499,111 @@
     if (document.getElementById('mob-close')) document.getElementById('mob-close').onclick = () => document.getElementById('mob-menu').classList.remove('open');
 
     initStore();
+    loadHeroAds();
+
+    // Hero Ads Auto-Rotating Banner Script
+    let HERO_ADS = [];
+    let currentAdIndex = 0;
+    let adInterval = null;
+
+    async function loadHeroAds() {
+      try {
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          const { data } = await sb.from('banners').select('*');
+          if (data && data.length > 0) {
+            HERO_ADS = data;
+            renderHeroAd();
+            startAdTimer();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('DB banners not loaded');
+      }
+
+      const local = JSON.parse(localStorage.getItem('gogo-hero-ads') || 'null');
+      if (local && local.length > 0) {
+        HERO_ADS = local;
+      } else {
+        HERO_ADS = [
+          {
+            tagline: 'FLASH OFFER • SAVE 30%',
+            title: 'Artisanal Chocolates & Crispy Shortbread',
+            desc: 'Handcrafted sweetness made from 100% natural ingredients.',
+            image_url: 'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80',
+            btn_text: 'Claim Offer',
+            btn_link: 'offers.html'
+          },
+          {
+            tagline: 'FRESH HARVEST • EXPRESS DELIVERY',
+            title: 'Finest Organic Pantry Essentials',
+            desc: 'Farm fresh spices, tea, and everyday organic goods at your doorstep.',
+            image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+            btn_text: 'Shop Now',
+            btn_link: 'products.html'
+          }
+        ];
+        localStorage.setItem('gogo-hero-ads', JSON.stringify(HERO_ADS));
+      }
+      renderHeroAd();
+      startAdTimer();
+    }
+
+    function renderHeroAd() {
+      if (!HERO_ADS || HERO_ADS.length === 0) return;
+      if (currentAdIndex >= HERO_ADS.length) currentAdIndex = 0;
+      if (currentAdIndex < 0) currentAdIndex = HERO_ADS.length - 1;
+
+      const ad = HERO_ADS[currentAdIndex];
+      const img = document.getElementById('ad-banner-img');
+      const badge = document.getElementById('ad-banner-badge');
+      const title = document.getElementById('ad-banner-title');
+      const desc = document.getElementById('ad-banner-desc');
+      const btn = document.getElementById('ad-banner-btn');
+      const dotsContainer = document.getElementById('ad-dots');
+
+      if (img) {
+        img.style.opacity = '0.4';
+        setTimeout(() => {
+          img.src = ad.image_url;
+          img.style.opacity = '1';
+        }, 120);
+      }
+      if (badge) badge.textContent = ad.tagline || 'SPECIAL PROMO';
+      if (title) title.textContent = ad.title || 'Special Collection';
+      if (desc) desc.textContent = ad.desc || '';
+      if (btn) {
+        btn.querySelector('span').textContent = ad.btn_text || 'Claim Offer';
+        btn.href = ad.btn_link || 'offers.html';
+      }
+
+      if (dotsContainer) {
+        dotsContainer.innerHTML = HERO_ADS.map((_, i) => `
+          <button onclick="goToAdSlide(${i})" class="w-2 h-2 rounded-full transition-all ${i === currentAdIndex ? 'bg-amber-400 w-5' : 'bg-white/40'}"></button>
+        `).join('');
+      }
+    }
+
+    function changeAdSlide(delta) {
+      currentAdIndex += delta;
+      renderHeroAd();
+      startAdTimer();
+    }
+
+    function goToAdSlide(idx) {
+      currentAdIndex = idx;
+      renderHeroAd();
+      startAdTimer();
+    }
+
+    function startAdTimer() {
+      if (adInterval) clearInterval(adInterval);
+      adInterval = setInterval(() => {
+        changeAdSlide(1);
+      }, 5000); // rotates every 5 seconds
+    }
+
   </script>
 <script src="live-search.js"></script>
 </body>

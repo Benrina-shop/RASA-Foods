@@ -91,3 +91,4 @@ if (document.readyState === 'loading') {
 } else {
   initLiveSearchData();
 }
+
