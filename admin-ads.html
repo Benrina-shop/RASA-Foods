@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Banners & Ads Management — GOGO MART</title>
+  <title>Banners & Promo Ads Management — GOGO MART</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -19,7 +19,7 @@
     body { background: var(--bg); color: var(--cream); font-family: 'Plus Jakarta Sans', sans-serif; }
     .sidebar { width: 280px; height: 100vh; position: fixed; left: 0; top: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 2.5rem 1.5rem; z-index: 50; }
     .main-content { margin-left: 280px; padding: 3rem; }
-    .nav-link { display: flex; items-center: center; gap: 12px; padding: .875rem 1.25rem; border-radius: 14px; color: var(--muted); font-size: .875rem; font-weight: 700; transition: all .2s; margin-bottom: .5rem; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: .875rem 1.25rem; border-radius: 14px; color: var(--muted); font-size: .875rem; font-weight: 700; transition: all .2s; margin-bottom: .5rem; }
     .nav-link:hover, .nav-link.active { background: rgba(37,99,235,0.15); color: #60a5fa; }
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; }
     .modal.open { display: flex; }
@@ -27,6 +27,10 @@
     .input-field:focus { border-color: var(--accent); }
     .ad-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; transition: all .3s; }
     .ad-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.3); }
+    .banner-preview-thumb { position: relative; width: 100px; height: 75px; border-radius: 12px; overflow: hidden; border: 2px solid var(--border); background: #0f172a; flex-shrink: 0; }
+    .banner-preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-remove { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 9999px; background: rgba(239, 68, 68, 0.9); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; cursor: pointer; transition: transform 0.15s; }
+    .thumb-remove:hover { transform: scale(1.15); }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -34,7 +38,7 @@
 
   <!-- Modal for Creating/Editing Ads -->
   <div id="ad-modal" class="modal">
-    <div class="bg-[var(--surface)] p-8 md:p-10 rounded-3xl border border-[var(--border)] w-full max-w-xl shadow-2xl">
+    <div class="bg-[var(--surface)] p-8 md:p-10 rounded-3xl border border-[var(--border)] w-full max-w-xl max-h-[92vh] overflow-y-auto shadow-2xl">
       <div class="flex items-center justify-between mb-6">
         <h2 id="modal-title" class="text-2xl font-black text-white">Create Promo Banner / Ad</h2>
         <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl">✕</button>
@@ -59,23 +63,23 @@
         </div>
 
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-2 block">Banner Image (Local Device Upload)</label>
-          <input type="file" id="ad-file-input" accept="image/*" class="hidden" onchange="handleBannerFileSelect(event)">
-          <input type="hidden" id="ad-image">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-blue-400 block">Banner Visuals (Local Upload - Multiple Allowed)</label>
+            <span class="text-[10px] text-amber-400 font-bold" id="banner-count-badge">0 Photo(s)</span>
+          </div>
 
+          <input type="file" id="ad-file-input" accept="image/*" multiple class="hidden" onchange="handleBannerFileSelect(event)">
+          
           <div class="space-y-3">
             <button type="button" onclick="document.getElementById('ad-file-input').click()" class="w-full py-4 bg-transparent border-2 border-dashed border-slate-600 rounded-2xl text-xs font-bold uppercase tracking-widest hover:border-blue-500 transition-all text-slate-300 hover:text-white flex items-center justify-center gap-2">
               <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              Choose Photo from Device
+              Select Banner Photo(s) from Device
             </button>
+            <p class="text-[10px] text-slate-400 italic">💡 එක banner එකකට photos කිහිපයක් දැමූ විට, හෝම් පේජ් එකේ auto rotate (swap) වේ.</p>
 
-            <!-- Image preview box -->
-            <div id="img-preview-box" class="rounded-2xl overflow-hidden border border-slate-700 bg-slate-900 h-44 flex items-center justify-center relative">
-              <img id="img-preview-tag" src="" alt="Preview" class="w-full h-full object-cover hidden">
-              <span id="img-preview-placeholder" class="text-xs text-slate-500 font-bold">Select a photo from your computer or phone</span>
-              <button type="button" id="remove-img-btn" onclick="clearSelectedImg()" class="hidden absolute top-2 right-2 px-3 py-1 bg-red-600/80 hover:bg-red-600 text-white text-[10px] font-bold rounded-lg backdrop-blur-md">
-                Change
-              </button>
+            <!-- Previews thumbnails row -->
+            <div id="banner-thumbs-row" class="flex gap-3 overflow-x-auto pb-2 min-h-[85px] items-center p-2 rounded-2xl bg-slate-900/60 border border-slate-700/80">
+              <div id="banner-empty-msg" class="w-full text-center text-xs text-slate-500 font-medium py-3">No images selected yet.</div>
             </div>
           </div>
         </div>
@@ -162,6 +166,7 @@
         title: 'Artisanal Chocolates & Crispy Shortbread',
         desc: 'Handcrafted sweetness made from 100% natural ingredients.',
         image_url: 'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80',
+        images: ['https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80', 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80'],
         btn_text: 'Explore Deals',
         btn_link: 'products.html',
         is_active: true
@@ -172,6 +177,7 @@
         title: 'Finest Organic Pantry Essentials',
         desc: 'Farm fresh spices, tea, and everyday organic goods at your doorstep.',
         image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+        images: ['https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80'],
         btn_text: 'Shop Now',
         btn_link: 'products.html',
         is_active: true
@@ -179,6 +185,7 @@
     ];
 
     var allAds = [];
+    var selectedBannerImages = []; // Array of strings (data URLs or remote URLs)
 
     async function initAds() {
       try {
@@ -213,11 +220,15 @@
       }
 
       grid.innerHTML = allAds.map(function(ad) {
+        var imgs = (ad.images && ad.images.length) ? ad.images : [ad.image_url];
+        var imgCountBadge = imgs.length > 1 ? '<span class="absolute bottom-3 right-3 px-2.5 py-1 bg-black/75 backdrop-blur-md rounded-lg text-[10px] font-black text-white">🔄 ' + imgs.length + ' Photos (Auto Swap)</span>' : '';
+
         return '<div class="ad-card flex flex-col justify-between">' +
           '<div>' +
             '<div class="relative h-48 bg-slate-900 overflow-hidden">' +
-              '<img src="' + ad.image_url + '" alt="' + ad.title + '" class="w-full h-full object-cover">' +
-              '<div class="absolute top-3 left-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-[10px] font-black text-amber-400 tracking-wider">' + ad.tagline + '</div>' +
+              '<img src="' + (imgs[0] || 'logo.png') + '" alt="' + ad.title + '" class="w-full h-full object-cover">' +
+              '<div class="absolute top-3 left-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-[10px] font-black text-amber-400 tracking-wider">' + (ad.tagline || 'PROMO') + '</div>' +
+              imgCountBadge +
             '</div>' +
             '<div class="p-6">' +
               '<h3 class="text-lg font-black text-white mb-2">' + ad.title + '</h3>' +
@@ -236,48 +247,49 @@
       }).join('');
     }
 
-    var selectedBannerFile = null;
-
     function handleBannerFileSelect(event) {
-      var file = event.target.files[0];
-      if (!file) return;
-      selectedBannerFile = file;
+      var files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
 
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        var base64Url = e.target.result;
-        document.getElementById('ad-image').value = base64Url;
-        previewBannerImg(base64Url);
-      };
-      reader.readAsDataURL(file);
+      files.forEach(function(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          selectedBannerImages.push(e.target.result);
+          renderBannerThumbs();
+        };
+        reader.readAsDataURL(file);
+      });
+      event.target.value = '';
     }
 
-    function clearSelectedImg() {
-      selectedBannerFile = null;
-      document.getElementById('ad-image').value = '';
-      document.getElementById('ad-file-input').value = '';
-      previewBannerImg('');
+    function removeBannerThumb(index) {
+      selectedBannerImages.splice(index, 1);
+      renderBannerThumbs();
     }
 
-    function previewBannerImg(url) {
-      var img = document.getElementById('img-preview-tag');
-      var placeholder = document.getElementById('img-preview-placeholder');
-      var removeBtn = document.getElementById('remove-img-btn');
-      if (url && url.length > 5) {
-        img.src = url;
-        img.classList.remove('hidden');
-        placeholder.classList.add('hidden');
-        if (removeBtn) removeBtn.classList.remove('hidden');
-      } else {
-        img.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        if (removeBtn) removeBtn.classList.add('hidden');
+    function renderBannerThumbs() {
+      var row = document.getElementById('banner-thumbs-row');
+      var badge = document.getElementById('banner-count-badge');
+      if (badge) badge.textContent = selectedBannerImages.length + ' Photo(s)';
+
+      if (selectedBannerImages.length === 0) {
+        row.innerHTML = '<div id="banner-empty-msg" class="w-full text-center text-xs text-slate-500 font-medium py-3">No images selected yet.</div>';
+        return;
       }
+
+      row.innerHTML = selectedBannerImages.map(function(url, idx) {
+        return '<div class="banner-preview-thumb">' +
+          '<img src="' + url + '" alt="Thumb ' + (idx + 1) + '">' +
+          '<div class="thumb-remove" onclick="removeBannerThumb(' + idx + ')" title="Remove photo">✕</div>' +
+        '</div>';
+      }).join('');
     }
 
     function openModal(id) {
       var modal = document.getElementById('ad-modal');
       modal.classList.add('open');
+      selectedBannerImages = [];
+
       if (id) {
         var ad = allAds.find(function(x) { return x.id == id; });
         document.getElementById('modal-title').textContent = 'Modify Hero Ad';
@@ -285,18 +297,20 @@
         document.getElementById('ad-tagline').value = ad.tagline || '';
         document.getElementById('ad-title').value = ad.title || '';
         document.getElementById('ad-desc').value = ad.desc || '';
-        document.getElementById('ad-image').value = ad.image_url || '';
         document.getElementById('ad-btn-text').value = ad.btn_text || 'Claim Offer';
         document.getElementById('ad-btn-link').value = ad.btn_link || 'offers.html';
-        previewBannerImg(ad.image_url);
+
+        if (ad.images && ad.images.length > 0) {
+          selectedBannerImages = [...ad.images];
+        } else if (ad.image_url) {
+          selectedBannerImages = [ad.image_url];
+        }
       } else {
         document.getElementById('modal-title').textContent = 'Create Promo Banner / Ad';
         document.getElementById('ad-form').reset();
         document.getElementById('ad-id').value = '';
-        selectedBannerFile = null;
-        document.getElementById('ad-file-input').value = '';
-        previewBannerImg('');
       }
+      renderBannerThumbs();
     }
 
     function closeModal() {
@@ -306,31 +320,10 @@
     document.getElementById('ad-form').onsubmit = async function(e) {
       e.preventDefault();
       var id = document.getElementById('ad-id').value;
-      var imageUrl = document.getElementById('ad-image').value.trim();
 
-      if (!imageUrl) {
-        alert('Please choose a banner image from your device.');
+      if (selectedBannerImages.length === 0) {
+        alert('Please select at least one banner photo from your device.');
         return;
-      }
-
-      // If user uploaded a new local file, try uploading to Supabase Storage products bucket
-      if (selectedBannerFile) {
-        try {
-          var sb = typeof getSupabase === 'function' ? getSupabase() : null;
-          if (sb && sb.storage) {
-            var ext = selectedBannerFile.name.split('.').pop();
-            var fileName = 'banner-' + Date.now() + '-' + Math.random().toString(36).substring(7) + '.' + ext;
-            var upRes = await sb.storage.from('products').upload(fileName, selectedBannerFile);
-            if (!upRes.error) {
-              var urlData = sb.storage.from('products').getPublicUrl(fileName);
-              if (urlData && urlData.data && urlData.data.publicUrl) {
-                imageUrl = urlData.data.publicUrl;
-              }
-            }
-          }
-        } catch (stErr) {
-          console.warn('Storage upload bypassed, using local data URL');
-        }
       }
 
       var adData = {
@@ -338,7 +331,8 @@
         tagline: document.getElementById('ad-tagline').value.trim(),
         title: document.getElementById('ad-title').value.trim(),
         desc: document.getElementById('ad-desc').value.trim(),
-        image_url: imageUrl,
+        image_url: selectedBannerImages[0],
+        images: selectedBannerImages,
         btn_text: document.getElementById('ad-btn-text').value.trim() || 'Claim Offer',
         btn_link: document.getElementById('ad-btn-link').value.trim() || 'offers.html',
         is_active: true
@@ -384,4 +378,3 @@
   </script>
 </body>
 </html>
-

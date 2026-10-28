@@ -567,10 +567,12 @@
     initStore();
     loadHeroAds();
 
-    // Hero Ads Auto-Rotating Banner Script
+    // Hero Ads Auto-Rotating Banner Script with Multi-Image Auto-Swap
     let HERO_ADS = [];
     let currentAdIndex = 0;
+    let currentBannerImgIndex = 0;
     let adInterval = null;
+    let bannerImgInterval = null;
 
     async function loadHeroAds() {
       try {
@@ -598,6 +600,7 @@
             title: 'Artisanal Chocolates & Crispy Shortbread',
             desc: 'Handcrafted sweetness made from 100% natural ingredients.',
             image_url: 'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80',
+            images: ['https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80', 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80'],
             btn_text: 'Claim Offer',
             btn_link: 'offers.html'
           },
@@ -606,6 +609,7 @@
             title: 'Finest Organic Pantry Essentials',
             desc: 'Farm fresh spices, tea, and everyday organic goods at your doorstep.',
             image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+            images: ['https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80'],
             btn_text: 'Shop Now',
             btn_link: 'products.html'
           }
@@ -629,13 +633,33 @@
       const btn = document.getElementById('ad-banner-btn');
       const dotsContainer = document.getElementById('ad-dots');
 
+      // Banner Images
+      const bannerImgs = (Array.isArray(ad.images) && ad.images.length > 0) ? ad.images : [ad.image_url || 'logo.png'];
+      currentBannerImgIndex = 0;
+
       if (img) {
-        img.style.opacity = '0.4';
+        img.style.opacity = '0.3';
         setTimeout(() => {
-          img.src = ad.image_url;
+          img.src = bannerImgs[0];
           img.style.opacity = '1';
         }, 120);
       }
+
+      // If this ad has multiple images, auto-swap images within the ad every 2.5 seconds
+      if (bannerImgInterval) clearInterval(bannerImgInterval);
+      if (bannerImgs.length > 1) {
+        bannerImgInterval = setInterval(() => {
+          currentBannerImgIndex = (currentBannerImgIndex + 1) % bannerImgs.length;
+          if (img) {
+            img.style.opacity = '0.4';
+            setTimeout(() => {
+              img.src = bannerImgs[currentBannerImgIndex];
+              img.style.opacity = '1';
+            }, 120);
+          }
+        }, 2500);
+      }
+
       if (badge) badge.textContent = ad.tagline || 'SPECIAL PROMO';
       if (title) title.textContent = ad.title || 'Special Collection';
       if (desc) desc.textContent = ad.desc || '';
@@ -667,7 +691,7 @@
       if (adInterval) clearInterval(adInterval);
       adInterval = setInterval(() => {
         changeAdSlide(1);
-      }, 5000); // rotates every 5 seconds
+      }, 7000); // rotates ad slide every 7 seconds
     }
 
   </script>
