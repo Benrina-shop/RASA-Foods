@@ -263,6 +263,10 @@ async function initPage() {
         // Read search query from URL parameter if present (e.g. products.html?q=chocolate)
         const urlParams = new URLSearchParams(window.location.search);
         const qParam = urlParams.get('q');
+        const catParam = urlParams.get('cat');
+        if (catParam) {
+            selectedCats = [catParam];
+        }
         if (qParam) {
             const sInput = document.getElementById('search-input');
             if (sInput) sInput.value = qParam;

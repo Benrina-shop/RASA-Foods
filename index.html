@@ -286,6 +286,32 @@
     <a href="sign-in.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Sign In</a>
   </div>
 
+  
+  <!-- Popular Categories Section (Directly below Header) -->
+  <section class="py-6 sm:py-8 bg-slate-50/80 border-b border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-display text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Popular Categories</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Explore our most popular departments & trending selections</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Categories Slider -->
+      <div id="popular-cats-slider" class="flex items-center gap-3.5 sm:gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar" style="scrollbar-width:none;-ms-overflow-style:none;">
+        <div class="py-10 text-center text-slate-400 w-full animate-pulse text-xs">Loading popular categories...</div>
+      </div>
+    </div>
+  </section>
+
   <section class="hero">
     <div class="hero-bg"></div>
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full pt-10 sm:pt-20 pb-16">
@@ -782,6 +808,81 @@
       adInterval = setInterval(() => {
         changeAdSlide(1);
       }, 7000); // rotates ad slide every 7 seconds
+    }
+
+
+    // Popular Categories Slider Logic
+    let POPULAR_CATEGORIES = [];
+    const DEFAULT_POPULAR_CATS = [
+      { name: "Trending Products", slug: "trending", subtitle: "Hot Picks", image_url: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80" },
+      { name: "Combo Package", slug: "combo-package", subtitle: "Great Value", image_url: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80" },
+      { name: "Computer Accessories", slug: "computer-accessories", subtitle: "Tech & Audio", image_url: "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=600&q=80" },
+      { name: "Mobile Hub", slug: "mobile-hub", subtitle: "Phones & Gadgets", image_url: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80" },
+      { name: "Mens", slug: "mens", subtitle: "Fashion & Style", image_url: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80" },
+      { name: "Kids", slug: "kids", subtitle: "Toys & Fun", image_url: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80" },
+      { name: "Home & Living", slug: "home-living", subtitle: "Kitchen & Decor", image_url: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80" }
+    ];
+
+    async function loadPopularCategories() {
+      const container = document.getElementById('popular-cats-slider');
+      if (!container) return;
+
+      try {
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          const { data } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
+          if (data && data.image_url) {
+            try {
+              POPULAR_CATEGORIES = JSON.parse(data.image_url);
+              renderPopularCategories();
+              return;
+            } catch (err) {}
+          }
+        }
+      } catch (e) {
+        console.warn('DB categories load fallback');
+      }
+
+      const local = JSON.parse(localStorage.getItem('gogo-popular-categories') || 'null');
+      if (local && local.length > 0) {
+        POPULAR_CATEGORIES = local;
+      } else {
+        POPULAR_CATEGORIES = DEFAULT_POPULAR_CATS;
+      }
+
+      renderPopularCategories();
+    }
+
+    function renderPopularCategories() {
+      const container = document.getElementById('popular-cats-slider');
+      if (!container) return;
+
+      if (!POPULAR_CATEGORIES || POPULAR_CATEGORIES.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = POPULAR_CATEGORIES.map(cat => `
+        <a href="products.html?cat=${encodeURIComponent(cat.slug)}" class="group flex-shrink-0 w-36 sm:w-44 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-blue-400 transition-all text-left">
+          <div class="w-full aspect-[4/3] bg-slate-100 overflow-hidden relative">
+            <img src="${cat.image_url || 'logo.png'}" alt="${cat.name}" class="w-full h-full object-cover group-hover:scale-108 transition-transform duration-300">
+            <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900/80 text-white backdrop-blur-xs">
+              ${cat.subtitle || 'Category'}
+            </span>
+          </div>
+          <div class="p-2.5 sm:p-3">
+            <h4 class="font-bold text-xs sm:text-sm text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">${cat.name}</h4>
+            <span class="text-[10px] text-blue-500 font-semibold flex items-center gap-1 mt-0.5">Explore <span class="group-hover:translate-x-0.5 transition-transform">→</span></span>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    function scrollPopularCats(dir) {
+      const container = document.getElementById('popular-cats-slider');
+      if (container) {
+        container.scrollBy({ left: dir * 260, behavior: 'smooth' });
+      }
     }
 
   </script>
