@@ -435,6 +435,23 @@ function renderProduct() {
               <textarea id="r-comment" rows="4" placeholder="Tell us how you enjoyed this product..." required class="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:border-blue-600 transition-colors resize-none"></textarea>
             </div>
 
+            <!-- Review Photos (Client Upload) -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-bold uppercase tracking-widest text-slate-700 block">Attach Photos (Optional)</label>
+                <span id="review-img-count" class="text-[10px] font-bold text-blue-600">0 added</span>
+              </div>
+              <input type="file" id="r-photos" accept="image/*" multiple class="hidden" onchange="handleReviewPhotosSelect(event)">
+              
+              <div id="review-photos-preview" class="hidden flex gap-2.5 overflow-x-auto pb-2 mb-2.5"></div>
+
+              <button type="button" onclick="document.getElementById('r-photos').click()" class="w-full py-3 rounded-xl border border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 text-slate-600 hover:text-blue-600 font-bold text-xs transition-all flex items-center justify-center gap-2">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Choose Photo(s) from Device
+              </button>
+              <p class="text-[10px] text-slate-400 mt-1 italic">Tip: You can upload real product photos you received.</p>
+            </div>
+
             <button type="submit" id="submit-review-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-pink-500 to-amber-500 hover:opacity-95 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
               Submit Review
             </button>
@@ -613,6 +630,15 @@ function renderReviewsList() {
           </div>
         </div>
         <p class="text-slate-600 text-sm leading-relaxed">${r.comment}</p>
+        ${(r.images && r.images.length > 0) ? `
+          <div class="flex gap-2.5 overflow-x-auto pt-2 pb-1">
+            ${r.images.map(imgUrl => `
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 cursor-pointer hover:opacity-90 hover:scale-105 transition-all shadow-sm" onclick="openPhotoModal('${imgUrl}')">
+                <img src="${imgUrl}" alt="Review photo" class="w-full h-full object-cover">
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
       </div>
     `;
   }).join('');
@@ -651,6 +677,65 @@ function updateStarPicker(val) {
   });
 }
 
+let reviewSelectedPhotos = []; // array of { file, dataUrl }
+
+function handleReviewPhotosSelect(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      reviewSelectedPhotos.push({ file: file, dataUrl: e.target.result });
+      renderReviewPhotoPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function removeReviewPhoto(idx) {
+  reviewSelectedPhotos.splice(idx, 1);
+  renderReviewPhotoPreviews();
+}
+
+function renderReviewPhotoPreviews() {
+  const container = document.getElementById('review-photos-preview');
+  const countBadge = document.getElementById('review-img-count');
+  if (!container) return;
+
+  if (countBadge) countBadge.textContent = `${reviewSelectedPhotos.length} added`;
+
+  if (reviewSelectedPhotos.length === 0) {
+    container.classList.add('hidden');
+    container.innerHTML = '';
+    return;
+  }
+
+  container.classList.remove('hidden');
+  container.innerHTML = reviewSelectedPhotos.map((item, idx) => `
+    <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-300 bg-slate-100 shrink-0 shadow-sm">
+      <img src="${item.dataUrl}" class="w-full h-full object-cover">
+      <button type="button" onclick="removeReviewPhoto(${idx})" class="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold shadow">✕</button>
+    </div>
+  `).join('');
+}
+
+function openPhotoModal(imgUrl) {
+  const existing = document.getElementById('photo-modal');
+  if (existing) existing.remove();
+
+  const modalHtml = `
+    <div id="photo-modal" class="fixed inset-0 z-[3000] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onclick="this.remove()">
+      <div class="relative max-w-2xl w-full max-h-[85vh] flex items-center justify-center" onclick="event.stopPropagation()">
+        <img src="${imgUrl}" alt="Customer photo" class="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/20">
+        <button onclick="document.getElementById('photo-modal').remove()" class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-slate-900 font-black flex items-center justify-center shadow-lg hover:bg-slate-200">✕</button>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
 async function submitReview(e) {
   e.preventDefault();
   const name = document.getElementById('r-name').value.trim();
@@ -667,6 +752,28 @@ async function submitReview(e) {
   btn.textContent = 'Posting review...';
   btn.disabled = true;
 
+  // Process photos (upload to Supabase storage 'products' bucket if possible, or fallback to dataUrl)
+  const finalPhotoUrls = [];
+  const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+
+  for (const item of reviewSelectedPhotos) {
+    let photoUrl = item.dataUrl;
+    if (sb && sb.storage && item.file) {
+      try {
+        const ext = item.file.name.split('.').pop() || 'jpg';
+        const fn = `rev-${PRODUCT.id}-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+        const { data: upData, error: upErr } = await sb.storage.from('products').upload(fn, item.file);
+        if (!upErr) {
+          const { data: pubData } = sb.storage.from('products').getPublicUrl(fn);
+          if (pubData && pubData.publicUrl) photoUrl = pubData.publicUrl;
+        }
+      } catch (stErr) {
+        console.warn('Storage upload bypass, keeping base64');
+      }
+    }
+    finalPhotoUrls.push(photoUrl);
+  }
+
   const newReview = {
     id: Date.now(),
     product_id: PRODUCT.id,
@@ -674,19 +781,20 @@ async function submitReview(e) {
     author_email: email, // Saved securely, never displayed to public
     rating: rating,
     comment: comment,
+    images: finalPhotoUrls,
     created_at: new Date().toISOString()
   };
 
   // 1. Try DB
   try {
-    const sb = getSupabase();
     if (sb) {
       await sb.from('reviews').insert({
         product_id: PRODUCT.id,
         author_name: name,
         author_email: email,
         rating: rating,
-        comment: comment
+        comment: comment,
+        images: finalPhotoUrls
       });
     }
   } catch (err) {
@@ -697,7 +805,8 @@ async function submitReview(e) {
   REVIEWS.unshift(newReview);
   localStorage.setItem('gogo-reviews-' + PRODUCT.id, JSON.stringify(REVIEWS));
 
-  showToast('✅ Review submitted! Thank you.');
+  showToast('✅ Review submitted with photos! Thank you.');
+  reviewSelectedPhotos = [];
   btn.textContent = 'Submit Review';
   btn.disabled = false;
 
