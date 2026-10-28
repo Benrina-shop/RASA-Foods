@@ -221,7 +221,7 @@ async function initPage() {
         
         // Load Categories
         const { data: cats } = await sb.from('categories').select('*').order('name');
-        allCategories = (cats || []).filter(c => c.slug !== 'system_cover_banner');
+        allCategories = (cats || []).filter(c => !c.slug.startsWith('system_') && !c.name.startsWith('SYSTEM_'));
         updateCategoryDropdown();
 
         // Load Products

@@ -258,7 +258,7 @@ async function initPage() {
         const { data: cats } = await sb.from('categories').select('*');
         
         ALL_PRODUCTS = prods || [];
-        ALL_CATEGORIES = (cats || []).filter(c => c.slug !== 'system_cover_banner');
+        ALL_CATEGORIES = (cats || []).filter(c => !c.slug.startsWith('system_') && !c.name.startsWith('SYSTEM_'));
         
         // Read search query from URL parameter if present (e.g. products.html?q=chocolate)
         const urlParams = new URLSearchParams(window.location.search);

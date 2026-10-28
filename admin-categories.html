@@ -106,13 +106,21 @@
         <input type="hidden" id="cat-id">
         
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Category Name *</label>
-          <input type="text" id="cat-name" required placeholder="e.g. Trending Products, Mobile Hub, Electronics" oninput="autoSlug(this.value)" class="w-full bg-[#0b1120] border border-[var(--border)] p-3.5 rounded-xl text-white outline-none focus:border-blue-500 text-sm">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Select From Store Categories *</label>
+          <select id="cat-existing-select" onchange="onSelectExistingCategory(this.value)" class="w-full bg-[#0b1120] border border-[var(--border)] p-3 rounded-xl text-white outline-none focus:border-blue-500 text-sm mb-3">
+            <option value="">-- Choose Existing Category --</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mb-2">Choosing a category links popular card directly to your products in this department.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Slug (URL identifier) *</label>
-          <input type="text" id="cat-slug" required placeholder="e.g. trending-products" class="w-full bg-[#0b1120] border border-[var(--border)] p-3.5 rounded-xl text-white outline-none focus:border-blue-500 text-sm">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Display Name *</label>
+          <input type="text" id="cat-name" required placeholder="e.g. Snacks & Chips, Artisan Bakery, Mens" oninput="autoSlug(this.value)" class="w-full bg-[#0b1120] border border-[var(--border)] p-3.5 rounded-xl text-white outline-none focus:border-blue-500 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Category Slug (Links to products.html?cat=...) *</label>
+          <input type="text" id="cat-slug" required placeholder="e.g. snacks, bakery, mens" class="w-full bg-[#0b1120] border border-[var(--border)] p-3.5 rounded-xl text-white outline-none focus:border-blue-500 text-sm">
         </div>
 
         <div>
@@ -144,6 +152,7 @@
   <script src="supabase-config.js"></script>
   <script>
     let CATEGORIES = [];
+    let STORE_CATEGORIES = [];
 
     const DEFAULT_POPULAR_CATS = [
       { name: "Trending Products", slug: "trending", subtitle: "Hot Picks", image_url: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80" },
@@ -155,7 +164,41 @@
       { name: "Home & Living", slug: "home-living", subtitle: "Kitchen & Decor", image_url: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80" }
     ];
 
+    async function loadStoreCategoriesDropdown() {
+      try {
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          const { data } = await sb.from('categories').select('*').order('name');
+          if (data) {
+            STORE_CATEGORIES = data.filter(c => !c.slug.startsWith('system_') && !c.name.startsWith('SYSTEM_'));
+            populateCategorySelect();
+          }
+        }
+      } catch (err) {
+        console.warn('Store categories dropdown load error', err);
+      }
+    }
+
+    function populateCategorySelect() {
+      const select = document.getElementById('cat-existing-select');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- Choose Existing Category --</option>' + 
+        STORE_CATEGORIES.map(c => `<option value="${c.slug}" data-name="${c.name}">${c.name} (${c.slug})</option>`).join('');
+    }
+
+    function onSelectExistingCategory(slug) {
+      if (!slug) return;
+      const found = STORE_CATEGORIES.find(c => c.slug === slug);
+      if (found) {
+        document.getElementById('cat-slug').value = found.slug;
+        if (!document.getElementById('cat-name').value || document.getElementById('cat-id').value === '') {
+          document.getElementById('cat-name').value = found.name;
+        }
+      }
+    }
+
     async function loadCategories() {
+      loadStoreCategoriesDropdown();
       const grid = document.getElementById('categories-grid');
       
       try {
@@ -224,6 +267,7 @@
     function openModal() {
       document.getElementById('cat-form').reset();
       document.getElementById('cat-id').value = '';
+      if (document.getElementById('cat-existing-select')) document.getElementById('cat-existing-select').value = '';
       document.getElementById('modal-title').textContent = 'Add Category';
       document.getElementById('img-preview').classList.add('hidden');
       document.getElementById('img-preview-placeholder').classList.remove('hidden');
@@ -239,6 +283,9 @@
       document.getElementById('cat-id').value = idx;
       document.getElementById('cat-name').value = cat.name || '';
       document.getElementById('cat-slug').value = cat.slug || '';
+      if (document.getElementById('cat-existing-select')) {
+        document.getElementById('cat-existing-select').value = cat.slug || '';
+      }
       document.getElementById('cat-subtitle').value = cat.subtitle || '';
       document.getElementById('cat-img').value = cat.image_url || '';
       
