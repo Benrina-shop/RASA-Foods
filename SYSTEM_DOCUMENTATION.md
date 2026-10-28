@@ -17,7 +17,7 @@ Welcome to the official, full-scope system documentation for **GOGO MART** (form
 GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web platform. It incorporates an approachable, modern design theme (**Pure White, Royal Blue `#2563eb`, Rose Pink `#ec4899`, and Vibrant Amber `#f59e0b`**) with **Plus Jakarta Sans** and **Inter** typography, full mobile touchscreen support, real-time inventory synchronization, rich media reviews with photos, and automated customer support widgets.
 
 ### Tech Stack
-- **Frontend Architecture**: HTML5, Vanilla JavaScript (ES6+ Modules & Singletons), Tailwind CSS.
+- **Frontend Architecture**: HTML5, Vanilla JavaScript (ES6+ Modules, REST API integrations & DOM Lifecycle Guards), Tailwind CSS.
 - **Backend & Database**: Supabase (PostgreSQL 15, Row Level Security, Supabase Storage buckets).
 - **Client Libraries**:
   - `@supabase/supabase-js v2`: Realtime database querying and direct authenticated/anonymous storage uploading.
@@ -30,6 +30,14 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 ## 2. Customer Storefront Ecosystem
 
 ### 2.1. Home Page (`index.html`)
+- **Popular Categories Infinite Marquee Slider (NEW)**:
+  - Positioned directly below the navigation header.
+  - Displays high-resolution category cards with photo thumbnails, category names, custom subtitle tags (e.g., *"Hot Picks"*, *"Great Value"*), and forward arrow cues.
+  - **Smooth Infinite Marquee Animation**: Slowly and continuously scrolls left-to-right (`animation: marqueeCats 32s linear infinite`) with left and right gradient fade masks (`mask-image`).
+  - **Interactive Hover Pause**: Automatically pauses animation whenever customer hovers over or touches a card.
+  - **Manual Nav Controls**: Left/Right circular buttons to jump forward/backwards smoothly.
+  - **Instant Click Redirection**: Clicking any category card navigates directly to `products.html?cat={slug}`, pre-filtering and displaying items belonging to that category.
+  - **Direct High-Speed REST Synchronization**: Pulls live category configurations from Supabase `categories` table (`slug: system_popular_categories`) via direct REST API with `localStorage` caching for zero loading delay.
 - **Full-Width Hero Background Slideshow**:
   - Dynamically cycles high-resolution background covers (configured via `admin-banners.html`) every 5 seconds with smooth cross-fade animation.
 - **Interactive Promo Ads Card (Multi-Image Auto-Rotating)**:
@@ -49,6 +57,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 ### 2.2. Products Catalogue (`products.html`)
 - **Desktop Sticky Sidebar & Mobile Filter Drawer**:
   - Multi-category checkboxes, stock availability toggles, and dynamic price range slider.
+  - **Filtered System Slugs (NEW)**: System configuration categories (`SYSTEM_COVER_BANNER`, `SYSTEM_MARQUEE_NEWS`, `SYSTEM_POPULAR_CATEGORIES`) are automatically excluded from customer-facing category filters.
 - **Dual Action Buttons on Product Cards**:
   - **"Add To Cart"** with reactive badge animation and count updater.
   - **"Buy Now"** for instant 1-click checkout redirection.
@@ -133,7 +142,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 
 ### 3.4. Supabase Client Configuration (`supabase-config.js`)
 - Centralized helper initialization:
-  - URL: `https://vabymfmsvowphqfdrnld.supabase.co`
+  - URL: `https://yswekhygaebgvowdrmxk.supabase.co`
   - Anon Public Key authentication.
   - Provides universal `getSupabase()` accessor and `formatPrice(amount)` utility function.
 
@@ -141,33 +150,48 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 
 ## 4. Administrative Control Ecosystem (Admin Portal)
 
-### 4.1. Admin Authentication (`admin-login.html`)
-- Secure login portal with role-based session token storage and automatic redirect security guards.
+### 4.1. Unified Admin Design System (NEW)
+All admin portal pages share a completely unified, sleek dark UI matching GOGO MART’s signature identity:
+- **Background**: Deep Slate Navy (`#0f172a`)
+- **Surfaces & Cards**: Slate (`#1e293b` & `#334155`)
+- **Primary Accent**: GOGO Royal Blue (`#2563eb` / `#3b82f6` with pink/amber highlights)
+- **Typography & Sidebars**: Standardized 280px left navigation bar with consistent icons and active states.
 
-### 4.2. Global Performance Dashboard (`admin-dashboard.html`)
+### 4.2. Admin Authentication (`admin-login.html`)
+- Secure login portal with role-based session token storage and automatic redirect security guards.
+- Redesigned with the unified Royal Blue & Slate aesthetic.
+
+### 4.3. Global Performance Dashboard (`admin-dashboard.html`)
 - Real-time KPIs: Total Revenue, Total Orders, Active Catalogue Items, and Pending Deliveries.
 - Recent sales chart, latest order stream, and low-stock warnings.
 
-### 4.3. Product & Inventory Manager (`admin-products.html`)
+### 4.4. Popular Categories Manager (`admin-categories.html`) (NEW)
+- Dedicated management portal for the home page’s Popular Categories section:
+  - **Existing Store Category Selector**: Dropdown to select from existing store product categories (e.g. *Snacks, Bakery, Beverages, Mens*), auto-filling the name and target slug.
+  - **Category Card Customization**: Custom display titles, optional subtitle tag badges (e.g. *"Hot Picks"*, *"Best Value"*), and card image upload/URL selector.
+  - **Instant Supabase Cloud Storage**: Changes persist in `categories` under `slug: system_popular_categories` and immediately sync to the live storefront marquee.
+
+### 4.5. Product & Inventory Manager (`admin-products.html`)
 - Add, Edit, Archive, and Delete products.
 - **Multi-Photo Upload**: Supports uploading multiple photos directly to Supabase storage.
 - **Product Video Uploader**: Upload MP4/WebM video clips directly to product listings.
 - **Stock Control**: Exact numerical stock allocation per product, which decreases automatically upon customer order.
 - **Pricing & Discounts**: Set regular selling price and higher comparison price (`old_price`) for automatic strike-through badge display.
+- Excludes system slugs (`system_*`) from category dropdowns.
 
-### 4.4. Hero Background Covers Manager (`admin-banners.html`)
+### 4.6. Hero Background Covers Manager (`admin-banners.html`)
 - Upload and manage full-width hero background cover photos.
 - Stored as JSON array in Supabase (`slug: system_cover_banner`) with instantaneous auto-swap on the home page hero section.
 
-### 4.5. Promo Ads Banner Manager (`admin-ads.html`)
+### 4.7. Promo Ads Banner Manager (`admin-ads.html`)
 - Manage interactive promotion slides displayed inside the home page hero right column.
 - Configure taglines, titles, descriptions, action button links, and multi-photo slide sets.
 
-### 4.6. Live Announcement Marquee Manager (`admin-marquee.html`)
+### 4.8. Live Announcement Marquee Manager (`admin-marquee.html`)
 - Create, reorder, toggle on/off, and delete scrolling announcements for the top ticker bar.
 - Custom tag badges (e.g., `HOT DEAL`, `ANNOUNCEMENT`, `NEW ARRIVAL`).
 
-### 4.7. Orders & Dispatch Processing (`admin-orders.html`)
+### 4.9. Orders & Dispatch Processing (`admin-orders.html`)
 - Filter orders by status: `Pending`, `Processing`, `Delivered`, `Cancelled`.
 - **Search & Filter**: Search orders by Customer Name, Order ID, or Phone Number.
 - **Order Details Modal**:
@@ -177,7 +201,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 - **1-Click WhatsApp Order Confirmation Button**:
   - Automatically composes and opens a structured Sinhala/English WhatsApp message to the customer with their order summary, requesting delivery confirmation before dispatch.
 
-### 4.8. Marketing & Coupons Manager (`admin-offers.html`)
+### 4.10. Marketing & Coupons Manager (`admin-offers.html`)
 - Create and toggle promo coupon codes with customizable percentage discounts and expiration status.
 
 ---
@@ -232,34 +256,48 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 | `discount_percentage` | `integer` | Discount percentage (e.g., `20`, `40`) |
 | `is_active` | `boolean` | Enable / disable promo coupon |
 
-### Table: `categories` (Used for System Dynamic Storage)
-- Stores categories as well as system JSON configurations under designated slugs:
-  - `system_cover_banner`: Stores full-width hero background cover banner images.
-  - `system_marquee_news`: Stores live top marquee ticker messages.
+### Table: `categories` (Standard Categories & Dynamic System JSON Store)
+Stores standard store product categories as well as system configurations:
+- Regular Store Categories: `snacks`, `sweets`, `beverages`, `spices`, `bakery`, `organic`, `sinhala-food`, `mens`, etc.
+- **System Slugs**:
+  - `system_cover_banner`: Full-width hero background cover banner images (JSON array).
+  - `system_marquee_news`: Live top marquee ticker announcements (JSON array).
+  - `system_popular_categories`: Featured popular category cards displayed in the home page marquee (JSON array).
 
 ---
 
 ## 6. Storage Buckets (Supabase Storage)
 
 - **`products`**:
-  - Publicly accessible bucket storing product photos, review attachments, admin hero covers, and demo MP4 videos.
+  - Publicly accessible bucket storing product photos, review attachments, admin hero covers, category card images, and demo MP4 videos.
 
 ---
 
-## 7. Version History & Recent Enhancements
+## 7. Version History & Comprehensive Milestone Log
 
-### Major Milestone (Late October 2026):
+### Complete Enhancements Summary (October 2026):
 1. **Brand Identity Transition**: Modernized brand to **GOGO MART** with unified footer `"© 2026 GOGO MART. Your Trusted Online Store."` and refreshed color palette.
-2. **Hover Image Slideshow**: Multi-photo cycling upon card hover on catalogue views.
-3. **Hero Cover Banners & Dedicated Admin**: Created `admin-banners.html` with multi-image local upload for background cover auto-swapping.
-4. **Product Video Support**: Video upload in admin portal and responsive player on product details page.
-5. **Real-time Live News Marquee**: Built `live-marquee.js` and `admin-marquee.html` for broadcast announcements.
-6. **Customer Review Photo Attachment**: Star rating review form with photo attachments and lightbox zoom modal.
-7. **Floating WhatsApp Chat Assistant**: Built `whatsapp-widget.js` with smart auto-generated context messages.
-8. **Mobile Header Overhaul**: 2-row sticky header with dedicated full-width search input (`"Search Your Products"`).
-9. **Touch Swipe on Mobile Gallery**: Seamless swipe gestures for mobile product browsing.
-10. **Checkout & Cart Mobile Ground-Up Restructure**: Auto-fits 100% viewport width without horizontal scroll or manual zoom-out, with order summary on top followed by delivery details.
-11. **Mobile Menu Drawer Fixes**: Unified slide-down drawer across all customer storefront pages.
+2. **Popular Categories Infinite Marquee Slider**:
+   - Continuous slow infinite marquee loop with hover-pause functionality.
+   - 1-click customer filtering redirecting straight to matching catalogue products.
+   - High-speed REST API synchronization with fallback handling.
+3. **Dedicated Admin Categories Manager (`admin-categories.html`)**:
+   - Dropdown to select and link existing store categories.
+   - Image upload, custom titles, tags, and cloud sync.
+4. **Unified Admin Panel Design**:
+   - Modernized all admin management pages (`dashboard`, `products`, `orders`, `categories`, `offers`, `marquee`, `banners`, `ads`, `login`) to a consistent Royal Blue & Dark Slate UI.
+5. **System Category Filtering**:
+   - Internal system records (`SYSTEM_*`) cleanly excluded from client-facing filter sidebars and dropdowns.
+6. **Hover Image Slideshow**: Multi-photo cycling upon card hover on catalogue views.
+7. **Hero Cover Banners & Dedicated Admin**: Created `admin-banners.html` with multi-image local upload for background cover auto-swapping.
+8. **Product Video Support**: Video upload in admin portal and responsive player on product details page.
+9. **Real-time Live News Marquee**: Built `live-marquee.js` and `admin-marquee.html` for broadcast announcements.
+10. **Customer Review Photo Attachment**: Star rating review form with photo attachments and lightbox zoom modal.
+11. **Floating WhatsApp Chat Assistant**: Built `whatsapp-widget.js` with smart auto-generated context messages.
+12. **Mobile Header Overhaul**: 2-row sticky header with dedicated full-width search input (`"Search Your Products"`).
+13. **Touch Swipe on Mobile Gallery**: Seamless swipe gestures for mobile product browsing.
+14. **Checkout & Cart Mobile Ground-Up Restructure**: Auto-fits 100% viewport width without horizontal scroll or manual zoom-out, with order summary on top followed by delivery details.
+15. **Mobile Menu Drawer Fixes**: Unified slide-down drawer across all customer storefront pages.
 
 ---
 *Maintained by GOGO MART Core Engineering Team — Comprehensive Documentation Updated: October 2026.*
