@@ -111,6 +111,61 @@ function getStockInfo(stock) {
   }
 }
 
+
+function formatDescription(desc) {
+  if (!desc) return '<p>Quality guaranteed. Carefully packed and delivered fresh to your doorstep by GOGO MART.</p>';
+  
+  // If description already has HTML tags like <p>, <ul>, <li>, <br>
+  if (/<[a-z][\s\S]*>/i.test(desc)) {
+    return desc;
+  }
+
+  // Split lines
+  const lines = desc.split('\n');
+  let html = '';
+  let inList = false;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    
+    // Check if it's a bullet point (- or * or •)
+    if (/^[-*•]\s+/.test(trimmed)) {
+      if (!inList) {
+        html += '<ul class="list-disc list-inside space-y-1.5 my-2 pl-1">';
+        inList = true;
+      }
+      const itemText = trimmed.replace(/^[-*•]\s+/, '');
+      html += `<li>${itemText}</li>`;
+    } 
+    // Check if it's a numbered list (1. or 2.)
+    else if (/^\d+\.\s+/.test(trimmed)) {
+      if (!inList) {
+        html += '<ol class="list-decimal list-inside space-y-1.5 my-2 pl-1">';
+        inList = true;
+      }
+      const itemText = trimmed.replace(/^\d+\.\s+/, '');
+      html += `<li>${itemText}</li>`;
+    } 
+    else {
+      if (inList) {
+        html += inList === 'ol' ? '</ol>' : '</ul>';
+        inList = false;
+      }
+      if (trimmed.length > 0) {
+        html += `<p class="mb-2.5 last:mb-0">${trimmed}</p>`;
+      } else {
+        html += '<div class="h-2"></div>'; // empty spacer
+      }
+    }
+  });
+
+  if (inList) {
+    html += inList === 'ol' ? '</ol>' : '</ul>';
+  }
+
+  return html;
+}
+
 function renderProduct() {
   const container = document.getElementById('product-container');
   const stockInfo = getStockInfo(PRODUCT.stock);
@@ -179,8 +234,8 @@ function renderProduct() {
             </div>
             <div>${stockInfo.badgeHtml}</div>
           </div>
-          <div class="p-6 rounded-3xl bg-white border border-slate-200/90 leading-relaxed text-slate-600 text-base shadow-sm">
-            ${PRODUCT.description || 'Quality guaranteed. Carefully packed and delivered fresh to your doorstep by GOGO MART.'}
+          <div class="p-6 rounded-3xl bg-white border border-slate-200/90 leading-relaxed text-slate-600 text-base shadow-sm whitespace-pre-line prose max-w-none">
+            ${formatDescription(PRODUCT.description)}
           </div>
         </div>
         

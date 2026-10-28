@@ -86,8 +86,22 @@
         </div>
 
         <div class="mt-8">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Product Story / Specs</label>
-            <textarea id="p-desc" placeholder="Tell the product's story..." class="input-field h-32"></textarea>
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Product Story / Specs</label>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="insertDescFormat('bullet')" class="text-[10px] px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-white transition-all font-bold">
+                        • Bullet List
+                    </button>
+                    <button type="button" onclick="insertDescFormat('number')" class="text-[10px] px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-white transition-all font-bold">
+                        1. Numbered List
+                    </button>
+                    <button type="button" onclick="insertDescFormat('bold')" class="text-[10px] px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-white transition-all font-bold">
+                        𝐁 Bold Heading
+                    </button>
+                </div>
+            </div>
+            <textarea id="p-desc" placeholder="Tell the product's story...\n• Feature 1\n• Feature 2\n1. Step 1" class="input-field h-40 font-mono text-sm leading-relaxed"></textarea>
+            <p class="text-[9px] text-[var(--muted)] mt-1.5 italic">Line breaks, bullets (• or -), and numbering (1., 2.) are automatically formatted on the customer page.</p>
         </div>
 
         <div class="flex gap-4 mt-8">
@@ -242,6 +256,27 @@ function removeFile(index) {
 function toggleNewCat() {
     const container = document.getElementById('new-cat-container');
     container.classList.toggle('hidden');
+}
+
+
+function insertDescFormat(type) {
+    const textarea = document.getElementById('p-desc');
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const current = textarea.value;
+
+    let insertion = '';
+    if (type === 'bullet') {
+        insertion = '\n• Feature / Specification\n• Another point';
+    } else if (type === 'number') {
+        insertion = '\n1. First detail\n2. Second detail';
+    } else if (type === 'bold') {
+        insertion = '\n--- Product Highlights ---\n';
+    }
+
+    textarea.value = current.substring(0, start) + insertion + current.substring(end);
+    textarea.focus();
 }
 
 function openModal(id = null) {
