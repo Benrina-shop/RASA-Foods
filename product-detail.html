@@ -645,5 +645,20 @@ async function submitReview(e) {
 
 loadProduct();
 </script>
+
+<script>
+function handleNavSearch(e, form) {
+  e.preventDefault();
+  const input = form.querySelector('input[name="q"]');
+  const query = input ? input.value.trim() : '';
+  if (query) {
+    window.location.href = 'products.html?q=' + encodeURIComponent(query);
+  } else {
+    window.location.href = 'products.html';
+  }
+  return false;
+}
+</script>
+
 </body>
 </html>
