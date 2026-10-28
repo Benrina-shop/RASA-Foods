@@ -115,17 +115,36 @@ function renderProduct() {
   const container = document.getElementById('product-container');
   const stockInfo = getStockInfo(PRODUCT.stock);
   const images = PRODUCT.images && PRODUCT.images.length ? PRODUCT.images : [PRODUCT.image_url];
+  productImagesList = images;
+  currentImgIndex = 0;
   
   container.innerHTML = `
     <div class="grid lg:grid-cols-2 gap-16 items-start">
       <div class="space-y-6">
-          <div class="rounded-[36px] overflow-hidden border border-slate-200 bg-white aspect-square shadow-sm p-4">
-            <img id="main-img" src="${images[0]}" alt="${PRODUCT.name}" class="w-full h-full object-contain rounded-2xl transition-opacity duration-300">
+          <div class="relative group rounded-[36px] overflow-hidden border border-slate-200 bg-white aspect-square shadow-sm p-4 flex items-center justify-center">
+            <img id="main-img" src="${images[0]}" alt="${PRODUCT.name}" class="w-full h-full object-contain rounded-2xl transition-opacity duration-300 select-none">
+
+            ${images.length > 1 ? `
+            <!-- Left Arrow Button -->
+            <button type="button" onclick="navigateImg(-1)" aria-label="Previous image" class="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-slate-800 hover:text-blue-600 shadow-lg shadow-black/10 border border-slate-200/80 backdrop-blur-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-10 focus:outline-none">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+
+            <!-- Right Arrow Button -->
+            <button type="button" onclick="navigateImg(1)" aria-label="Next image" class="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-slate-800 hover:text-blue-600 shadow-lg shadow-black/10 border border-slate-200/80 backdrop-blur-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-10 focus:outline-none">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
+
+            <!-- Image Index Counter Badge (e.g. 1 / 4) -->
+            <div id="img-counter" class="absolute bottom-6 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-bold tracking-widest pointer-events-none transition-opacity">
+              1 / ${images.length}
+            </div>
+            ` : ''}
           </div>
           ${images.length > 1 ? `
           <div class="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
             ${images.map((url, i) => `
-                <div class="thumbnail ${i === 0 ? 'active' : ''} bg-white p-1 border border-slate-200" onclick="changeImg('${url}', this)">
+                <div class="thumbnail ${i === 0 ? 'active' : ''} bg-white p-1 border border-slate-200 cursor-pointer rounded-xl transition-all" onclick="selectImgByIndex(${i})">
                     <img src="${url}" class="w-full h-full object-cover rounded-lg">
                 </div>
             `).join('')}
@@ -305,16 +324,56 @@ function renderProduct() {
   updateStarPicker(currentSelectedRating);
 }
 
-function changeImg(url, el) {
-    const main = document.getElementById('main-img');
-    main.style.opacity = '0';
+let currentImgIndex = 0;
+let productImagesList = [];
+
+function selectImgByIndex(index) {
+  if (!productImagesList.length) return;
+  if (index < 0) index = productImagesList.length - 1;
+  if (index >= productImagesList.length) index = 0;
+  
+  currentImgIndex = index;
+  const main = document.getElementById('main-img');
+  if (main) {
+    main.style.opacity = '0.3';
     setTimeout(() => {
-        main.src = url;
-        main.style.opacity = '1';
-    }, 200);
-    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
+      main.src = productImagesList[currentImgIndex];
+      main.style.opacity = '1';
+    }, 120);
+  }
+
+  // Update thumbnails
+  const thumbs = document.querySelectorAll('.thumbnail');
+  thumbs.forEach((t, i) => {
+    if (i === currentImgIndex) {
+      t.classList.add('active');
+      t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    } else {
+      t.classList.remove('active');
+    }
+  });
+
+  // Update Counter badge
+  const counter = document.getElementById('img-counter');
+  if (counter) {
+    counter.textContent = `${currentImgIndex + 1} / ${productImagesList.length}`;
+  }
 }
+
+function navigateImg(delta) {
+  selectImgByIndex(currentImgIndex + delta);
+}
+
+function changeImg(url, el) {
+  const idx = productImagesList.indexOf(url);
+  if (idx !== -1) selectImgByIndex(idx);
+}
+
+// Keyboard arrows navigation support
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') navigateImg(-1);
+  if (e.key === 'ArrowRight') navigateImg(1);
+});
 
 function changeQty(d) {
   const maxStock = PRODUCT && PRODUCT.stock !== undefined ? PRODUCT.stock : 999;
