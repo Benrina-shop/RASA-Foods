@@ -7,12 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#020100;--surface:#0a0501;--surface2:#110802;--border:#1f1105;--accent:#f97316;--cream:#fef3c7;--muted:#6b5a4d}
+    :root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#334155;--accent:#2563eb;--cream:#f8fafc;--muted:#94a3b8}
     body{background:var(--bg);color:var(--cream);font-family:'Plus Jakarta Sans', sans-serif}
     .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;padding:2.5rem 1.5rem}
     .main-content{margin-left:280px;padding:3rem 4rem;min-height:100vh}
     .nav-link{display:flex;align-items:center;gap:1rem;padding:.85rem 1.25rem;border-radius:14px;color:var(--muted);transition:all .3s;margin-bottom:.5rem;font-weight:500;font-size:.9rem}
-    .nav-link:hover, .nav-link.active{background:rgba(249,115,22,.08);color:var(--accent)}
+    .nav-link:hover, .nav-link.active{background:rgba(37,99,235,0.15);color:var(--accent)}
     .input-field{width:100%;padding:.9rem 1rem;border-radius:12px;background:var(--bg);border:1px solid var(--border);color:var(--cream);outline:none;margin-bottom:1.25rem;font-size:.875rem}
     .input-field:focus{border-color:var(--accent)}
     .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);z-index:1000;align-items:center;justify-content:center;padding:2rem}
@@ -31,11 +31,11 @@
       <form id="offer-form">
         <input type="hidden" id="o-id">
         <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Campaign Code</label>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-2 block">Campaign Code</label>
             <input type="text" id="o-code" placeholder="WELCOME15" required class="input-field uppercase">
         </div>
         <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-2 block">Discount Percentage (%)</label>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-2 block">Discount Percentage (%)</label>
             <input type="number" id="o-disc" placeholder="15" min="1" max="100" required class="input-field">
         </div>
         <div class="flex items-center justify-between mb-8 p-4 bg-white/5 rounded-2xl border border-[var(--border)]">
@@ -44,7 +44,7 @@
         </div>
         <div class="flex gap-4">
           <button type="button" onclick="closeModal()" class="flex-1 py-4 bg-transparent border border-[var(--border)] rounded-xl font-bold uppercase text-xs tracking-widest">Cancel</button>
-          <button type="submit" class="flex-1 py-4 bg-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 uppercase text-xs tracking-widest">Save Offer</button>
+          <button type="submit" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 uppercase text-xs tracking-widest">Save Offer</button>
         </div>
       </form>
     </div>
@@ -53,7 +53,7 @@
   <div class="sidebar flex flex-col justify-between">
     <div>
         <div class="font-display text-2xl font-black mb-12 flex items-center gap-3" style="font-family:'Plus Jakarta Sans', sans-serif">
-            <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-orange-500/40">
+            <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-blue-400/40">
             <span>GOGO <span class="text-xs font-normal opacity-40 tracking-widest uppercase">Admin</span></span>
         </div>
         <nav>
@@ -100,7 +100,7 @@
           <h1 class="text-4xl font-black mb-2" style="font-family:'Plus Jakarta Sans', sans-serif">Marketing</h1>
           <p class="text-sm text-[var(--muted)]">Manage promo codes and customer incentives.</p>
       </div>
-      <button onclick="openModal()" class="px-8 py-4 bg-orange-500 text-white font-black rounded-2xl shadow-xl shadow-orange-500/10 hover:scale-105 transition-all">+ New Code</button>
+      <button onclick="openModal()" class="px-8 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-500/25 hover:scale-105 transition-all">+ New Code</button>
     </div>
     
     <div id="offers-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -131,9 +131,9 @@ function renderGrid() {
         return;
     }
     grid.innerHTML = allOffers.map(o => `
-        <div class="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-[32px] hover:border-orange-500/50 transition-all group">
+        <div class="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-[32px] hover:border-blue-400/40 transition-all group">
             <div class="flex justify-between items-start mb-6">
-                <span class="px-3 py-1 bg-orange-500/10 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-[.2em]">${o.is_active ? 'Active' : 'Paused'}</span>
+                <span class="px-3 py-1 bg-blue-500/15 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-[.2em]">${o.is_active ? 'Active' : 'Paused'}</span>
                 <div class="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onclick="editOffer(${o.id})" class="text-[var(--muted)] hover:text-white"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2"/></svg></button>
                     <button onclick="deleteOffer(${o.id})" class="text-[var(--muted)] hover:text-red-500"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>
@@ -143,7 +143,7 @@ function renderGrid() {
             <p class="text-sm text-[var(--muted)] mb-8 font-medium">${o.discount_percentage}% Discount on total settlement</p>
             <div class="flex items-center gap-2">
                 <div class="flex-1 h-1 bg-[var(--border)] rounded-full overflow-hidden">
-                    <div class="h-full bg-orange-500" style="width: ${o.discount_percentage}%"></div>
+                    <div class="h-full bg-blue-600" style="width: ${o.discount_percentage}%"></div>
                 </div>
             </div>
         </div>

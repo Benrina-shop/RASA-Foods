@@ -190,6 +190,33 @@
         transform: translateX(0)
       }
     }
+
+    /* Popular Categories Marquee Animation */
+    .cats-marquee-wrapper {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+    }
+    .cats-marquee-track {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: max-content;
+      animation: marqueeCats 32s linear infinite;
+    }
+    .cats-marquee-wrapper:hover .cats-marquee-track {
+      animation-play-state: paused;
+    }
+    @keyframes marqueeCats {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -305,8 +332,10 @@
         </div>
       </div>
 
-      <!-- Scrollable Categories Slider -->
-      <div id="popular-cats-slider" class="flex items-center gap-3.5 sm:gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar" style="scrollbar-width:none;-ms-overflow-style:none;">
+      <!-- Popular Categories Infinite Marquee Slider -->
+      <div class="cats-marquee-wrapper py-2">
+        <div id="popular-cats-slider" class="cats-marquee-track">
+        </div>
       </div>
     </div>
   </section>
@@ -878,7 +907,7 @@
         return;
       }
 
-      container.innerHTML = POPULAR_CATEGORIES.map(cat => `
+      const cardHtml = (cat) => `
         <a href="products.html?cat=${encodeURIComponent(cat.slug)}" class="group flex-shrink-0 w-36 sm:w-44 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-blue-400 transition-all text-left">
           <div class="w-full aspect-[4/3] bg-slate-100 overflow-hidden relative">
             <img src="${cat.image_url || 'logo.png'}" alt="${cat.name}" class="w-full h-full object-cover group-hover:scale-108 transition-transform duration-300">
@@ -891,7 +920,17 @@
             <span class="text-[10px] text-blue-500 font-semibold flex items-center gap-1 mt-0.5">Explore <span class="group-hover:translate-x-0.5 transition-transform">→</span></span>
           </div>
         </a>
-      `).join('');
+      `;
+
+      // Multiply list if items count is small to ensure continuous smooth infinite marquee loop
+      let list = [...POPULAR_CATEGORIES];
+      while (list.length < 8) {
+        list = list.concat(POPULAR_CATEGORIES);
+      }
+
+      // Render duplicate sets for seamless infinite loop (-50% translateX)
+      const content = list.map(cardHtml).join('');
+      container.innerHTML = content + content;
     }
 
     function scrollPopularCats(dir) {

@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#080300;--surface:#110700;--surface2:#1c0d00;--border:#2e1800;--accent:#f97316;--cream:#fef3c7;--muted:#8a6840}
+    :root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#334155;--accent:#2563eb;--cream:#f8fafc;--muted:#94a3b8}
     body{background:var(--bg);color:var(--cream);font-family:'Plus Jakarta Sans', sans-serif}
     .nav-link{display:flex;align-items:center;gap:12px;padding:12px 20px;border-radius:12px;color:var(--muted);transition:all .3s;font-weight:500}
     .nav-link:hover,.nav-link.active{background:var(--surface2);color:var(--accent)}
@@ -36,7 +36,7 @@
   <!-- Sidebar -->
   <aside class="w-72 border-r border-[var(--border)] p-8 flex flex-col fixed h-full bg-[var(--bg)]">
     <div class="mb-12 flex items-center gap-3">
-      <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-orange-500/40">
+      <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-blue-400/40">
       <h1 class="font-display text-2xl font-bold" style="font-family:'Plus Jakarta Sans', sans-serif">GOGO <span class="text-xs text-[var(--muted)]">Admin</span></h1>
     </div>
     
@@ -85,12 +85,12 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-[var(--surface2)] border-b border-[var(--border)]">
-            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500">Order Token</th>
-            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500">Beneficiary</th>
-            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500">Status</th>
-            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500 text-right">Settlement</th>
-            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500 text-right">Chronology</th>
-            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-orange-500"></th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-blue-400">Order Token</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-blue-400">Beneficiary</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-blue-400">Status</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-blue-400 text-right">Settlement</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-blue-400 text-right">Chronology</th>
+            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-blue-400"></th>
           </tr>
         </thead>
         <tbody id="orders-list">
@@ -109,7 +109,7 @@
               <div class="flex items-center gap-3">
                 <p class="text-[10px] text-[var(--muted)] font-black uppercase tracking-widest" id="m-order-id">ORD-XXXXXX</p>
                 <span class="w-1 h-1 rounded-full bg-[var(--border)]"></span>
-                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest" id="m-order-date">Date Placeholder</p>
+                <p class="text-[10px] text-blue-400 font-black uppercase tracking-widest" id="m-order-date">Date Placeholder</p>
               </div>
           </div>
           <button onclick="closeModal()" class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-white/5">✕</button>
@@ -117,7 +117,7 @@
       
       <div class="grid md:grid-cols-2 gap-10 mb-10">
           <div class="space-y-4">
-              <h4 class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Customer Identity</h4>
+              <h4 class="text-[10px] font-bold uppercase tracking-widest text-blue-400">Customer Identity</h4>
               <div class="space-y-2">
                   <p class="font-bold text-white text-lg" id="m-cust-name">...</p>
                   <p class="text-sm text-[var(--muted)]" id="m-cust-email">...</p>
@@ -129,7 +129,7 @@
               </div>
           </div>
           <div class="space-y-4">
-              <h4 class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Fulfillment Location</h4>
+              <h4 class="text-[10px] font-bold uppercase tracking-widest text-blue-400">Fulfillment Location</h4>
               <p class="text-sm leading-relaxed text-[var(--muted)]" id="m-cust-addr">...</p>
               
               <div id="m-note-container" class="hidden p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
@@ -143,7 +143,7 @@
       </div>
 
       <div class="space-y-4 mb-10">
-          <h4 class="text-[10px] font-bold uppercase tracking-widest text-orange-500">Itemized Collection</h4>
+          <h4 class="text-[10px] font-bold uppercase tracking-widest text-blue-400">Itemized Collection</h4>
           <div id="m-items" class="space-y-3"></div>
       </div>
 
@@ -214,7 +214,7 @@
         const list = document.getElementById('orders-list');
         list.innerHTML = data.map(o => `
             <tr class="border-b border-[var(--border)] hover:bg-white/5 transition-colors group">
-              <td class="px-8 py-6 font-mono text-[10px] font-bold text-[var(--muted)] group-hover:text-orange-500">#ORD-${o.id.toString().substring(0,6)}</td>
+              <td class="px-8 py-6 font-mono text-[10px] font-bold text-[var(--muted)] group-hover:text-blue-400">#ORD-${o.id.toString().substring(0,6)}</td>
               <td class="px-8 py-6">
                 <div class="flex items-center gap-2">
                   <p class="font-bold text-white text-sm">${o.customer_name}</p>
@@ -225,7 +225,7 @@
               <td class="px-8 py-6">
                 <span class="status-badge ${getStatusClass(o.status)}">${o.status || 'Pending'}</span>
               </td>
-              <td class="px-8 py-6 text-right font-black text-orange-500">${formatPrice(o.total_amount)}</td>
+              <td class="px-8 py-6 text-right font-black text-blue-400">${formatPrice(o.total_amount)}</td>
               <td class="px-8 py-6 text-right text-[10px] font-medium text-[var(--muted)]">${new Date(o.created_at).toLocaleDateString()}</td>
               <td class="px-8 py-6 text-right space-x-2">
                 <button onclick="viewOrder('${o.id}')" class="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] hover:text-white">Review</button>
@@ -301,7 +301,7 @@
                         <p class="text-[10px] text-[var(--muted)] uppercase font-bold">${i.quantity} x ${formatPrice(i.unit_price)}</p>
                     </div>
                 </div>
-                <p class="text-sm font-black text-orange-500">${formatPrice(i.quantity * i.unit_price)}</p>
+                <p class="text-sm font-black text-blue-400">${formatPrice(i.quantity * i.unit_price)}</p>
             </div>
         `).join('');
 
