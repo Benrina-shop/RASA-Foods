@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Thank You — GOGO MART</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
-<body class="flex items-center justify-center p-6">
+<body class="flex items-center justify-center p-3.5 sm:p-6 min-h-screen">
   <div class="max-w-md w-full text-center">
     <img src="logo.png" alt="GOGO MART Logo" class="w-20 h-20 object-contain rounded-full mx-auto mb-6 shadow-xl border border-blue-200">
     <div class="success-icon mx-auto mb-6 animate-bounce">
@@ -38,7 +38,7 @@
     <h1 class="text-4xl font-bold mb-4" style="font-family:'Plus Jakarta Sans', sans-serif">Order Placed!</h1>
     <p class="text-[var(--muted)] mb-10">Thank you for shopping with GOGO MART. Your items have been secured and are being prepared for transit.</p>
     
-    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-[32px] p-8 text-left mb-10 shadow-2xl">
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-2xl sm:rounded-[32px] p-5 sm:p-8 text-left mb-8 sm:mb-10 shadow-2xl">
       <h3 class="font-bold mb-6 border-b border-[var(--border)] pb-4 text-xs uppercase tracking-widest text-blue-600">Transaction Summary</h3>
       <div id="order-details" class="space-y-4">
           <div class="flex justify-between text-sm">

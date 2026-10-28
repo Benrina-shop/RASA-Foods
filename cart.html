@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Your Basket — GOGO MART</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,16 +19,31 @@
       --cream: #0f172a;
       --muted: #64748b;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--cream);font-family:'Plus Jakarta Sans', sans-serif;overflow-x:hidden}
-    #navbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.1rem 1.5rem;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 2px 12px rgba(15,23,42,0.03)}
+    *, *::before, *::after{box-sizing:border-box;margin:0;padding:0}
+    html, body{width:100%;max-width:100%;overflow-x:hidden;background:var(--bg);color:var(--cream);font-family:'Plus Jakarta Sans', sans-serif}
+    .cart-item{background:#ffffff;border:1px solid var(--border);border-radius:18px;padding:0.9rem;display:flex;align-items:center;gap:0.85rem;margin-bottom:0.85rem;box-shadow:0 2px 8px rgba(15,23,42,0.03);width:100%;max-width:100%}
+    @media (min-width: 640px) {
+      .cart-item{border-radius:24px;padding:1.5rem;gap:1.5rem;margin-bottom:1rem}
+    }
+    .cart-img{width:68px;height:68px;object-fit:cover;border-radius:14px;border:1px solid var(--border);background:#f1f5f9;flex-shrink:0}
+    @media (min-width: 640px) {
+      .cart-img{width:96px;height:96px;border-radius:18px}
+    }
+    .qty-btn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border:1px solid #e2e8f0;color:#0f172a;cursor:pointer;font-weight:bold;transition:all .2s;font-size:12px}
+    @media (min-width: 640px) {
+      .qty-btn{width:34px;height:34px;border-radius:10px;font-size:14px}
+    }
+    .qty-btn:hover{background:#e2e8f0}
+    #summary-card{background:#ffffff;border:1px solid var(--border);border-radius:20px;padding:1.25rem;box-shadow:0 4px 25px rgba(15,23,42,0.04);width:100%;max-width:100%}
+    @media (min-width: 640px) {
+      #summary-card{border-radius:28px;padding:1.75rem}
+    }
+    @media (min-width: 1024px) {
+      #summary-card{position:sticky;top:84px;padding:2rem}
+    }
     .nav-link{color:var(--muted);font-size:.875rem;font-weight:600;transition:color .2s}
     .nav-link:hover,.nav-link.active{color:var(--accent)}
-    .cart-item{background:#ffffff;border:1px solid var(--border);border-radius:24px;padding:1.5rem;display:flex;align-items:center;gap:1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,0.03)}
-    .cart-img{width:100px;height:100px;object-fit:cover;border-radius:18px;border:1px solid var(--border);background:#f1f5f9}
-    .qty-btn{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border:1px solid #e2e8f0;color:#0f172a;cursor:pointer;font-weight:bold;transition:all .2s}
-    .qty-btn:hover{background:#e2e8f0}
-    #summary-card{background:#ffffff;border:1px solid var(--border);border-radius:32px;padding:2rem;position:sticky;top:120px;box-shadow:0 4px 25px rgba(15,23,42,0.04)}
+    
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -120,8 +135,8 @@
     <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
   </div>
 
-<main class="pt-32 pb-24 px-6 min-h-screen">
-  <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-12">
+<main class="pt-4 sm:pt-8 pb-16 px-3.5 sm:px-6 min-h-screen w-full max-w-full overflow-hidden">
+  <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-6 lg:gap-10 w-full max-w-full">
     <div class="lg:col-span-2">
       <h1 class="font-display text-4xl font-black mb-10" style="font-family:'Plus Jakarta Sans', sans-serif">Shopping Bag</h1>
       <div id="cart-items" class="space-y-4"></div>
@@ -180,20 +195,20 @@ function renderCart() {
   container.innerHTML = cart.map((item, idx) => {
     subtotal += item.price * item.qty;
     return `
-      <div class="cart-item items-center">
+      <div class="cart-item">
         <img src="${item.image_url}" class="cart-img" alt="${item.name}">
-        <div class="flex-1">
-          <p class="text-[10px] text-blue-600 mb-1 uppercase tracking-widest font-bold">${item.category_slug}</p>
-          <h3 class="font-bold text-lg text-slate-900 mb-1">${item.name}</h3>
-          <p class="text-sm font-black text-blue-600">${formatPrice(item.price)}</p>
+        <div class="flex-1 min-w-0">
+          <p class="text-[10px] text-blue-600 mb-0.5 uppercase tracking-wider font-bold truncate">${item.category_slug || 'Store Item'}</p>
+          <h3 class="font-bold text-xs sm:text-base text-slate-900 mb-1 truncate">${item.name}</h3>
+          <p class="text-xs sm:text-sm font-black text-blue-600">${formatPrice(item.price)}</p>
         </div>
-        <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200">
+        <div class="flex items-center gap-1 sm:gap-2 bg-slate-50 p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-200 shrink-0">
           <button onclick="updateQty(${idx}, -1)" class="qty-btn">−</button>
-          <span class="font-black w-6 text-center text-sm text-slate-900">${item.qty}</span>
+          <span class="font-black w-5 sm:w-6 text-center text-xs sm:text-sm text-slate-900">${item.qty}</span>
           <button onclick="updateQty(${idx}, 1)" class="qty-btn">+</button>
         </div>
-        <button onclick="removeItem(${idx})" class="p-3 text-slate-400 hover:text-red-500 transition-colors">
-          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button onclick="removeItem(${idx})" class="p-1.5 sm:p-2 text-slate-400 hover:text-red-500 transition-colors shrink-0" aria-label="Remove item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
     `;
