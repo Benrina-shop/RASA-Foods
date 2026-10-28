@@ -911,32 +911,48 @@
       const container = document.getElementById('popular-cats-slider');
       if (!container) return;
 
-      // Render default or local categories immediately to avoid any loading delay
+      // 1. Initial quick render from localStorage or default
       const local = JSON.parse(localStorage.getItem('gogo-popular-categories') || 'null');
       if (local && local.length > 0) {
         POPULAR_CATEGORIES = local;
-      } else {
-        POPULAR_CATEGORIES = DEFAULT_POPULAR_CATS;
+        renderPopularCategories();
       }
-      renderPopularCategories();
 
-      // In background, fetch custom categories from Supabase if configured
-      try {
-        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-        if (sb) {
+      // 2. Fetch fresh custom categories from Supabase with retry if sb isn\'t ready immediately
+      let attempts = 0;
+      async function fetchFromDb() {
+        attempts++;
+        try {
+          const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+          if (!sb) {
+            if (attempts < 20) return setTimeout(fetchFromDb, 150);
+            return;
+          }
+
           const { data, error } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
           if (data && data.image_url) {
-            const parsed = JSON.parse(data.image_url);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              POPULAR_CATEGORIES = parsed;
-              localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
-              renderPopularCategories();
-            }
+            try {
+              const parsed = JSON.parse(data.image_url);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                POPULAR_CATEGORIES = parsed;
+                localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
+                renderPopularCategories();
+                return;
+              }
+            } catch (err) {}
           }
+        } catch (e) {
+          console.warn('DB categories load fallback', e);
         }
-      } catch (e) {
-        console.warn('DB categories load fallback');
+
+        // If no custom categories configured in DB, fallback to defaults
+        if (!POPULAR_CATEGORIES || POPULAR_CATEGORIES.length === 0) {
+          POPULAR_CATEGORIES = DEFAULT_POPULAR_CATS;
+          renderPopularCategories();
+        }
       }
+
+      fetchFromDb();
     }
 
     function renderPopularCategories() {
