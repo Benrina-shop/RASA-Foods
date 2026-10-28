@@ -100,8 +100,9 @@
       background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80');
       background-size: cover;
       background-position: center;
-      opacity: .06;
-      transform: scale(1.02)
+      opacity: .18;
+      transform: scale(1.02);
+      transition: opacity 0.8s ease-in-out, background-image 0.8s ease-in-out;
     }
 
     .prod-card {
@@ -565,7 +566,77 @@
     if (document.getElementById('mob-close')) document.getElementById('mob-close').onclick = () => document.getElementById('mob-menu').classList.remove('open');
 
     initStore();
+    loadHeroCoverBanners();
     loadHeroAds();
+
+    // Cover Banners Management (Full-Width Hero Cover Images)
+    let COVER_BANNERS = [];
+    let currentCoverIndex = 0;
+    let coverTimer = null;
+
+    async function loadHeroCoverBanners() {
+      try {
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          const { data } = await sb.from('categories').select('*').eq('slug', 'system_cover_banner').single();
+          if (data && data.image_url) {
+            try {
+              const parsed = JSON.parse(data.image_url);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                COVER_BANNERS = parsed;
+                applyCoverBanner();
+                startCoverTimer();
+                return;
+              }
+            } catch (e) {
+              COVER_BANNERS = [data.image_url];
+              applyCoverBanner();
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Cover banners DB fetch bypass');
+      }
+
+      const local = JSON.parse(localStorage.getItem('gogo-cover-banners') || 'null');
+      if (local && Array.isArray(local) && local.length > 0) {
+        COVER_BANNERS = local;
+      } else {
+        COVER_BANNERS = [
+          'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80',
+          'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=1800&q=80',
+          'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=1800&q=80'
+        ];
+        localStorage.setItem('gogo-cover-banners', JSON.stringify(COVER_BANNERS));
+      }
+
+      applyCoverBanner();
+      startCoverTimer();
+    }
+
+    function applyCoverBanner() {
+      if (!COVER_BANNERS || COVER_BANNERS.length === 0) return;
+      if (currentCoverIndex >= COVER_BANNERS.length) currentCoverIndex = 0;
+      const bgEl = document.querySelector('.hero-bg');
+      if (bgEl) {
+        bgEl.style.opacity = '0.05';
+        setTimeout(() => {
+          bgEl.style.backgroundImage = `url('${COVER_BANNERS[currentCoverIndex]}')`;
+          bgEl.style.opacity = '0.18';
+        }, 300);
+      }
+    }
+
+    function startCoverTimer() {
+      if (coverTimer) clearInterval(coverTimer);
+      if (COVER_BANNERS.length > 1) {
+        coverTimer = setInterval(() => {
+          currentCoverIndex = (currentCoverIndex + 1) % COVER_BANNERS.length;
+          applyCoverBanner();
+        }, 5000); // auto-swap every 5 seconds
+      }
+    }
 
     // Hero Ads Auto-Rotating Banner Script with Multi-Image Auto-Swap
     let HERO_ADS = [];

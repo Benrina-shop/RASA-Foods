@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cover Banners — GOGO MART Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --border: #334155;
+      --accent: #2563eb;
+      --cream: #f8fafc;
+      --muted: #94a3b8;
+    }
+    body { background: var(--bg); color: var(--cream); font-family: 'Plus Jakarta Sans', sans-serif; }
+    .sidebar { width: 280px; height: 100vh; position: fixed; left: 0; top: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 2.5rem 1.5rem; z-index: 50; }
+    .main-content { margin-left: 280px; padding: 3rem; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: .875rem 1.25rem; border-radius: 14px; color: var(--muted); font-size: .875rem; font-weight: 700; transition: all .2s; margin-bottom: .5rem; }
+    .nav-link:hover, .nav-link.active { background: rgba(37,99,235,0.15); color: #60a5fa; }
+    .card-banner { position: relative; border-radius: 20px; overflow: hidden; border: 2px solid var(--border); background: #0b1120; aspect-ratio: 16/7; transition: all .2s; }
+    .card-banner:hover { border-color: #3b82f6; transform: translateY(-2px); }
+    .thumb-action { position: absolute; top: 8px; right: 8px; background: rgba(239, 68, 68, 0.9); color: white; border-radius: 9999px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; cursor: pointer; transition: transform .15s; }
+    .thumb-action:hover { transform: scale(1.15); }
+    .badge-primary { position: absolute; top: 8px; left: 8px; background: rgba(37, 99, 235, 0.9); color: white; padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar flex flex-col justify-between">
+    <div>
+      <div class="text-2xl font-black mb-12 flex items-center gap-3">
+        <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-blue-400/40">
+        <span>GOGO <span class="text-xs font-normal opacity-40 tracking-widest uppercase">Admin</span></span>
+      </div>
+      <nav>
+        <a href="admin-dashboard.html" class="nav-link ">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-width="2"/></svg>
+          Dashboard
+        </a>
+        <a href="admin-products.html" class="nav-link ">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-width="2"/></svg>
+          Products
+        </a>
+        <a href="admin-orders.html" class="nav-link ">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2"/></svg>
+          Orders
+        </a>
+        <a href="admin-banners.html" class="nav-link active">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Cover Banners
+        </a>
+        <a href="admin-ads.html" class="nav-link ">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+          Promo Ads
+        </a>
+        <a href="admin-offers.html" class="nav-link ">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" stroke-width="2"/></svg>
+          Offers
+        </a>
+      </nav>
+    </div>
+    <div class="pt-6 border-t border-[var(--border)]">
+      <a href="index.html" class="nav-link"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2"/></svg> View Storefront</a>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-black text-white">Homepage Cover Banners</h1>
+        <p class="text-sm text-[var(--muted)] mt-1">Manage full-width background cover banners. Upload multiple images to enable auto-swap!</p>
+      </div>
+      <div>
+        <input type="file" id="cover-file-input" accept="image/*" multiple class="hidden" onchange="handleCoverUpload(event)">
+        <button onclick="document.getElementById('cover-file-input').click()" class="px-6 py-3.5 bg-gradient-to-r from-blue-600 to-pink-500 hover:opacity-95 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 text-xs uppercase tracking-wider flex items-center gap-2">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          Upload New Cover Banner
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Preview Banner Window -->
+    <div class="mb-10 p-6 rounded-3xl bg-[var(--surface)] border border-[var(--border)]">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-white">Live Storefront Cover Preview</h2>
+        </div>
+        <span class="text-xs text-blue-400 font-bold" id="auto-swap-status">Auto-swap active (5s)</span>
+      </div>
+      
+      <div class="relative w-full aspect-[21/8] md:aspect-[21/7] rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center">
+        <img id="live-cover-preview" src="" alt="Cover Banner" class="w-full h-full object-cover transition-opacity duration-500">
+        <div class="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/20 to-transparent flex items-center p-8">
+          <div class="max-w-md text-white">
+            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600/90 mb-3 inline-block">Cover Banner Preview</span>
+            <h3 class="text-2xl md:text-3xl font-black font-display leading-tight mb-2">Your trusted Online Store</h3>
+            <p class="text-xs text-slate-300">This is how your homepage background hero banner appears to visitors.</p>
+          </div>
+        </div>
+        <div id="preview-dots" class="absolute bottom-4 right-6 flex items-center gap-2 z-10"></div>
+      </div>
+    </div>
+
+    <!-- Uploaded Covers Grid -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-white">Active Banner Gallery (<span id="banner-count">0</span>)</h2>
+        <p class="text-xs text-slate-400">💡 එක image එකකට වඩා වැඩි වූ විට හෝම් පේජ් එකේ cover එක auto swap වේ.</p>
+      </div>
+      <div id="banners-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Dynamic list of banners -->
+      </div>
+    </div>
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script>
+    if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
+
+    var DEFAULT_COVERS = [
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80',
+      'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=1800&q=80',
+      'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=1800&q=80'
+    ];
+
+    var coverList = [];
+    var previewIndex = 0;
+    var previewTimer = null;
+
+    async function initCovers() {
+      // 1. Try fetching from Supabase categories 'system_cover_banner'
+      try {
+        var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          var { data } = await sb.from('categories').select('*').eq('slug', 'system_cover_banner').single();
+          if (data && data.image_url) {
+            try {
+              var parsed = JSON.parse(data.image_url);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                coverList = parsed;
+                renderGallery();
+                startPreviewSlideshow();
+                return;
+              }
+            } catch (e) {
+              coverList = [data.image_url];
+              renderGallery();
+              startPreviewSlideshow();
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('DB cover fetch fallback');
+      }
+
+      // 2. Fallback to localStorage
+      var local = JSON.parse(localStorage.getItem('gogo-cover-banners') || 'null');
+      if (local && Array.isArray(local) && local.length > 0) {
+        coverList = local;
+      } else {
+        coverList = DEFAULT_COVERS;
+        localStorage.setItem('gogo-cover-banners', JSON.stringify(coverList));
+      }
+
+      renderGallery();
+      startPreviewSlideshow();
+    }
+
+    function renderGallery() {
+      document.getElementById('banner-count').textContent = coverList.length;
+      var grid = document.getElementById('banners-grid');
+      
+      if (coverList.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 bg-slate-900/50 rounded-2xl border border-slate-700">No cover banners uploaded. Click "Upload New Cover Banner" above.</div>';
+        return;
+      }
+
+      grid.innerHTML = coverList.map(function(url, idx) {
+        return '<div class="card-banner">' +
+          '<img src="' + url + '" alt="Cover ' + (idx + 1) + '" class="w-full h-full object-cover">' +
+          '<div class="badge-primary">' + (idx === 0 ? 'Primary Cover' : 'Slide ' + (idx + 1)) + '</div>' +
+          '<div class="thumb-action" onclick="deleteCover(' + idx + ')" title="Remove cover banner">✕</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function handleCoverUpload(event) {
+      var files = Array.from(event.target.files || []);
+      if (!files.length) return;
+
+      var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+
+      for (var file of files) {
+        var base64Url = await readFileAsDataURL(file);
+        var finalUrl = base64Url;
+
+        // Try upload to Supabase storage 'products' bucket if available
+        if (sb && sb.storage) {
+          try {
+            var ext = file.name.split('.').pop() || 'jpg';
+            var fn = 'cover-' + Date.now() + '-' + Math.random().toString(36).substring(7) + '.' + ext;
+            var upRes = await sb.storage.from('products').upload(fn, file);
+            if (!upRes.error) {
+              var { data: pubData } = sb.storage.from('products').getPublicUrl(fn);
+              if (pubData && pubData.publicUrl) finalUrl = pubData.publicUrl;
+            }
+          } catch (e) {
+            console.warn('Storage upload fallback to data URL');
+          }
+        }
+        coverList.push(finalUrl);
+      }
+
+      await saveCovers();
+      event.target.value = '';
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise((resolve) => {
+        var r = new FileReader();
+        r.onload = (e) => resolve(e.target.result);
+        r.readAsDataURL(file);
+      });
+    }
+
+    async function deleteCover(idx) {
+      if (confirm('Delete this cover banner?')) {
+        coverList.splice(idx, 1);
+        await saveCovers();
+      }
+    }
+
+    async function saveCovers() {
+      localStorage.setItem('gogo-cover-banners', JSON.stringify(coverList));
+
+      // Save to Supabase categories row with slug 'system_cover_banner'
+      try {
+        var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          var payload = {
+            name: 'SYSTEM_COVER_BANNER',
+            slug: 'system_cover_banner',
+            image_url: JSON.stringify(coverList)
+          };
+          var { data: exist } = await sb.from('categories').select('id').eq('slug', 'system_cover_banner').single();
+          if (exist) {
+            await sb.from('categories').update(payload).eq('id', exist.id);
+          } else {
+            await sb.from('categories').insert(payload);
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase save bypass');
+      }
+
+      renderGallery();
+      startPreviewSlideshow();
+    }
+
+    function startPreviewSlideshow() {
+      if (previewTimer) clearInterval(previewTimer);
+      if (!coverList || coverList.length === 0) return;
+      
+      updatePreviewDisplay();
+      if (coverList.length > 1) {
+        previewTimer = setInterval(function() {
+          previewIndex = (previewIndex + 1) % coverList.length;
+          updatePreviewDisplay();
+        }, 5000);
+      }
+    }
+
+    function updatePreviewDisplay() {
+      if (previewIndex >= coverList.length) previewIndex = 0;
+      var img = document.getElementById('live-cover-preview');
+      var dots = document.getElementById('preview-dots');
+      if (img && coverList[previewIndex]) {
+        img.style.opacity = '0.3';
+        setTimeout(function() {
+          img.src = coverList[previewIndex];
+          img.style.opacity = '1';
+        }, 150);
+      }
+      if (dots) {
+        dots.innerHTML = coverList.map(function(_, i) {
+          return '<div class="w-2.5 h-2.5 rounded-full transition-all ' + (i === previewIndex ? 'bg-white w-6' : 'bg-white/40') + '"></div>';
+        }).join('');
+      }
+    }
+
+    initCovers();
+  </script>
+</body>
+</html>
