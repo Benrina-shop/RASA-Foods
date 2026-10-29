@@ -292,30 +292,50 @@ async function initPage() {
         const { data: prods, error: productError } = await sb.from('products').select('*');
         if (productError) throw productError;
 
-        // Load categories strictly from Admin Panel (system_popular_categories)
-        let adminCats = [];
+        ALL_PRODUCTS = prods || [];
+
+        // Load all active categories created in the Admin Panel
+        const { data: dbCats } = await sb.from('categories').select('*').order('name');
+        let popCats = [];
         try {
             const { data: popRow } = await sb.from('categories').select('image_url').eq('slug', 'system_popular_categories').single();
             if (popRow && popRow.image_url) {
                 const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    adminCats = parsed;
+                if (Array.isArray(parsed)) popCats = parsed;
+            }
+        } catch (err) {}
+
+        const catMap = new Map();
+
+        // 1. From categories table (e.g. Mens, Animal, Birds, Womens)
+        (dbCats || []).forEach(c => {
+            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_')) {
+                catMap.set(c.slug.toLowerCase(), { name: c.name, slug: c.slug });
+            }
+        });
+
+        // 2. From system_popular_categories (Popular Categories manager)
+        popCats.forEach(c => {
+            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
+                const key = c.slug.toLowerCase();
+                if (!catMap.has(key)) {
+                    catMap.set(key, { name: c.name, slug: c.slug });
                 }
             }
-        } catch (err) {
-            console.warn('Admin categories load error:', err);
-        }
+        });
 
-        if (adminCats.length === 0) {
-            try {
-                const local = JSON.parse(localStorage.getItem('gogo-popular-categories') || 'null');
-                if (Array.isArray(local) && local.length > 0) adminCats = local;
-            } catch (e) {}
-        }
+        // 3. From actual products created by admin in inventory
+        (ALL_PRODUCTS || []).forEach(p => {
+            if (p && p.category_slug) {
+                const key = p.category_slug.toLowerCase();
+                if (!catMap.has(key) && !key.startsWith('system_')) {
+                    const formatted = p.category_slug.charAt(0).toUpperCase() + p.category_slug.slice(1);
+                    catMap.set(key, { name: formatted, slug: p.category_slug });
+                }
+            }
+        });
 
-        ALL_CATEGORIES = adminCats.filter(c => c && c.name && !c.slug?.toLowerCase().startsWith('system_'));
-        
-        ALL_PRODUCTS = prods || [];
+        ALL_CATEGORIES = Array.from(catMap.values()).sort((a,b) => a.name.localeCompare(b.name));
         const priceRange = document.getElementById('price-range');
         const ceiling = ALL_PRODUCTS.reduce((max, product) => Math.max(max, Number(product.price) || 0), 10000);
         priceRange.max = String(Math.ceil(ceiling / 100) * 100);

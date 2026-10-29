@@ -366,7 +366,7 @@
       e.preventDefault();
       const idx = document.getElementById('cat-id').value;
       const name = document.getElementById('cat-name').value.trim();
-      const slug = document.getElementById('cat-slug').value.trim();
+      const slug = document.getElementById('cat-slug').value.trim().toLowerCase();
       const subtitle = document.getElementById('cat-subtitle').value.trim();
       const image_url = document.getElementById('cat-img').value.trim() || 'logo.png';
 
@@ -379,13 +379,34 @@
       }
 
       await syncCategories();
+
+      // Ensure category row exists in categories table
+      try {
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          const { data: exist } = await sb.from('categories').select('slug').eq('slug', slug).single();
+          if (!exist) {
+            await sb.from('categories').insert({ name, slug });
+          }
+        }
+      } catch(err) {}
+
       closeModal();
     }
 
     async function deleteCategory(idx) {
       if (confirm('Are you sure you want to remove this category?')) {
-        CATEGORIES.splice(idx, 1);
+        const removed = CATEGORIES.splice(idx, 1)[0];
         await syncCategories();
+
+        if (removed && removed.slug) {
+          try {
+            const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+            if (sb) {
+              await sb.from('categories').delete().eq('slug', removed.slug.toLowerCase());
+            }
+          } catch(err) {}
+        }
       }
     }
 

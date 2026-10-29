@@ -219,29 +219,29 @@ async function initPage() {
         if (typeof getSupabase !== 'function') return setTimeout(initPage, 200);
         const sb = getSupabase();
         
-        // Load Categories from Admin Categories Manager
-        let adminCats = [];
+        // Load Categories from DB and Popular Categories
+        const { data: dbCats } = await sb.from('categories').select('*').order('name');
+        let popCats = [];
         try {
             const { data: popRow } = await sb.from('categories').select('image_url').eq('slug', 'system_popular_categories').single();
             if (popRow && popRow.image_url) {
                 const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
-                if (Array.isArray(parsed) && parsed.length > 0) adminCats = parsed;
+                if (Array.isArray(parsed)) popCats = parsed;
             }
         } catch (e) {}
 
-        if (adminCats.length === 0) {
-            try {
-                const local = JSON.parse(localStorage.getItem('gogo-popular-categories') || 'null');
-                if (Array.isArray(local) && local.length > 0) adminCats = local;
-            } catch (e) {}
-        }
-
-        if (adminCats.length > 0) {
-            allCategories = adminCats.filter(c => c && c.name && !c.slug?.toLowerCase().startsWith('system_'));
-        } else {
-            const { data: cats } = await sb.from('categories').select('*').order('name');
-            allCategories = (cats || []).filter(c => !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_'));
-        }
+        const catMap = new Map();
+        (dbCats || []).forEach(c => {
+            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
+                catMap.set(c.slug.toLowerCase(), { name: c.name, slug: c.slug });
+            }
+        });
+        popCats.forEach(c => {
+            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
+                catMap.set(c.slug.toLowerCase(), { name: c.name, slug: c.slug });
+            }
+        });
+        allCategories = Array.from(catMap.values()).sort((a,b) => a.name.localeCompare(b.name));
         updateCategoryDropdown();
 
         // Load Products
