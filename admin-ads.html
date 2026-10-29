@@ -167,7 +167,249 @@
     </div>
   </main>
 
-  <script src="supabase-config.js"></script>
+    <script src="supabase-config.js"></script>
+  <script>
+    if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
+
+    var DEFAULT_ADS = [
+      {
+        id: 1,
+        tagline: 'SPECIAL OFFER • SAVE UP TO 25%',
+        title: 'Artisanal Chocolates & Crispy Shortbread',
+        desc: 'Handcrafted sweetness made from 100% natural ingredients.',
+        image_url: 'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80',
+        images: ['https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80', 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80'],
+        btn_text: 'Explore Deals',
+        btn_link: 'products.html',
+        is_active: true
+      },
+      {
+        id: 2,
+        tagline: 'FRESH HARVEST • EXPRESS DELIVERY',
+        title: 'Finest Organic Pantry Essentials',
+        desc: 'Farm fresh spices, tea, and everyday organic goods at your doorstep.',
+        image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+        images: ['https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80'],
+        btn_text: 'Shop Now',
+        btn_link: 'products.html',
+        is_active: true
+      }
+    ];
+
+    var allAds = [];
+    var selectedBannerImages = [];
+
+    async function initAds() {
+      // 1. Fetch from Supabase categories 'system_promo_ads'
+      try {
+        var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          var { data, error } = await sb.from('categories').select('*').eq('slug', 'system_promo_ads').single();
+          if (data && data.image_url) {
+            try {
+              var parsed = JSON.parse(data.image_url);
+              if (Array.isArray(parsed)) {
+                allAds = parsed;
+                localStorage.setItem('gogo-hero-ads', JSON.stringify(allAds));
+                renderAds();
+                return;
+              }
+            } catch (err) {}
+          }
+        }
+      } catch (e) {
+        console.warn('DB promo ads fetch fallback:', e);
+      }
+
+      // 2. Fallback to localStorage if exists
+      var localStr = localStorage.getItem('gogo-hero-ads');
+      if (localStr !== null) {
+        try {
+          allAds = JSON.parse(localStr) || [];
+          renderAds();
+          return;
+        } catch (e) {}
+      }
+
+      // 3. Defaults only on brand new first-time setup
+      allAds = DEFAULT_ADS;
+      localStorage.setItem('gogo-hero-ads', JSON.stringify(allAds));
+      saveAdsToSupabase();
+      renderAds();
+    }
+
+    async function saveAdsToSupabase() {
+      localStorage.setItem('gogo-hero-ads', JSON.stringify(allAds));
+      try {
+        var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          var payload = {
+            name: 'SYSTEM_PROMO_ADS',
+            slug: 'system_promo_ads',
+            image_url: JSON.stringify(allAds)
+          };
+          var { data: exist } = await sb.from('categories').select('id').eq('slug', 'system_promo_ads').single();
+          if (exist) {
+            await sb.from('categories').update(payload).eq('id', exist.id);
+          } else {
+            await sb.from('categories').insert(payload);
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase save error:', err);
+      }
+    }
+
+    function renderAds() {
+      var grid = document.getElementById('ads-grid');
+      if (!allAds || allAds.length === 0) {
+        grid.innerHTML = '<div class="col-span-full p-12 text-center text-slate-500 bg-slate-800/40 rounded-3xl border border-slate-700">No active ads. Click "+ New Hero Ad" to add one!</div>';
+        return;
+      }
+
+      grid.innerHTML = allAds.map(function(ad) {
+        var imgs = (ad.images && ad.images.length) ? ad.images : [ad.image_url];
+        var imgCountBadge = imgs.length > 1 ? '<span class="absolute bottom-3 right-3 px-2.5 py-1 bg-black/75 backdrop-blur-md rounded-lg text-[10px] font-black text-white">🔄 ' + imgs.length + ' Photos (Auto Swap)</span>' : '';
+
+        return '<div class="ad-card flex flex-col justify-between">' +
+          '<div>' +
+            '<div class="relative h-48 bg-slate-900 overflow-hidden">' +
+              '<img src="' + (imgs[0] || 'logo.png') + '" alt="' + ad.title + '" class="w-full h-full object-cover">' +
+              '<div class="absolute top-3 left-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-[10px] font-black text-amber-400 tracking-wider">' + (ad.tagline || 'PROMO') + '</div>' +
+              imgCountBadge +
+            '</div>' +
+            '<div class="p-6">' +
+              '<h3 class="text-lg font-black text-white mb-2">' + ad.title + '</h3>' +
+              '<p class="text-xs text-slate-400 leading-relaxed mb-4">' + (ad.desc || '') + '</p>' +
+              '<div class="flex items-center justify-between text-xs font-bold text-blue-400 pt-3 border-t border-slate-700/60">' +
+                '<span>Button: ' + ad.btn_text + '</span>' +
+                '<span class="text-slate-500 truncate max-w-[120px]">' + ad.btn_link + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="p-5 bg-slate-800/60 border-t border-slate-700/60 flex items-center justify-between">' +
+            '<button onclick="editAd(' + ad.id + ')" class="text-xs font-bold text-blue-400 hover:text-blue-300">Edit Details</button>' +
+            '<button onclick="deleteAd(' + ad.id + ')" class="text-xs font-bold text-red-400 hover:text-red-300">Delete Ad</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function handleBannerFileSelect(event) {
+      var files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
+
+      files.forEach(function(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          selectedBannerImages.push(e.target.result);
+          renderBannerThumbs();
+        };
+        reader.readAsDataURL(file);
+      });
+      event.target.value = '';
+    }
+
+    function removeBannerThumb(index) {
+      selectedBannerImages.splice(index, 1);
+      renderBannerThumbs();
+    }
+
+    function renderBannerThumbs() {
+      var row = document.getElementById('banner-thumbs-row');
+      var badge = document.getElementById('banner-count-badge');
+      if (badge) badge.textContent = selectedBannerImages.length + ' Photo(s)';
+
+      if (selectedBannerImages.length === 0) {
+        row.innerHTML = '<div id="banner-empty-msg" class="w-full text-center text-xs text-slate-500 font-medium py-3">No images selected yet.</div>';
+        return;
+      }
+
+      row.innerHTML = selectedBannerImages.map(function(url, idx) {
+        return '<div class="banner-preview-thumb">' +
+          '<img src="' + url + '" alt="Thumb ' + (idx + 1) + '">' +
+          '<div class="thumb-remove" onclick="removeBannerThumb(' + idx + ')" title="Remove photo">✕</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function openModal(id) {
+      var modal = document.getElementById('ad-modal');
+      modal.classList.add('open');
+      selectedBannerImages = [];
+
+      if (id) {
+        var ad = allAds.find(function(x) { return x.id == id; });
+        if (!ad) return;
+        document.getElementById('modal-title').textContent = 'Modify Hero Ad';
+        document.getElementById('ad-id').value = ad.id;
+        document.getElementById('ad-tagline').value = ad.tagline || '';
+        document.getElementById('ad-title').value = ad.title || '';
+        document.getElementById('ad-desc').value = ad.desc || '';
+        document.getElementById('ad-btn-text').value = ad.btn_text || 'Claim Offer';
+        document.getElementById('ad-btn-link').value = ad.btn_link || 'offers.html';
+
+        if (ad.images && ad.images.length > 0) {
+          selectedBannerImages = [...ad.images];
+        } else if (ad.image_url) {
+          selectedBannerImages = [ad.image_url];
+        }
+      } else {
+        document.getElementById('modal-title').textContent = 'Create Promo Banner / Ad';
+        document.getElementById('ad-form').reset();
+        document.getElementById('ad-id').value = '';
+      }
+      renderBannerThumbs();
+    }
+
+    function closeModal() {
+      document.getElementById('ad-modal').classList.remove('open');
+    }
+
+    document.getElementById('ad-form').onsubmit = async function(e) {
+      e.preventDefault();
+      var id = document.getElementById('ad-id').value;
+
+      if (selectedBannerImages.length === 0) {
+        alert('Please select at least one banner photo from your device.');
+        return;
+      }
+
+      var adData = {
+        id: id ? Number(id) : Date.now(),
+        tagline: document.getElementById('ad-tagline').value.trim(),
+        title: document.getElementById('ad-title').value.trim(),
+        desc: document.getElementById('ad-desc').value.trim(),
+        image_url: selectedBannerImages[0],
+        images: selectedBannerImages,
+        btn_text: document.getElementById('ad-btn-text').value.trim() || 'Claim Offer',
+        btn_link: document.getElementById('ad-btn-link').value.trim() || 'offers.html',
+        is_active: true
+      };
+
+      if (id) {
+        allAds = allAds.map(function(x) { return x.id == id ? adData : x; });
+      } else {
+        allAds.unshift(adData);
+      }
+
+      await saveAdsToSupabase();
+      closeModal();
+      renderAds();
+    };
+
+    async function deleteAd(id) {
+      if (confirm('Are you sure you want to delete this promo ad?')) {
+        allAds = allAds.filter(function(x) { return x.id != id; });
+        await saveAdsToSupabase();
+        renderAds();
+      }
+    }
+
+    function editAd(id) { openModal(id); }
+
+    initAds();
+  </script>
   <script>
     if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
 

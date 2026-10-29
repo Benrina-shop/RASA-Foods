@@ -723,53 +723,78 @@
     let bannerImgInterval = null;
 
     async function loadHeroAds() {
+      // 1. First check Supabase categories 'system_promo_ads' (direct REST or client)
       try {
-        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-        if (sb) {
-          const { data } = await sb.from('banners').select('*');
-          if (data && data.length > 0) {
-            HERO_ADS = data;
-            renderHeroAd();
-            startAdTimer();
-            return;
+        const res = await fetch('https://yswekhygaebgvowdrmxk.supabase.co/rest/v1/categories?select=*&slug=eq.system_promo_ads', {
+          headers: {
+            'apikey': SB_KEY,
+            'Authorization': 'Bearer ' + SB_KEY,
+            'Accept': 'application/vnd.pgrst.object+json'
+          }
+        });
+        if (res.ok) {
+          const row = await res.json();
+          if (row && row.image_url) {
+            try {
+              const parsed = JSON.parse(row.image_url);
+              if (Array.isArray(parsed)) {
+                HERO_ADS = parsed;
+                localStorage.setItem('gogo-hero-ads', JSON.stringify(HERO_ADS));
+                renderHeroAd();
+                startAdTimer();
+                return;
+              }
+            } catch (err) {}
           }
         }
       } catch (e) {
-        console.warn('DB banners not loaded');
+        console.warn('DB promo ads fetch fallback');
       }
 
-      const local = JSON.parse(localStorage.getItem('gogo-hero-ads') || 'null');
-      if (local && local.length > 0) {
-        HERO_ADS = local;
-      } else {
-        HERO_ADS = [
-          {
-            tagline: 'FLASH OFFER • SAVE 30%',
-            title: 'Artisanal Chocolates & Crispy Shortbread',
-            desc: 'Handcrafted sweetness made from 100% natural ingredients.',
-            image_url: 'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80',
-            images: ['https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80', 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80'],
-            btn_text: 'Claim Offer',
-            btn_link: 'offers.html'
-          },
-          {
-            tagline: 'FRESH HARVEST • EXPRESS DELIVERY',
-            title: 'Finest Organic Pantry Essentials',
-            desc: 'Farm fresh spices, tea, and everyday organic goods at your doorstep.',
-            image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-            images: ['https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80'],
-            btn_text: 'Shop Now',
-            btn_link: 'products.html'
-          }
-        ];
-        localStorage.setItem('gogo-hero-ads', JSON.stringify(HERO_ADS));
+      // 2. Fallback to localStorage if exists
+      const localStr = localStorage.getItem('gogo-hero-ads');
+      if (localStr !== null) {
+        try {
+          HERO_ADS = JSON.parse(localStr) || [];
+          renderHeroAd();
+          startAdTimer();
+          return;
+        } catch (e) {}
       }
+
+      // 3. Fallback defaults only on brand new clean install
+      HERO_ADS = [
+        {
+          tagline: 'FLASH OFFER • SAVE 30%',
+          title: 'Artisanal Chocolates & Crispy Shortbread',
+          desc: 'Handcrafted sweetness made from 100% natural ingredients.',
+          image_url: 'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80',
+          images: ['https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80', 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80'],
+          btn_text: 'Claim Offer',
+          btn_link: 'offers.html'
+        },
+        {
+          tagline: 'FRESH HARVEST • EXPRESS DELIVERY',
+          title: 'Finest Organic Pantry Essentials',
+          desc: 'Farm fresh spices, tea, and everyday organic goods at your doorstep.',
+          image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+          images: ['https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80'],
+          btn_text: 'Shop Now',
+          btn_link: 'products.html'
+        }
+      ];
+      localStorage.setItem('gogo-hero-ads', JSON.stringify(HERO_ADS));
       renderHeroAd();
       startAdTimer();
     }
 
     function renderHeroAd() {
-      if (!HERO_ADS || HERO_ADS.length === 0) return;
+      const container = document.getElementById('hero-ads-container');
+      if (!HERO_ADS || HERO_ADS.length === 0) {
+        if (container) container.style.display = 'none';
+        return;
+      }
+      if (container) container.style.display = 'block';
       if (currentAdIndex >= HERO_ADS.length) currentAdIndex = 0;
       if (currentAdIndex < 0) currentAdIndex = HERO_ADS.length - 1;
 
