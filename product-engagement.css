@@ -1,6 +1,11 @@
 .product-engagement { margin: 14px 0; padding-top: 12px; border-top: 1px solid #e2e8f0; cursor: default; }
 .engagement-label { display: block; margin-bottom: 7px; color: #64748b; font-size: 11px; font-weight: 700; }
 .reaction-options { display: flex; flex-wrap: wrap; gap: 5px; }
+.reaction-options button { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; max-width: 100%; }
+.reaction-count { display: inline-block; min-width: 20px; padding: 1px 5px; border-radius: 6px; background: #e2e8f0; color: #334155; font-size: 11px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.reaction-sync-note { display: block; margin-top: 6px; color: #64748b; font-size: 10px; line-height: 1.5; }
+.product-engagement button:disabled { cursor: wait; opacity: .65; }
+.product-engagement .reaction-retry { margin-top: 5px; color: #2563eb; font-size: 11px; }
 .product-engagement button { min-height: 36px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 6px 9px; background: #fff; color: #475569; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s; }
 .product-engagement button:hover { border-color: #93c5fd; background: #eff6ff; }
 .product-engagement button:focus-visible, .wishlist-link:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }

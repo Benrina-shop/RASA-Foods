@@ -4,6 +4,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const http = require('node:http');
 const assert = require('node:assert/strict');
+const { createReactionDB } = require('./product-reactions-db.cjs');
 const playwrightPath = process.env.PLAYWRIGHT_MODULE_PATH || 'playwright';
 const { chromium } = require(playwrightPath);
 const { expect } = require(playwrightPath + '/test');
@@ -26,46 +27,70 @@ const products = [
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const baseURL = `http://127.0.0.1:${server.address().port}`;
   let browser;
+  const reactionDB = await createReactionDB();
+  let failCounts = false;
+  let failWrites = false;
   try {
     browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
     const context = await browser.newContext({ baseURL, viewport: { width: 1280, height: 900 } });
-    // Deterministic fixtures for the external Supabase API; no production writes.
-    await context.route('**/*.supabase.co/**', async route => {
+    // Product fixtures plus real local PostgreSQL reaction functions; no production writes.
+    const apiRoute = async route => {
       const url = new URL(route.request().url());
+      if (url.pathname.includes('/rpc/')) {
+        const name = url.pathname.split('/').pop();
+        const args = route.request().postDataJSON();
+        if ((name === 'get_product_reactions' && failCounts) || (name === 'set_product_reaction' && failWrites)) {
+          return route.fulfill({ status: 503, json: { message: 'Test service outage' } });
+        }
+        try {
+          let result;
+          if (name === 'get_product_reactions') result = await reactionDB.query('select * from public.get_product_reactions($1::bigint[], $2::uuid)', [args.p_product_ids, args.p_visitor_token]);
+          else if (name === 'set_product_reaction') result = await reactionDB.query('select * from public.set_product_reaction($1::bigint, $2::text, $3::uuid)', [args.p_product_id, args.p_reaction, args.p_visitor_token]);
+          else throw new Error('Unexpected RPC');
+          return route.fulfill({ json: result.rows });
+        } catch (error) { return route.fulfill({ status: 400, json: { message: error.message } }); }
+      }
       assert.equal(route.request().method(), 'GET', 'Tests must never write to Supabase');
       let data = [];
       if (url.pathname.endsWith('/products')) data = url.searchParams.has('id') ? products.find(p => 'eq.' + p.id === url.searchParams.get('id')) : products;
       if (url.pathname.endsWith('/categories')) data = url.searchParams.has('slug') ? null : [{ id: 1, name: 'Gifts', slug: 'gifts', image_url: 'logo.png' }];
       await route.fulfill({ json: data });
-    });
+    };
+    await context.route('**/*.supabase.co/**', apiRoute);
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto('/products.html');
     const widget = page.locator('[data-engagement-id="901"]');
     await expect(widget).toBeVisible();
-    await widget.getByRole('button', { name: 'Like', exact: true }).click();
-    await expect(widget.getByRole('button', { name: 'Like', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await widget.getByRole('button', { name: /^Like(?:,|$)/ }).click();
+    await expect(widget.getByRole('button', { name: /^Like(?:,|$)/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(widget.locator('[data-reaction-count="like"]')).toHaveText('1');
+    await expect(widget.locator('[data-reaction-count="love"]')).toHaveText('0');
+    await expect(widget.locator('[data-reaction-count="wow"]')).toHaveText('0');
     await expect(page).toHaveURL(/products\.html$/);
     assert.equal(await page.evaluate(() => localStorage.getItem('rasa-cart')), null);
-    await widget.getByRole('button', { name: 'Love', exact: true }).click();
-    await expect(widget.getByRole('button', { name: 'Like', exact: true })).toHaveAttribute('aria-pressed', 'false');
-    await expect(widget.getByRole('button', { name: 'Love', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    await widget.getByRole('button', { name: 'Love', exact: true }).click();
-    await expect(widget.getByRole('button', { name: 'Love', exact: true })).toHaveAttribute('aria-pressed', 'false');
-    await widget.getByRole('button', { name: 'Wow', exact: true }).focus();
+    await widget.getByRole('button', { name: /^Love(?:,|$)/ }).click();
+    await expect(widget.getByRole('button', { name: /^Like(?:,|$)/ })).toHaveAttribute('aria-pressed', 'false');
+    await expect(widget.getByRole('button', { name: /^Love(?:,|$)/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(widget.locator('[data-reaction-count="like"]')).toHaveText('0');
+    await expect(widget.locator('[data-reaction-count="love"]')).toHaveText('1');
+    await widget.getByRole('button', { name: /^Love(?:,|$)/ }).click();
+    await expect(widget.getByRole('button', { name: /^Love(?:,|$)/ })).toHaveAttribute('aria-pressed', 'false');
+    await expect(widget.locator('[data-reaction-count="love"]')).toHaveText('0');
+    await widget.getByRole('button', { name: /^Wow(?:,|$)/ }).focus();
     await page.keyboard.press('Space');
-    await expect(widget.getByRole('button', { name: 'Wow', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(widget.getByRole('button', { name: /^Wow(?:,|$)/ })).toHaveAttribute('aria-pressed', 'true');
     await widget.getByRole('button', { name: 'Add to Wishlist', exact: true }).click();
     await page.reload();
     await expect(widget.getByRole('button', { name: 'Saved to Wishlist', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    await expect(widget.getByRole('button', { name: 'Wow', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(widget.getByRole('button', { name: /^Wow(?:,|$)/ })).toHaveAttribute('aria-pressed', 'true');
     console.log('PASS reaction select/change/remove, keyboard, no card navigation/cart side effects, reload persistence');
 
     for (const url of ['/index.html', '/offers.html', '/product-detail.html?id=901']) {
       await page.goto(url);
       await expect(widget.getByRole('button', { name: 'Saved to Wishlist', exact: true })).toBeVisible();
-      await expect(widget.getByRole('button', { name: 'Wow', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(widget.getByRole('button', { name: /^Wow(?:,|$)/ })).toHaveAttribute('aria-pressed', 'true');
     }
     await page.locator('#nav-search-input').fill('Premium');
     await expect(page.locator('#live-search-results').getByText('Premium Gift Box', { exact: true })).toBeVisible();
@@ -82,6 +107,25 @@ const products = [
     await expect(page.getByText('Your wishlist is empty', { exact: true })).toBeVisible();
     await secondTab.close();
     console.log('PASS cross-page state, wishlist retrieval including high-price items, cross-tab removal and empty state');
+
+    await page.goto('/products.html');
+    await expect(widget.locator('[data-reaction-count="wow"]')).toHaveText('1');
+    const otherContext = await browser.newContext({ baseURL });
+    await otherContext.route('**/*.supabase.co/**', apiRoute);
+    const otherPage = await otherContext.newPage();
+    await otherPage.goto('/products.html');
+    const otherWidget = otherPage.locator('[data-engagement-id="901"]');
+    await expect(otherWidget.locator('[data-reaction-count="wow"]')).toHaveText('1');
+    await expect(otherWidget.getByRole('button', { name: /^Wow(?:,|$)/ })).toHaveAttribute('aria-pressed', 'false');
+    await otherWidget.getByRole('button', { name: /^Love(?:,|$)/ }).click();
+    await expect(otherWidget.locator('[data-reaction-count="love"]')).toHaveText('1');
+    await page.bringToFront();
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect(widget.locator('[data-reaction-count="love"]')).toHaveText('1');
+    await expect(widget.locator('[data-reaction-count="wow"]')).toHaveText('1');
+    await expect(widget.getByRole('button', { name: /^Wow(?:,|$)/ })).toHaveAttribute('aria-pressed', 'true');
+    await otherContext.close();
+    console.log('PASS independent browsers see shared counts without sharing personal selection');
 
     await page.goto('/products.html');
     const outOfStock = page.locator('[data-engagement-id="902"]');
@@ -104,15 +148,31 @@ const products = [
       localStorage.setItem('gogo-product-preference:v1:901', 'malformed');
     });
     await page.reload();
-    await expect(widget.getByRole('button', { name: 'Like', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    await expect(widget.getByRole('button', { name: /^Like(?:,|$)/ })).toHaveAttribute('aria-pressed', 'false');
+    failWrites = true;
+    await widget.getByRole('button', { name: /^Like(?:,|$)/ }).click();
+    await expect(page.getByRole('status')).toContainText('Unable to confirm');
+    await expect(widget.locator('[data-reaction-count="like"]')).toHaveText('0');
+    failWrites = false;
+    failCounts = true;
+    await page.reload();
+    await expect(widget.getByText('Counts unavailable.', { exact: true })).toBeVisible();
+    await expect(widget.locator('[data-reaction-count="like"]')).toHaveText('—');
+    await expect(widget.getByRole('button', { name: /^Like(?:,|$)/ })).toBeDisabled();
+    failCounts = false;
+    await widget.getByRole('button', { name: 'Retry counts', exact: true }).click();
+    await expect(widget.locator('[data-reaction-count="love"]')).toHaveText('1');
+    await expect(widget.getByRole('button', { name: /^Like(?:,|$)/ })).toBeEnabled();
+    await page.evaluate(() => localStorage.removeItem('gogo-reaction-visitor:v1'));
     await page.evaluate(() => { Storage.prototype.setItem = function () { throw new DOMException('Blocked', 'QuotaExceededError'); }; });
-    await widget.getByRole('button', { name: 'Like', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Unable to save your choice');
-    await expect(widget.getByRole('button', { name: 'Like', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    await widget.getByRole('button', { name: /^Like(?:,|$)/ }).click();
+    await expect(page.getByRole('status')).toContainText('Please allow browser storage to react');
+    await expect(widget.getByRole('button', { name: /^Like(?:,|$)/ })).toHaveAttribute('aria-pressed', 'false');
     assert.deepEqual(errors, [], 'No browser JavaScript errors');
-    console.log('PASS corrupt storage recovery and blocked storage feedback; no JavaScript errors');
+    console.log('PASS corrupt/blocked storage, failed writes, count outage/retry; no JavaScript errors');
   } finally {
     if (browser) await browser.close();
+    await reactionDB.close();
     await new Promise(resolve => server.close(resolve));
   }
 })().catch(error => { console.error(error); process.exitCode = 1; });
