@@ -21,7 +21,7 @@
     .main-content { margin-left: 280px; padding: 3rem; }
     .nav-link { display: flex; align-items: center; gap: 12px; padding: .875rem 1.25rem; border-radius: 14px; color: var(--muted); font-size: .875rem; font-weight: 700; transition: all .2s; margin-bottom: .5rem; }
     .nav-link:hover, .nav-link.active { background: rgba(37,99,235,0.15); color: #60a5fa; }
-    .card-banner { position: relative; border-radius: 20px; overflow: hidden; border: 2px solid var(--border); background: #0b1120; aspect-ratio: 16/7; transition: all .2s; }
+    .card-banner { position: relative; border-radius: 20px; overflow: hidden; border: 2px solid var(--border); background: #0b1120; aspect-ratio: 1/1; transition: all .2s; }
     .card-banner:hover { border-color: #3b82f6; transform: translateY(-2px); }
     .thumb-action { position: absolute; top: 8px; right: 8px; background: rgba(239, 68, 68, 0.9); color: white; border-radius: 9999px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; cursor: pointer; transition: transform .15s; }
     .thumb-action:hover { transform: scale(1.15); }
@@ -103,7 +103,7 @@
         <span class="text-xs text-blue-400 font-bold" id="auto-swap-status">Auto-swap active (5s)</span>
       </div>
       
-      <div class="relative w-full aspect-[21/8] md:aspect-[21/7] rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center">
+      <div class="relative w-full aspect-square max-w-lg mx-auto rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center">
         <img id="live-cover-preview" src="" alt="Cover Banner" class="w-full h-full object-contain p-2 transition-opacity duration-500">
         <div class="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/20 to-transparent flex items-center p-8">
           <div class="max-w-md text-white">

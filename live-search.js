@@ -50,7 +50,7 @@ function handleLiveSearch(query, isMobile) {
       var img = p.image_url || 'logo.png';
       var formattedPrice = typeof formatPrice === 'function' ? formatPrice(p.price) : 'Rs. ' + p.price;
       return '<a href="product-detail.html?id=' + p.id + '" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-50/70 transition-colors group">' +
-        '<img src="' + img + '" alt="' + p.name + '" class="w-11 h-11 rounded-lg object-cover border border-slate-200 bg-white shrink-0 group-hover:scale-105 transition-transform">' +
+        '<img src="' + img + '" alt="' + p.name + '" class="w-11 h-11 rounded-lg object-contain border border-slate-200 bg-white shrink-0 group-hover:scale-105 transition-transform">' +
         '<div class="flex-1 min-w-0">' +
         '<p class="text-xs font-bold text-slate-900 group-hover:text-blue-600 truncate">' + p.name + '</p>' +
         '<p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">' + (p.category_slug || '') + '</p>' +

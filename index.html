@@ -109,7 +109,7 @@
 
     .prod-card-img {
       width: 100%;
-      aspect-ratio: 4/3;
+      aspect-ratio: 1/1;
       object-fit: contain;
       padding: 10px;
       transition: transform .5s ease;
@@ -383,7 +383,7 @@
         <div class="lg:col-span-5 fu delay2">
           <div id="hero-ads-container"
             class="relative group rounded-[32px] overflow-hidden border border-slate-200/90 bg-white shadow-2xl shadow-blue-500/10">
-            <div id="hero-ad-slide" class="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden bg-slate-950 flex items-center justify-center">
+            <div id="hero-ad-slide" class="relative aspect-square overflow-hidden bg-slate-950 flex items-center justify-center">
               <img id="ad-banner-bg" src="https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80"
                 alt="" class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none select-none">
               <img id="ad-banner-img" src="https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80"
@@ -945,7 +945,7 @@
 
       const cardHtml = (cat) => `
         <a href="products.html?cat=${encodeURIComponent(cat.slug)}" class="group flex-shrink-0 w-36 sm:w-44 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-blue-400 transition-all text-left">
-          <div class="w-full aspect-[4/3] bg-slate-50 overflow-hidden relative flex items-center justify-center p-2">
+          <div class="w-full aspect-square bg-slate-50 overflow-hidden relative flex items-center justify-center p-2">
             <img src="${cat.image_url || 'logo.png'}" alt="${cat.name}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
             <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900/80 text-white backdrop-blur-xs">
               ${cat.subtitle || 'Category'}

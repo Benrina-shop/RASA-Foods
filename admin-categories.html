@@ -135,7 +135,7 @@
             <button type="button" onclick="document.getElementById('cat-file-input').click()" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold text-white shrink-0">Upload Image</button>
             <input type="url" id="cat-img" placeholder="Or paste image URL" class="w-full bg-[#0b1120] border border-[var(--border)] p-2.5 rounded-xl text-white outline-none focus:border-blue-500 text-xs">
           </div>
-          <div id="img-preview-box" class="w-full aspect-[4/3] rounded-xl bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center">
+          <div id="img-preview-box" class="w-full aspect-square rounded-xl bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center">
             <img id="img-preview" src="" alt="Preview" class="w-full h-full object-contain p-2 hidden">
             <span id="img-preview-placeholder" class="text-xs text-slate-500">Image Preview</span>
           </div>
@@ -237,7 +237,7 @@
 
       grid.innerHTML = CATEGORIES.map((cat, idx) => `
         <div class="category-card group">
-          <div class="aspect-[4/3] bg-slate-900 relative overflow-hidden flex items-center justify-center p-2">
+          <div class="aspect-square bg-slate-900 relative overflow-hidden flex items-center justify-center p-2">
             <img src="${cat.image_url || 'logo.png'}" alt="${cat.name}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex flex-col justify-end p-4">
               <span class="text-[10px] font-black uppercase tracking-wider text-pink-400 mb-0.5">${cat.subtitle || 'Category'}</span>
