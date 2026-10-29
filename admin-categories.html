@@ -168,9 +168,13 @@
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          const { data } = await sb.from('categories').select('*').order('name');
+          const { data } = await sb.from('products').select('category_slug');
           if (data) {
-            STORE_CATEGORIES = data.filter(c => !c.slug.startsWith('system_') && !c.name.startsWith('SYSTEM_'));
+            const uniqueSlugs = [...new Set(data.map(p => p.category_slug).filter(Boolean))];
+            STORE_CATEGORIES = uniqueSlugs.map(s => ({
+              slug: s,
+              name: s.charAt(0).toUpperCase() + s.slice(1)
+            }));
             populateCategorySelect();
           }
         }
