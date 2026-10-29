@@ -7,7 +7,7 @@
 .reaction-options { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; }
 .reaction-options button { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; max-width: 100%; }
 .reaction-sync-note { display: block; margin-top: 6px; color: #64748b; font-size: 10px; line-height: 1.5; }
-.product-engagement button:disabled { cursor: wait; opacity: .65; }
+.product-engagement button:disabled { cursor: default; opacity: .65; }
 .product-engagement .reaction-retry { margin-top: 5px; color: #2563eb; font-size: 11px; }
 .product-engagement button { min-height: 36px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 6px 9px; background: #fff; color: #475569; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s; }
 .product-engagement button:hover { border-color: #93c5fd; background: #eff6ff; }

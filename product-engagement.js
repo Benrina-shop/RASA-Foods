@@ -89,17 +89,35 @@
         const returned = new Set(rows.map(row => String(row.product_id)));
         if (batch.some(id => !returned.has(id))) throw new Error('Product no longer available.');
         rows.forEach(row => { if (!pending.has(String(row.product_id))) accept(row); });
-      } catch (_) {
+      } catch (error) {
         if (version !== requestVersion) return;
-        batch.forEach(id => { if (!pending.has(id)) totals.set(id, { ...totals.get(id), failed: true }); });
+        batch.forEach(id => { if (!pending.has(id)) totals.set(id, { ...totals.get(id), failed: true, localOnly: error.code === 'PGRST202' }); });
       }
       refresh();
     }
   }
 
   async function saveReaction(id, reaction) {
-    const current = totals.get(id);
-    if (pending.has(id) || !current?.ready || current.failed) return;
+    let current = totals.get(id);
+    if (pending.has(id)) return;
+    if (current?.localOnly) { saveLocalReaction(id, reaction); return; }
+    if (!current?.ready || current.failed) {
+      pending.add(id);
+      ++requestVersion;
+      refresh();
+      try {
+        const rows = await rpc('get_product_reactions', { p_product_ids: [id], p_visitor_token: visitorToken() });
+        const row = rows.find(item => String(item.product_id) === id);
+        if (!row) throw new Error('Product unavailable');
+        accept(row);
+        current = totals.get(id);
+      } catch (error) {
+        totals.set(id, { ...current, failed: true, localOnly: error.code === 'PGRST202' });
+        if (error.code === 'PGRST202') saveLocalReaction(id, reaction);
+        else announce('Reactions are temporarily unavailable. Please try again.');
+        return;
+      } finally { pending.delete(id); refresh(); }
+    }
     const next = current.mine === reaction ? null : reaction;
     pending.add(id);
     ++requestVersion; // Ignore any older read response arriving during this write.
@@ -123,6 +141,17 @@
       pending.delete(id);
       refresh();
     }
+  }
+
+  function saveLocalReaction(id, reaction) {
+    const state = read(id);
+    state.reaction = state.reaction === reaction ? null : reaction;
+    try {
+      if (!state.saved && !state.reaction) localStorage.removeItem(prefix + id);
+      else localStorage.setItem(prefix + id, JSON.stringify(state));
+      refresh();
+      announce('Reaction saved in this browser only. Shared counts are unavailable.');
+    } catch (_) { announce('Unable to save your choice. Please allow browser storage and try again.'); }
   }
 
   function productId(id) {
@@ -154,18 +183,19 @@
     const state = read(id);
     const counts = totals.get(id);
     const pickerId = `reaction-picker-${++pickerNumber}`;
-    const selected = reactions[counts?.mine];
+    const mine = counts?.localOnly ? state.reaction : counts?.mine;
+    const selected = reactions[mine];
     scheduleCounts();
     return `<div class="product-engagement" data-engagement-id="${id}" role="group" aria-label="Product reactions and wishlist">
       <div class="reaction-summary" role="group" aria-label="Reaction counts">
         ${['love', 'like', 'wow'].map(key => `<span class="reaction-total" data-reaction-total="${key}" title="${reactions[key][1]} reactions"><span aria-hidden="true">${reactions[key][0]}</span> <span data-reaction-count="${key}">${counts?.ready ? countText(counts[key]) : '—'}</span></span>`).join('<span class="reaction-dot" aria-hidden="true">·</span>')}
       </div>
       <div class="reaction-actions">
-        <button type="button" class="reaction-trigger" data-reaction-trigger aria-label="React to product" aria-expanded="false" aria-controls="${pickerId}" ${!counts?.ready || counts.failed || pending.has(id) ? 'disabled' : ''}><span aria-hidden="true">${selected ? selected[0] : '👍'}</span> ${selected ? selected[1] : 'React'}</button>
+        <button type="button" class="reaction-trigger" data-reaction-trigger aria-label="React to product" aria-expanded="false" aria-controls="${pickerId}"><span aria-hidden="true">${selected ? selected[0] : '👍'}</span> ${selected ? selected[1] : 'React'}</button>
         <button type="button" class="wishlist-toggle" data-product-wishlist aria-label="${state.saved ? 'Saved to Wishlist' : 'Add to Wishlist'}" title="${state.saved ? 'Saved to Wishlist' : 'Add to Wishlist'}" aria-pressed="${state.saved}"><span aria-hidden="true">${state.saved ? '🔖' : '🤍'}</span></button>
       </div>
       <div id="${pickerId}" class="reaction-options" role="group" aria-label="Choose one reaction" hidden>
-        ${Object.entries(reactions).map(([key, [emoji, label]]) => `<button type="button" data-product-reaction="${key}" aria-label="${label}" aria-pressed="${counts?.mine === key}" ${!counts?.ready || counts.failed || pending.has(id) ? 'disabled' : ''} title="${label}"><span aria-hidden="true">${emoji}</span> ${label}</button>`).join('')}
+        ${Object.entries(reactions).map(([key, [emoji, label]]) => `<button type="button" data-product-reaction="${key}" aria-label="${label}" aria-pressed="${mine === key}" ${pending.has(id) ? 'disabled' : ''} title="${label}"><span aria-hidden="true">${emoji}</span> ${label}</button>`).join('')}
       </div>
       <span class="reaction-sync-note" ${counts?.ready && !counts.failed ? 'hidden' : ''}>${counts?.ready ? '' : 'Loading reactions…'}</span>
       <button type="button" class="reaction-retry" data-reaction-retry ${counts?.failed ? '' : 'hidden'}>Retry counts</button>
@@ -192,12 +222,13 @@
       const id = widget.dataset.engagementId;
       const state = read(id);
       const counts = totals.get(id);
+      const mine = counts?.localOnly ? state.reaction : counts?.mine;
       widget.setAttribute('aria-busy', String(pending.has(id)));
       widget.querySelectorAll('[data-product-reaction]').forEach(button => {
         const key = button.dataset.productReaction;
-        button.setAttribute('aria-pressed', String(counts?.mine === key));
-        button.disabled = pending.has(id) || !counts?.ready || counts.failed;
-        button.title = `${counts?.mine === key ? 'Remove' : 'React with'} ${reactions[key][1]}`;
+        button.setAttribute('aria-pressed', String(mine === key));
+        button.disabled = pending.has(id);
+        button.title = `${mine === key ? 'Remove' : 'React with'} ${reactions[key][1]}`;
         const count = widget.querySelector(`[data-reaction-count="${key}"]`);
         count.textContent = counts?.ready ? countText(counts[key]) : '—';
         const total = count.closest('[data-reaction-total]');
@@ -205,14 +236,14 @@
         total.setAttribute('aria-label', label);
         total.title = label;
       });
-      const selected = reactions[counts?.mine];
+      const selected = reactions[mine];
       const trigger = widget.querySelector('[data-reaction-trigger]');
       trigger.innerHTML = `<span aria-hidden="true">${selected ? selected[0] : '👍'}</span> ${selected ? selected[1] : 'React'}`;
       trigger.classList.toggle('has-reaction', Boolean(selected));
-      trigger.disabled = pending.has(id) || !counts?.ready || counts.failed;
+      trigger.disabled = false;
       const note = widget.querySelector('.reaction-sync-note');
       note.hidden = Boolean(counts?.ready && !counts.failed && !pending.has(id));
-      note.textContent = pending.has(id) ? 'Saving reaction…' : counts?.failed ? (counts.ready ? 'Counts may be outdated.' : 'Counts unavailable.') : counts?.ready ? '' : 'Loading reactions…';
+      note.textContent = pending.has(id) ? 'Saving reaction…' : counts?.localOnly ? 'Reactions saved on this browser only. Shared counts unavailable.' : counts?.failed ? (counts.ready ? 'Counts may be outdated.' : 'Counts unavailable.') : counts?.ready ? '' : 'Loading reactions…';
       widget.querySelector('[data-reaction-retry]').hidden = !counts?.failed;
       const button = widget.querySelector('[data-product-wishlist]');
       button.setAttribute('aria-pressed', String(state.saved));

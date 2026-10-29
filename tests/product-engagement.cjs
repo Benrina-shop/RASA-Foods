@@ -30,6 +30,7 @@ const products = [
   const reactionDB = await createReactionDB();
   let failCounts = false;
   let failWrites = false;
+  let missingCounts = false;
   try {
     browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
     const context = await browser.newContext({ baseURL, viewport: { width: 1280, height: 900 } });
@@ -39,6 +40,7 @@ const products = [
       if (url.pathname.includes('/rpc/')) {
         const name = url.pathname.split('/').pop();
         const args = route.request().postDataJSON();
+        if (missingCounts && name === 'get_product_reactions') return route.fulfill({ status: 404, json: { code: 'PGRST202', message: 'Function not installed' } });
         if ((name === 'get_product_reactions' && failCounts) || (name === 'set_product_reaction' && failWrites)) {
           return route.fulfill({ status: 503, json: { message: 'Test service outage' } });
         }
@@ -177,11 +179,32 @@ const products = [
     await page.reload();
     await expect(widget.getByText('Counts unavailable.', { exact: true })).toBeVisible();
     await expect(widget.locator('[data-reaction-count="like"]')).toHaveText('—');
-    await expect(widget.getByRole('button', { name: /^Like(?:,|$)/, includeHidden: true })).toBeDisabled();
+    await expect(widget.getByRole('button', { name: 'React to product' })).toBeEnabled();
+    await widget.getByRole('button', { name: 'React to product' }).click();
+    await widget.getByRole('button', { name: /^Like(?:,|$)/ }).click();
+    await expect(page.getByRole('status')).toContainText('temporarily unavailable');
     failCounts = false;
     await widget.getByRole('button', { name: 'Retry counts', exact: true }).click();
     await expect(widget.locator('[data-reaction-count="love"]')).toHaveText('1');
     await expect(widget.getByRole('button', { name: /^Like(?:,|$)/, includeHidden: true })).toBeEnabled();
+    missingCounts = true;
+    await page.reload();
+    await expect(widget.getByText('Reactions saved on this browser only. Shared counts unavailable.')).toBeVisible();
+    await expect(widget.getByRole('button', { name: 'React to product' })).toHaveCSS('cursor', 'pointer');
+    await widget.getByRole('button', { name: 'React to product' }).click();
+    await widget.getByRole('button', { name: 'Like', exact: true }).click();
+    await expect(widget.getByRole('button', { name: 'React to product' })).toContainText('Like');
+    await expect(widget.locator('[data-reaction-count="like"]')).toHaveText('—');
+    await expect(page.getByRole('status')).toContainText('this browser only');
+    await page.reload();
+    await expect(widget.getByRole('button', { name: 'React to product' })).toContainText('Like');
+    await widget.getByRole('button', { name: 'React to product' }).click();
+    await widget.getByRole('button', { name: 'Like', exact: true }).click();
+    await expect(widget.getByRole('button', { name: 'React to product' })).toContainText('React');
+    missingCounts = false;
+    await widget.getByRole('button', { name: 'Retry counts', exact: true }).click();
+    await expect(widget.locator('[data-reaction-count="love"]')).toHaveText('1');
+    console.log('PASS missing SQL fallback, clickable React, reload/remove, and shared count recovery');
     await page.evaluate(() => localStorage.removeItem('gogo-reaction-visitor:v1'));
     await page.evaluate(() => { Storage.prototype.setItem = function () { throw new DOMException('Blocked', 'QuotaExceededError'); }; });
     await widget.getByRole('button', { name: 'React to product' }).click();
