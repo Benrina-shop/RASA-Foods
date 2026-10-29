@@ -59,26 +59,28 @@
     
 
     .nav-link {
-      color: #64748b;
-      font-size: .8125rem;
       font-weight: 700;
-      padding: .4rem .75rem;
-      border-radius: .75rem;
+      font-size: .85rem;
+      color: #475569;
+      padding: .45rem .85rem;
+      border-radius: 9999px;
       transition: all .2s;
       display: inline-flex;
       align-items: center;
       gap: .375rem;
       text-decoration: none;
+      letter-spacing: 0.01em;
     }
 
     .nav-link:hover {
       color: #2563eb;
-      background: rgba(37, 99, 235, 0.06);
+      background: rgba(37, 99, 235, 0.08);
     }
 
     .nav-link.active {
       color: #2563eb;
-      background: rgba(37, 99, 235, 0.08);
+      background: rgba(37, 99, 235, 0.12);
+      font-weight: 800;
     }
 
     .hero {
@@ -240,18 +242,15 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3.5">
       <div class="flex items-center justify-between gap-4 lg:gap-6">
         <!-- Left: Brand Logo & Navigation Links Group -->
-        <div class="flex items-center gap-4 lg:gap-6 shrink-0">
-          <!-- Logo -->
-          <a href="index.html" class="flex items-center gap-2.5 font-display text-xl sm:text-2xl font-bold shrink-0 hover:opacity-90 transition-opacity">
-            <img src="logo.png" alt="GOGO MART Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full shadow border border-orange-500/30">
-            <span class="flex items-baseline gap-1"><span style="color:var(--accent)" class="font-black">GOGO</span> <span class="text-xs sm:text-sm font-semibold tracking-wider text-[var(--muted)]">MART</span></span>
+        <div class="flex items-center gap-3 lg:gap-5 shrink-0">
+          <!-- Brand Logo with clear border separation -->
+          <a href="index.html" class="flex items-center gap-2.5 font-display text-xl sm:text-2xl font-bold shrink-0 hover:opacity-90 transition-opacity pr-4 sm:pr-5 border-r border-slate-300">
+            <img src="logo.png" alt="GOGO MART Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full shadow-sm border border-blue-400/30">
+            <span class="flex items-baseline gap-1.5"><span class="font-black tracking-tight" style="color:var(--accent)">GOGO</span> <span class="text-xs sm:text-sm font-bold tracking-widest text-slate-400 uppercase">MART</span></span>
           </a>
 
-          <!-- Elegant Divider between Brand and Nav Menu -->
-          <div class="hidden md:block h-6 w-px bg-slate-200"></div>
-
           <!-- Desktop Navigation Links -->
-          <div class="hidden md:flex items-center gap-1 lg:gap-2">
+          <div class="hidden md:flex items-center gap-1 lg:gap-1.5 pl-1">
             <a href="index.html" class="nav-link active">Home</a>
             <a href="products.html" class="nav-link">Products</a>
             <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
@@ -902,56 +901,73 @@
 
     // Popular Categories Slider Logic
     let POPULAR_CATEGORIES = [];
-    const DEFAULT_POPULAR_CATS = [
-      { name: "Trending Products", slug: "trending", subtitle: "Hot Picks", image_url: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80" },
-      { name: "Combo Package", slug: "combo-package", subtitle: "Great Value", image_url: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80" },
-      { name: "Computer Accessories", slug: "computer-accessories", subtitle: "Tech & Audio", image_url: "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=600&q=80" },
-      { name: "Mobile Hub", slug: "mobile-hub", subtitle: "Phones & Gadgets", image_url: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80" },
-      { name: "Mens", slug: "mens", subtitle: "Fashion & Style", image_url: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80" },
-      { name: "Kids", slug: "kids", subtitle: "Toys & Fun", image_url: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80" },
-      { name: "Home & Living", slug: "home-living", subtitle: "Kitchen & Decor", image_url: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80" }
-    ];
 
     async function loadPopularCategories() {
       const container = document.getElementById('popular-cats-slider');
       if (!container) return;
 
-      // 1. Instant render from localStorage if available
-      const local = JSON.parse(localStorage.getItem('gogo-popular-categories') || 'null');
-      if (local && Array.isArray(local) && local.length > 0) {
-        POPULAR_CATEGORIES = local;
-        renderPopularCategories();
-      }
-
-      // 2. Guaranteed fetch from Supabase REST endpoint (instant & reliable across all devices)
       try {
-        const res = await fetch('https://yswekhygaebgvowdrmxk.supabase.co/rest/v1/categories?select=*&slug=eq.system_popular_categories', {
-          headers: {
-            'apikey': SB_KEY,
-            'Authorization': 'Bearer ' + SB_KEY,
-            'Accept': 'application/json'
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (sb) {
+          const { data: dbCats } = await sb.from('categories').select('*').order('name');
+          const { data: popRow } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
+
+          let popList = [];
+          if (popRow && popRow.image_url) {
+            try {
+              const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
+              if (Array.isArray(parsed)) popList = parsed;
+            } catch (err) {}
           }
-        });
-        if (res.ok) {
-          const rows = await res.json();
-          const row = Array.isArray(rows) ? rows[0] : rows;
-          if (row && row.image_url) {
-            let parsed; try { parsed = typeof row.image_url === 'string' ? JSON.parse(row.image_url) : row.image_url; } catch(e) { parsed = []; }
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              POPULAR_CATEGORIES = parsed;
-              localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
-              renderPopularCategories();
-              return;
+
+          const catMap = new Map();
+          popList.forEach(c => {
+            if (c && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
+              catMap.set(c.slug.toLowerCase(), {
+                name: c.name,
+                slug: c.slug.toLowerCase(),
+                subtitle: c.subtitle || '',
+                image_url: c.image_url || 'logo.png'
+              });
             }
+          });
+
+          (dbCats || []).forEach(c => {
+            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_')) {
+              const key = c.slug.toLowerCase();
+              if (catMap.has(key)) {
+                const existing = catMap.get(key);
+                catMap.set(key, {
+                  name: c.name || existing.name,
+                  slug: key,
+                  subtitle: existing.subtitle || '',
+                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : existing.image_url
+                });
+              } else {
+                catMap.set(key, {
+                  name: c.name,
+                  slug: key,
+                  subtitle: '',
+                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : 'logo.png'
+                });
+              }
+            }
+          });
+
+          POPULAR_CATEGORIES = Array.from(catMap.values());
+          if (POPULAR_CATEGORIES.length > 0) {
+            localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
+            renderPopularCategories();
+            return;
           }
         }
       } catch (err) {
-        console.warn('REST loadPopularCategories error:', err);
+        console.warn('loadPopularCategories error:', err);
       }
 
-      // 3. Fallback to default categories only if no categories configured yet
-      if (!POPULAR_CATEGORIES || POPULAR_CATEGORIES.length === 0) {
-        POPULAR_CATEGORIES = DEFAULT_POPULAR_CATS;
+      const local = JSON.parse(localStorage.getItem('gogo-popular-categories') || 'null');
+      if (local && Array.isArray(local) && local.length > 0) {
+        POPULAR_CATEGORIES = local;
         renderPopularCategories();
       }
     }
@@ -997,6 +1013,32 @@
         container.scrollBy({ left: dir * 260, behavior: 'smooth' });
       }
     }
+
+    // Realtime listeners in index.html
+    if (typeof onStoreUpdate === 'function') {
+      onStoreUpdate(function(event) {
+        if (event.type === 'CATEGORIES_CHANGED') {
+          loadPopularCategories();
+        }
+        if (event.type === 'PRODUCTS_CHANGED') {
+          initStore();
+        }
+      });
+    }
+
+    const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
+    if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
+      subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function(event) {
+        if (event.table === 'categories') loadPopularCategories();
+        if (event.table === 'products') initStore();
+      });
+    }
+
+    // Background auto-refresh every 20 seconds
+    setInterval(function() {
+      loadPopularCategories();
+      initStore();
+    }, 20000);
 
   </script>
   <script src="live-search.js"></script>

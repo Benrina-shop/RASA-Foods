@@ -104,6 +104,7 @@
 
       <form id="cat-form" onsubmit="saveCategory(event)" class="space-y-5">
         <input type="hidden" id="cat-id">
+        <input type="hidden" id="cat-old-slug">
         
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Select From Store Categories *</label>
@@ -150,33 +151,24 @@
   </div>
 
   <script src="supabase-config.js"></script>
+
   <script>
     let CATEGORIES = [];
     let STORE_CATEGORIES = [];
-
-    const DEFAULT_POPULAR_CATS = [
-      { name: "Trending Products", slug: "trending", subtitle: "Hot Picks", image_url: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80" },
-      { name: "Combo Package", slug: "combo-package", subtitle: "Great Value", image_url: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80" },
-      { name: "Computer & Accessories", slug: "computer-accessories", subtitle: "Gaming & Tech", image_url: "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=600&q=80" },
-      { name: "Mobile Hub", slug: "mobile-hub", subtitle: "Phones & Audio", image_url: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80" },
-      { name: "Mens", slug: "mens", subtitle: "Fashion & Style", image_url: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80" },
-      { name: "Kids", slug: "kids", subtitle: "Toys & More", image_url: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80" },
-      { name: "Home & Living", slug: "home-living", subtitle: "Kitchen & Decor", image_url: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80" }
-    ];
 
     async function loadStoreCategoriesDropdown() {
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          const { data } = await sb.from('products').select('category_slug');
-          if (data) {
-            const uniqueSlugs = [...new Set(data.map(p => p.category_slug).filter(Boolean))];
-            STORE_CATEGORIES = uniqueSlugs.map(s => ({
-              slug: s,
-              name: s.charAt(0).toUpperCase() + s.slice(1)
-            }));
-            populateCategorySelect();
-          }
+          const { data: dbCats } = await sb.from('categories').select('name, slug').order('name');
+          const catMap = new Map();
+          (dbCats || []).forEach(c => {
+            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_')) {
+              catMap.set(c.slug.toLowerCase(), { name: c.name, slug: c.slug.toLowerCase() });
+            }
+          });
+          STORE_CATEGORIES = Array.from(catMap.values());
+          populateCategorySelect();
         }
       } catch (err) {
         console.warn('Store categories dropdown load error', err);
@@ -187,7 +179,7 @@
       const select = document.getElementById('cat-existing-select');
       if (!select) return;
       select.innerHTML = '<option value="">-- Choose Existing Category --</option>' + 
-        STORE_CATEGORIES.map(c => `<option value="${c.slug}" data-name="${c.name}">${c.name} (${c.slug})</option>`).join('');
+        STORE_CATEGORIES.map(c => '<option value="' + c.slug + '" data-name="' + c.name + '">' + c.name + ' (' + c.slug + ')</option>').join('');
     }
 
     function onSelectExistingCategory(slug) {
@@ -208,14 +200,60 @@
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          const { data, error } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
-          if (data && data.image_url) {
+          // 1. Fetch real categories table rows
+          const { data: dbCats } = await sb.from('categories').select('*').order('name');
+
+          // 2. Fetch system_popular_categories JSON
+          const { data: popRow } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
+          let popList = [];
+          if (popRow && popRow.image_url) {
             try {
-              CATEGORIES = JSON.parse(data.image_url);
-              renderGrid();
-              return;
+              const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
+              if (Array.isArray(parsed)) popList = parsed;
             } catch (err) {}
           }
+
+          const catMap = new Map();
+
+          // Add popular categories first
+          popList.forEach(c => {
+            if (c && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
+              const key = c.slug.toLowerCase();
+              catMap.set(key, {
+                name: c.name || key,
+                slug: key,
+                subtitle: c.subtitle || '',
+                image_url: c.image_url || 'logo.png'
+              });
+            }
+          });
+
+          // Merge actual DB categories (including any added via Inventory)
+          (dbCats || []).forEach(c => {
+            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_')) {
+              const key = c.slug.toLowerCase();
+              if (catMap.has(key)) {
+                const existing = catMap.get(key);
+                catMap.set(key, {
+                  name: c.name || existing.name,
+                  slug: key,
+                  subtitle: existing.subtitle || '',
+                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : existing.image_url
+                });
+              } else {
+                catMap.set(key, {
+                  name: c.name,
+                  slug: key,
+                  subtitle: '',
+                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : 'logo.png'
+                });
+              }
+            }
+          });
+
+          CATEGORIES = Array.from(catMap.values());
+          renderGrid();
+          return;
         }
       } catch (e) {
         console.warn('DB load error', e);
@@ -225,8 +263,7 @@
       if (local && local.length > 0) {
         CATEGORIES = local;
       } else {
-        CATEGORIES = DEFAULT_POPULAR_CATS;
-        localStorage.setItem('gogo-popular-categories', JSON.stringify(CATEGORIES));
+        CATEGORIES = [];
       }
 
       renderGrid();
@@ -271,6 +308,7 @@
     function openModal() {
       document.getElementById('cat-form').reset();
       document.getElementById('cat-id').value = '';
+      document.getElementById('cat-old-slug').value = '';
       if (document.getElementById('cat-existing-select')) document.getElementById('cat-existing-select').value = '';
       document.getElementById('modal-title').textContent = 'Add Category';
       document.getElementById('img-preview').classList.add('hidden');
@@ -285,6 +323,7 @@
     function editCategory(idx) {
       const cat = CATEGORIES[idx];
       document.getElementById('cat-id').value = idx;
+      document.getElementById('cat-old-slug').value = cat.slug || '';
       document.getElementById('cat-name').value = cat.name || '';
       document.getElementById('cat-slug').value = cat.slug || '';
       if (document.getElementById('cat-existing-select')) {
@@ -364,48 +403,100 @@
 
     async function saveCategory(e) {
       e.preventDefault();
-      const idx = document.getElementById('cat-id').value;
-      const name = document.getElementById('cat-name').value.trim();
-      const slug = document.getElementById('cat-slug').value.trim().toLowerCase();
-      const subtitle = document.getElementById('cat-subtitle').value.trim();
-      const image_url = document.getElementById('cat-img').value.trim() || 'logo.png';
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
 
-      const catData = { name, slug, subtitle, image_url };
-
-      if (idx === '') {
-        CATEGORIES.push(catData);
-      } else {
-        CATEGORIES[parseInt(idx)] = catData;
-      }
-
-      await syncCategories();
-
-      // Ensure category row exists in categories table
       try {
+        const idx = document.getElementById('cat-id').value;
+        const oldSlug = (document.getElementById('cat-old-slug').value || '').trim().toLowerCase();
+        const name = document.getElementById('cat-name').value.trim();
+        const slug = document.getElementById('cat-slug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        const subtitle = document.getElementById('cat-subtitle').value.trim();
+        const image_url = document.getElementById('cat-img').value.trim() || 'logo.png';
+
+        const catData = { name, slug, subtitle, image_url };
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+
         if (sb) {
-          const { data: exist } = await sb.from('categories').select('slug').eq('slug', slug).single();
-          if (!exist) {
-            await sb.from('categories').insert({ name, slug });
+          // 1. If renaming / changing slug of an existing category
+          if (oldSlug && oldSlug !== slug) {
+            // CASCADE UPDATE PRODUCTS
+            await sb.from('products').update({ category_slug: slug }).eq('category_slug', oldSlug);
+
+            // UPDATE OR RENAME IN CATEGORIES TABLE
+            const { data: existOld } = await sb.from('categories').select('id').eq('slug', oldSlug).single();
+            if (existOld) {
+              await sb.from('categories').update({ name, slug, image_url }).eq('id', existOld.id);
+            } else {
+              await sb.from('categories').insert({ name, slug, image_url });
+            }
+          } else {
+            // New category or slug didn't change
+            const { data: existNew } = await sb.from('categories').select('id').eq('slug', slug).single();
+            if (existNew) {
+              await sb.from('categories').update({ name, image_url }).eq('id', existNew.id);
+            } else {
+              await sb.from('categories').insert({ name, slug, image_url });
+            }
           }
         }
-      } catch(err) {}
 
-      closeModal();
+        if (idx === '') {
+          const existingIdx = CATEGORIES.findIndex(c => c.slug === slug);
+          if (existingIdx !== -1) {
+            CATEGORIES[existingIdx] = catData;
+          } else {
+            CATEGORIES.push(catData);
+          }
+        } else {
+          CATEGORIES[parseInt(idx)] = catData;
+        }
+
+        await syncCategories();
+
+        // Broadcast real-time change to all tabs and store
+        if (typeof notifyStoreUpdate === 'function') {
+          notifyStoreUpdate('CATEGORIES_CHANGED', { action: idx === '' ? 'add' : 'update', slug, oldSlug });
+          notifyStoreUpdate('PRODUCTS_CHANGED', { action: 'category_cascade', slug, oldSlug });
+        }
+
+        closeModal();
+      } catch (err) {
+        console.error('Save category error:', err);
+        alert('Failed to save category: ' + (err.message || err));
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Category';
+      }
     }
 
     async function deleteCategory(idx) {
-      if (confirm('Are you sure you want to remove this category?')) {
+      const cat = CATEGORIES[idx];
+      if (!cat) return;
+      if (confirm('Are you sure you want to remove "' + cat.name + '"? Linked products will be unassigned so no ghost categories remain.')) {
         const removed = CATEGORIES.splice(idx, 1)[0];
+        const delSlug = (removed.slug || '').toLowerCase();
+
+        try {
+          const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+          if (sb && delSlug) {
+            // 1. Delete from categories table
+            await sb.from('categories').delete().eq('slug', delSlug);
+
+            // 2. Cascade unassign any products referencing this category
+            await sb.from('products').update({ category_slug: '' }).eq('category_slug', delSlug);
+          }
+        } catch (err) {
+          console.warn('Delete category cascade error:', err);
+        }
+
         await syncCategories();
 
-        if (removed && removed.slug) {
-          try {
-            const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-            if (sb) {
-              await sb.from('categories').delete().eq('slug', removed.slug.toLowerCase());
-            }
-          } catch(err) {}
+        // Broadcast real-time change to all tabs
+        if (typeof notifyStoreUpdate === 'function') {
+          notifyStoreUpdate('CATEGORIES_CHANGED', { action: 'delete', slug: delSlug });
+          notifyStoreUpdate('PRODUCTS_CHANGED', { action: 'unlink_category', slug: delSlug });
         }
       }
     }
@@ -435,8 +526,23 @@
       renderGrid();
     }
 
+    // Realtime listeners
+    if (typeof onStoreUpdate === 'function') {
+      onStoreUpdate(function(event) {
+        if (event.type === 'CATEGORIES_CHANGED' || event.type === 'PRODUCTS_CHANGED') {
+          loadCategories();
+        }
+      });
+    }
+
+    const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
+    if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
+      subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function() {
+        loadCategories();
+      });
+    }
+
     loadCategories();
   </script>
 </body>
 </html>
-

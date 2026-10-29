@@ -481,14 +481,37 @@ document.getElementById('product-form').onsubmit = async (e) => {
 
         // 1. Handle New Category
         if (newCatName) {
-            const slug = newCatName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
-            const { data: existCat } = await sb.from('categories').select('slug').eq('slug', slug).single();
+            const slug = newCatName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            const { data: existCat } = await sb.from('categories').select('id, slug').eq('slug', slug).single();
             if (!existCat) {
                 await sb.from('categories').insert({ name: newCatName, slug: slug });
                 allCategories.push({ name: newCatName, slug: slug });
                 updateCategoryDropdown();
             }
+
+            // Sync with SYSTEM_POPULAR_CATEGORIES JSON
+            try {
+                const { data: popRow } = await sb.from('categories').select('id, image_url').eq('slug', 'system_popular_categories').single();
+                if (popRow) {
+                    let popList = [];
+                    try { popList = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url; } catch(e){}
+                    if (Array.isArray(popList) && !popList.some(c => c.slug === slug)) {
+                        popList.push({
+                            name: newCatName,
+                            slug: slug,
+                            subtitle: '',
+                            image_url: 'logo.png'
+                        });
+                        await sb.from('categories').update({ image_url: JSON.stringify(popList) }).eq('id', popRow.id);
+                        localStorage.setItem('gogo-popular-categories', JSON.stringify(popList));
+                    }
+                }
+            } catch(e){}
+
             cat_slug = slug;
+            if (typeof notifyStoreUpdate === 'function') {
+                notifyStoreUpdate('CATEGORIES_CHANGED', { action: 'add', slug });
+            }
         }
 
         // 2. Handle Image Uploads
@@ -559,6 +582,10 @@ document.getElementById('product-form').onsubmit = async (e) => {
 
         if (res.error) throw res.error;
 
+        if (typeof notifyStoreUpdate === 'function') {
+            notifyStoreUpdate('PRODUCTS_CHANGED', { action: id ? 'update' : 'add', id });
+        }
+
         closeModal();
         initPage();
     } catch (err) {
@@ -573,11 +600,32 @@ async function deleteProduct(id) {
     if (confirm('ARCHIVE WARNING: Permanently purge this asset?')) {
         const { error } = await getSupabase().from('products').delete().eq('id', id);
         if (error) alert(error.message);
-        else initPage();
+        else {
+            if (typeof notifyStoreUpdate === 'function') {
+                notifyStoreUpdate('PRODUCTS_CHANGED', { action: 'delete', id });
+            }
+            initPage();
+        }
     }
 }
 
 function editProduct(id) { openModal(id); }
+
+// Realtime listeners
+if (typeof onStoreUpdate === 'function') {
+    onStoreUpdate(function(event) {
+        if (event.type === 'PRODUCTS_CHANGED' || event.type === 'CATEGORIES_CHANGED') {
+            initPage();
+        }
+    });
+}
+
+const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
+if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
+    subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function() {
+        initPage();
+    });
+}
 
 initPage();
 </script>
