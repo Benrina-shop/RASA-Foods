@@ -36,24 +36,35 @@
     .qty-btn:hover{background:#e2e8f0}
     .nav-link{color:var(--muted);font-size:.875rem;font-weight:600;transition:color .2s}
     .nav-link:hover,.nav-link.active{color:var(--accent)}
+      .nav-link{color:#64748b;font-size:.8125rem;font-weight:700;padding:.4rem .75rem;border-radius:.75rem;transition:all .2s;display:inline-flex;align-items:center;gap:.375rem;text-decoration:none}
+    .nav-link:hover{color:#2563eb;background:rgba(37,99,235,0.06)}
+    .nav-link.active{color:#2563eb;background:rgba(37,99,235,0.08)}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <!-- Header -->
   <nav class="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-    <div class="max-w-6xl mx-auto px-3.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3">
-      <a href="index.html" class="flex items-center gap-2 sm:gap-3 font-display text-lg sm:text-2xl font-bold shrink-0">
-        <img src="logo.png" alt="GOGO MART Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full shadow border border-orange-500/30">
-        <span><span style="color:var(--accent)">GOGO</span> <span class="text-xs sm:text-sm font-semibold tracking-wider text-[var(--muted)]">MART</span></span>
-      </a>
+    <div class="max-w-6xl mx-auto px-3.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-4 lg:gap-6">
+      <!-- Left: Brand Logo & Navigation Links Group -->
+      <div class="flex items-center gap-4 lg:gap-6 shrink-0">
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-2.5 font-display text-xl sm:text-2xl font-bold shrink-0 hover:opacity-90 transition-opacity">
+          <img src="logo.png" alt="GOGO MART Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full shadow border border-orange-500/30">
+          <span class="flex items-baseline gap-1"><span style="color:var(--accent)" class="font-black">GOGO</span> <span class="text-xs sm:text-sm font-semibold tracking-wider text-[var(--muted)]">MART</span></span>
+        </a>
 
-      <!-- Desktop Links -->
-      <div class="hidden md:flex items-center gap-6 lg:gap-8">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="products.html" class="nav-link">Products</a>
-        <a href="offers.html" class="nav-link">Offers</a>
-        <a href="contact.html" class="nav-link">Contact</a>
+        <!-- Elegant Divider between Brand and Nav Menu -->
+        <div class="hidden md:block h-6 w-px bg-slate-200"></div>
+
+        <!-- Desktop Links -->
+        <div class="hidden md:flex items-center gap-1 lg:gap-2">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="products.html" class="nav-link">Products</a>
+          <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
+          <a href="offers.html" class="nav-link">Offers</a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </div>
       </div>
 
       <a href="products.html" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 px-3.5 py-1.5 rounded-full transition-colors shrink-0">
