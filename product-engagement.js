@@ -9,6 +9,30 @@
   const pending = new Set();
   let requestVersion = 0;
   let loadTimer;
+  let pickerNumber = 0;
+
+  function countText(value) {
+    return new Intl.NumberFormat('en', { notation: value >= 1000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value);
+  }
+
+  function closePickers(except = null, restoreFocus = false) {
+    document.querySelectorAll('[data-reaction-trigger][aria-expanded="true"]').forEach(trigger => {
+      const widget = trigger.closest('[data-engagement-id]');
+      if (widget === except) return;
+      trigger.setAttribute('aria-expanded', 'false');
+      widget.querySelector('.reaction-options').hidden = true;
+      if (restoreFocus) trigger.focus();
+    });
+  }
+
+  function togglePicker(widget) {
+    const trigger = widget.querySelector('[data-reaction-trigger]');
+    const open = trigger.getAttribute('aria-expanded') !== 'true';
+    closePickers();
+    trigger.setAttribute('aria-expanded', String(open));
+    widget.querySelector('.reaction-options').hidden = !open;
+    if (open) widget.querySelector('[data-product-reaction]:not(:disabled)')?.focus();
+  }
 
   function visitorToken(create = false) {
     try {
@@ -129,15 +153,22 @@
     if (!id) return '';
     const state = read(id);
     const counts = totals.get(id);
+    const pickerId = `reaction-picker-${++pickerNumber}`;
+    const selected = reactions[counts?.mine];
     scheduleCounts();
     return `<div class="product-engagement" data-engagement-id="${id}" role="group" aria-label="Product reactions and wishlist">
-      <span class="engagement-label">Product reactions</span>
-      <div class="reaction-options" role="group" aria-label="Choose one reaction">
-        ${Object.entries(reactions).map(([key, [emoji, label]]) => `<button type="button" data-product-reaction="${key}" aria-label="${label}" aria-pressed="${counts?.mine === key}" ${!counts?.ready || counts.failed || pending.has(id) ? 'disabled' : ''} title="${label}"><span aria-hidden="true">${emoji}</span> ${label} <span class="reaction-count" data-reaction-count="${key}" aria-label="${label} reactions">${counts?.ready ? counts[key].toLocaleString('en-US') : '—'}</span></button>`).join('')}
+      <div class="reaction-summary" role="group" aria-label="Reaction counts">
+        ${['love', 'like', 'wow'].map(key => `<span class="reaction-total" data-reaction-total="${key}" title="${reactions[key][1]} reactions"><span aria-hidden="true">${reactions[key][0]}</span> <span data-reaction-count="${key}">${counts?.ready ? countText(counts[key]) : '—'}</span></span>`).join('<span class="reaction-dot" aria-hidden="true">·</span>')}
       </div>
-      <span class="reaction-sync-note">${counts?.ready ? 'Reactions from all shoppers' : 'Loading reactions…'}</span>
+      <div class="reaction-actions">
+        <button type="button" class="reaction-trigger" data-reaction-trigger aria-label="React to product" aria-expanded="false" aria-controls="${pickerId}" ${!counts?.ready || counts.failed || pending.has(id) ? 'disabled' : ''}><span aria-hidden="true">${selected ? selected[0] : '👍'}</span> ${selected ? selected[1] : 'React'}</button>
+        <button type="button" class="wishlist-toggle" data-product-wishlist aria-label="${state.saved ? 'Saved to Wishlist' : 'Add to Wishlist'}" title="${state.saved ? 'Saved to Wishlist' : 'Add to Wishlist'}" aria-pressed="${state.saved}"><span aria-hidden="true">${state.saved ? '🔖' : '🤍'}</span></button>
+      </div>
+      <div id="${pickerId}" class="reaction-options" role="group" aria-label="Choose one reaction" hidden>
+        ${Object.entries(reactions).map(([key, [emoji, label]]) => `<button type="button" data-product-reaction="${key}" aria-label="${label}" aria-pressed="${counts?.mine === key}" ${!counts?.ready || counts.failed || pending.has(id) ? 'disabled' : ''} title="${label}"><span aria-hidden="true">${emoji}</span> ${label}</button>`).join('')}
+      </div>
+      <span class="reaction-sync-note" ${counts?.ready && !counts.failed ? 'hidden' : ''}>${counts?.ready ? '' : 'Loading reactions…'}</span>
       <button type="button" class="reaction-retry" data-reaction-retry ${counts?.failed ? '' : 'hidden'}>Retry counts</button>
-      <button type="button" class="wishlist-toggle" data-product-wishlist aria-pressed="${state.saved}"><span aria-hidden="true">${state.saved ? '🔖' : '🤍'}</span> ${state.saved ? 'Saved to Wishlist' : 'Add to Wishlist'}</button>
     </div>`;
   }
 
@@ -167,15 +198,27 @@
         button.setAttribute('aria-pressed', String(counts?.mine === key));
         button.disabled = pending.has(id) || !counts?.ready || counts.failed;
         button.title = `${counts?.mine === key ? 'Remove' : 'React with'} ${reactions[key][1]}`;
-        const count = button.querySelector('[data-reaction-count]');
-        count.textContent = counts?.ready ? counts[key].toLocaleString('en-US') : '—';
-        button.setAttribute('aria-label', `${reactions[key][1]}, ${counts?.ready ? counts[key].toLocaleString('en-US') + ' reactions' : 'count unavailable'}`);
+        const count = widget.querySelector(`[data-reaction-count="${key}"]`);
+        count.textContent = counts?.ready ? countText(counts[key]) : '—';
+        const total = count.closest('[data-reaction-total]');
+        const label = `${reactions[key][1]}: ${counts?.ready ? counts[key].toLocaleString('en-US') : 'unavailable'}`;
+        total.setAttribute('aria-label', label);
+        total.title = label;
       });
-      widget.querySelector('.reaction-sync-note').textContent = pending.has(id) ? 'Saving reaction…' : counts?.failed ? (counts.ready ? 'Counts may be outdated.' : 'Counts unavailable.') : counts?.ready ? 'Reactions from all shoppers' : 'Loading reactions…';
+      const selected = reactions[counts?.mine];
+      const trigger = widget.querySelector('[data-reaction-trigger]');
+      trigger.innerHTML = `<span aria-hidden="true">${selected ? selected[0] : '👍'}</span> ${selected ? selected[1] : 'React'}`;
+      trigger.classList.toggle('has-reaction', Boolean(selected));
+      trigger.disabled = pending.has(id) || !counts?.ready || counts.failed;
+      const note = widget.querySelector('.reaction-sync-note');
+      note.hidden = Boolean(counts?.ready && !counts.failed && !pending.has(id));
+      note.textContent = pending.has(id) ? 'Saving reaction…' : counts?.failed ? (counts.ready ? 'Counts may be outdated.' : 'Counts unavailable.') : counts?.ready ? '' : 'Loading reactions…';
       widget.querySelector('[data-reaction-retry]').hidden = !counts?.failed;
       const button = widget.querySelector('[data-product-wishlist]');
       button.setAttribute('aria-pressed', String(state.saved));
-      button.innerHTML = `<span aria-hidden="true">${state.saved ? '🔖' : '🤍'}</span> ${state.saved ? 'Saved to Wishlist' : 'Add to Wishlist'}`;
+      button.innerHTML = `<span aria-hidden="true">${state.saved ? '🔖' : '🤍'}</span>`;
+      button.setAttribute('aria-label', state.saved ? 'Saved to Wishlist' : 'Add to Wishlist');
+      button.title = state.saved ? 'Saved to Wishlist' : 'Add to Wishlist';
     });
     const count = savedIds().length;
     document.querySelectorAll('[data-wishlist-count]').forEach(el => { el.textContent = String(count); });
@@ -183,17 +226,19 @@
 
   // Capture before card onclick handlers so reacting never opens the product or buys it.
   document.addEventListener('click', event => {
-    const button = event.target.closest('[data-product-reaction], [data-product-wishlist], [data-reaction-retry]');
-    if (!button) return;
+    const button = event.target.closest('[data-product-reaction], [data-product-wishlist], [data-reaction-retry], [data-reaction-trigger]');
+    if (!button) { closePickers(); return; }
     const widget = button.closest('[data-engagement-id]');
     if (!widget) return;
     event.preventDefault();
     event.stopPropagation();
     const id = productId(widget.dataset.engagementId);
     if (!id) return;
+    if (button.hasAttribute('data-reaction-trigger')) { togglePicker(widget); return; }
     if (button.hasAttribute('data-reaction-retry')) { scheduleCounts(); return; }
     if (button.hasAttribute('data-product-reaction')) {
       const reaction = button.dataset.productReaction;
+      closePickers(null, true);
       if (Object.hasOwn(reactions, reaction)) void saveReaction(id, reaction);
       return;
     }
@@ -210,6 +255,16 @@
     window.dispatchEvent(new CustomEvent('product-preferences-changed', { detail: { id, isWishlist: true } }));
     announce(state.saved ? 'Added to your wishlist.' : 'Removed from your wishlist.');
   }, true);
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.querySelector('[data-reaction-trigger][aria-expanded="true"]')) {
+      event.preventDefault();
+      closePickers(null, true);
+    }
+  });
+  document.addEventListener('focusin', event => {
+    closePickers(event.target.closest('[data-engagement-id]'));
+  });
 
   window.addEventListener('storage', event => {
     if (event.key === null || event.key === visitorKey || event.key === changedKey) {
