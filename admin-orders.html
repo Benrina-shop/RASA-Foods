@@ -295,7 +295,7 @@
         document.getElementById('m-items').innerHTML = (items || []).map(i => `
             <div class="flex justify-between items-center p-4 bg-[var(--surface2)] border border-[var(--border)] rounded-2xl">
                 <div class="flex items-center gap-4">
-                    <img src="${i.products?.image_url || ''}" class="w-10 h-10 rounded-lg object-cover">
+                    <img src="${i.products?.image_url || ''}" class="w-10 h-10 rounded-lg object-contain p-0.5 border border-[var(--border)] bg-black/20">
                     <div>
                         <p class="text-sm font-bold text-white">${i.products?.name || 'Asset Deleted'}</p>
                         <p class="text-[10px] text-[var(--muted)] uppercase font-bold">${i.quantity} x ${formatPrice(i.unit_price)}</p>

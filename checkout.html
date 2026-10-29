@@ -274,7 +274,7 @@
         subtotal += itemTotal;
         return `
       <div class="flex items-center gap-2.5 p-2 sm:p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-        <img src="${item.image_url || 'logo.png'}" alt="${item.name}" class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-200 shrink-0">
+        <img src="${item.image_url || 'logo.png'}" alt="${item.name}" class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-contain p-0.5 bg-white border border-slate-200 shrink-0">
         <div class="flex-1 min-w-0">
           <h4 class="font-bold text-xs sm:text-sm text-slate-900 truncate">${item.name}</h4>
           <p class="text-[11px] text-slate-500 mt-0.5">${formatPrice(item.price)} × ${item.qty}</p>

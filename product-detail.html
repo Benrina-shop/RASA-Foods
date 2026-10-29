@@ -301,7 +301,7 @@ function renderProduct() {
           <div class="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
             ${images.map((url, i) => `
                 <div class="thumbnail ${i === 0 ? 'active' : ''} bg-white p-1 border border-slate-200 cursor-pointer rounded-xl transition-all" onclick="selectImgByIndex(${i})">
-                    <img src="${url}" class="w-full h-full object-cover rounded-lg">
+                    <img src="${url}" class="w-full h-full object-contain rounded-lg p-0.5">
                 </div>
             `).join('')}
           </div>
@@ -956,7 +956,7 @@ function handleLiveSearch(query) {
   } else {
     resultsContainer.innerHTML = matches.map(p => `
       <a href="product-detail.html?id=${p.id}" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-50/70 transition-colors group">
-        <img src="${p.image_url || 'logo.png'}" alt="${p.name}" class="w-11 h-11 rounded-lg object-cover border border-slate-200 bg-white shrink-0 group-hover:scale-105 transition-transform">
+        <img src="${p.image_url || 'logo.png'}" alt="${p.name}" class="w-11 h-11 rounded-lg object-contain p-0.5 border border-slate-200 bg-white shrink-0 group-hover:scale-105 transition-transform">
         <div class="flex-1 min-w-0">
           <p class="text-xs font-bold text-slate-900 group-hover:text-blue-600 truncate">${p.name}</p>
           <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">${p.category_slug || ''}</p>

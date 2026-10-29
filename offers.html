@@ -247,7 +247,7 @@ function renderDiscounts() {
     return `
       <div class="prod-card relative" onmouseenter="startHoverCarousel(${p.id})" onmouseleave="stopHoverCarousel(${p.id})" onclick="location.href='product-detail.html?id=${p.id}'">
         <div class="badge">-${disc}%</div>
-        <img id="card-img-${p.id}" src="${p.image_url}" class="w-full h-64 object-cover transition-opacity duration-300" alt="${p.name}">
+        <div class="w-full h-64 bg-slate-50 flex items-center justify-center p-3 overflow-hidden"><img id="card-img-${p.id}" src="${p.image_url}" class="w-full h-full object-contain transition-opacity duration-300" alt="${p.name}"></div>
         <div class="p-6">
           <p class="text-[10px] uppercase text-[var(--accent)] font-bold mb-1 tracking-widest">${p.category_slug}</p>
           <h3 class="font-bold text-lg mb-3 text-[var(--cream)]">${p.name}</h3>
