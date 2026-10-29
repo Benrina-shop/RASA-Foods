@@ -27,6 +27,8 @@
     .badge{background:linear-gradient(135deg,#ec4899,#f43f5e);color:white;font-size:.7rem;padding:4px 12px;border-radius:20px;font-weight:800;box-shadow:0 2px 8px rgba(236,72,153,0.3)}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="product-engagement.css">
+  <script src="product-engagement.js"></script>
 </head>
 <body>
 <nav id="navbar" class="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
@@ -42,6 +44,7 @@
         <div class="hidden md:flex items-center gap-6 lg:gap-8">
           <a href="index.html" class="nav-link">Home</a>
           <a href="products.html" class="nav-link ">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
           <a href="offers.html" class="nav-link ">Offers</a>
           <a href="contact.html" class="nav-link">Contact</a>
         </div>
@@ -111,6 +114,7 @@
     <div class="font-display text-2xl font-black mb-4 text-slate-900"><span style="color:var(--accent)">GOGO</span> <span class="text-pink-500">MART</span></div>
     <a href="index.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Home</a>
     <a href="products.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
     <a href="offers.html" class="text-2xl font-bold text-slate-800 hover:text-pink-600">Offers</a>
     <a href="contact.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Contact</a>
     <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
@@ -356,6 +360,11 @@ function renderProduct() {
           </div>
         </div>
         
+        <div>
+          ${ProductEngagement.render(PRODUCT)}
+          <p class="wishlist-note">Your reactions and wishlist are saved in this browser. <a class="wishlist-link" href="products.html?wishlist=1">View Wishlist</a></p>
+        </div>
+
         <div class="p-8 rounded-[32px] bg-gradient-to-br from-blue-50/80 via-white to-pink-50/50 border border-slate-200 space-y-6 shadow-md shadow-blue-500/5">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Select Quantity</span>
@@ -911,97 +920,7 @@ async function submitReview(e) {
 loadProduct();
 </script>
 
-<script>
-let LIVE_SEARCH_PRODUCTS = [];
-
-async function initLiveSearchData() {
-  if (LIVE_SEARCH_PRODUCTS.length > 0) return;
-  try {
-    const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-    if (sb) {
-      const { data } = await sb.from('products').select('id, name, price, old_price, category_slug, image_url');
-      if (data) LIVE_SEARCH_PRODUCTS = data;
-    }
-  } catch (err) {
-    console.warn('Live search fetch error:', err);
-  }
-}
-
-function handleLiveSearch(query) {
-  query = (query || '').trim().toLowerCase();
-  const dropdown = document.getElementById('live-search-dropdown');
-  const resultsContainer = document.getElementById('live-search-results');
-  const viewAllLink = document.getElementById('view-all-search-link');
-  if (!dropdown || !resultsContainer) return;
-
-  if (query.length === 0) {
-    dropdown.classList.add('hidden');
-    return;
-  }
-
-  // Filter products
-  const matches = LIVE_SEARCH_PRODUCTS.filter(p => 
-    (p.name && p.name.toLowerCase().includes(query)) ||
-    (p.category_slug && p.category_slug.toLowerCase().includes(query))
-  ).slice(0, 5);
-
-  if (matches.length === 0) {
-    resultsContainer.innerHTML = `
-      <div class="p-4 text-center text-slate-400">
-        <p class="text-xs font-semibold">No products found for "${query}"</p>
-        <p class="text-[10px] text-slate-400 mt-0.5">Try a different keyword</p>
-      </div>
-    `;
-    if (viewAllLink) viewAllLink.classList.add('hidden');
-  } else {
-    resultsContainer.innerHTML = matches.map(p => `
-      <a href="product-detail.html?id=${p.id}" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-50/70 transition-colors group">
-        <img src="${p.image_url || 'logo.png'}" alt="${p.name}" class="w-11 h-11 rounded-lg object-contain p-0.5 border border-slate-200 bg-white shrink-0 group-hover:scale-105 transition-transform">
-        <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-slate-900 group-hover:text-blue-600 truncate">${p.name}</p>
-          <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">${p.category_slug || ''}</p>
-        </div>
-        <div class="text-right shrink-0">
-          <span class="text-xs font-black text-blue-600">${typeof formatPrice === 'function' ? formatPrice(p.price) : 'Rs. ' + p.price}</span>
-        </div>
-      </a>
-    `).join('');
-    if (viewAllLink) {
-      viewAllLink.classList.remove('hidden');
-      viewAllLink.href = 'products.html?q=' + encodeURIComponent(query);
-      viewAllLink.textContent = `View all results for "${query}" →`;
-    }
-  }
-
-  dropdown.classList.remove('hidden');
-}
-
-function handleNavSearch(e, form) {
-  e.preventDefault();
-  const input = form.querySelector('input[name="q"]');
-  const query = input ? input.value.trim() : '';
-  if (query) {
-    window.location.href = 'products.html?q=' + encodeURIComponent(query);
-  } else {
-    window.location.href = 'products.html';
-  }
-  return false;
-}
-
-// Close dropdown on outside click
-document.addEventListener('click', (e) => {
-  const container = document.getElementById('nav-search-container');
-  const dropdown = document.getElementById('live-search-dropdown');
-  if (container && dropdown && !container.contains(e.target)) {
-    dropdown.classList.add('hidden');
-  }
-});
-
-// Also trigger live search on focus or load
-if (typeof initLiveSearchData === 'function') {
-  initLiveSearchData();
-}
-</script>
+<!-- Shared live search handles both desktop and mobile. -->
 
 <script src="live-search.js"></script>
 <script src="live-marquee.js"></script>

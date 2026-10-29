@@ -220,6 +220,8 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="product-engagement.css">
+  <script src="product-engagement.js"></script>
 </head>
 
 <body>
@@ -236,6 +238,7 @@
         <div class="hidden md:flex items-center gap-6 lg:gap-8">
           <a href="index.html" class="nav-link active">Home</a>
           <a href="products.html" class="nav-link">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
           <a href="offers.html" class="nav-link">Offers</a>
           <a href="contact.html" class="nav-link">Contact</a>
         </div>
@@ -308,6 +311,7 @@
     </div>
     <a href="index.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Home</a>
     <a href="products.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
     <a href="offers.html" class="text-2xl font-bold text-slate-800 hover:text-pink-600">Offers</a>
     <a href="contact.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Contact</a>
     <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
@@ -590,6 +594,7 @@
           <span class="font-black text-blue-600 text-base">${formatPrice(p.price)}</span>
           ${p.old_price && Number(p.old_price) > Number(p.price) ? `<span class="text-[10px] line-through text-slate-400">${formatPrice(p.old_price)}</span>` : ''}
         </div>
+        ${ProductEngagement.render(p)}
         <div class="grid grid-cols-2 gap-2 mt-2">
           <button onclick="addToCart(${p.id},event)" class="py-2 px-2 rounded-xl border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold text-xs flex items-center justify-center gap-1 transition-all">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>

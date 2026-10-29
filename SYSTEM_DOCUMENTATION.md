@@ -29,6 +29,15 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 
 ## 2. Customer Storefront Ecosystem
 
+### Product Reactions & Wishlist
+
+- `product-engagement.js` and `product-engagement.css` provide **Like**, **Love**, and **Wow** reactions plus a separate **Add to Wishlist** button on home, catalogue, offers, and product-detail views. All customer-facing labels are in English.
+- Each product allows one personal reaction. Selecting it again removes it; selecting another replaces it. Wishlist membership is independent of reactions and cart contents, including for out-of-stock products.
+- **Wishlist** navigation opens `products.html?wishlist=1`. The catalogue checkbox filters saved products using current catalogue data and supports existing search/category/price filters. Products removed from the catalogue are not displayed.
+- This first version stores preferences **in the current browser only**, under `gogo-product-preference:v1:<product-id>`. Preferences survive reloads and synchronize across tabs on the same origin. Clearing browser storage removes them. No public reaction totals, account synchronization, or database writes are implemented.
+- Storage failures show an English error without presenting an unsaved selection as successful. Native buttons expose `aria-pressed` and support keyboard interaction; a status region announces updates.
+- Browser verification: `tests/product-engagement.cjs` uses Playwright with deterministic external Supabase API fixtures, without production writes. Install Playwright in the test environment and run `node tests/product-engagement.cjs`; `PLAYWRIGHT_CHANNEL=msedge` can select installed Edge, and `PLAYWRIGHT_MODULE_PATH` can point to an existing Playwright package. The test covers reaction changes/removal, persistence, cross-page/tab synchronization, wishlist empty state, expensive/out-of-stock products, cart regression, mobile controls, and storage failures.
+
 ### 2.1. Home Page (`index.html`)
 - **Popular Categories Infinite Marquee Slider (NEW)**:
   - Positioned directly below the navigation header.

@@ -22,6 +22,8 @@
     #mob-menu.open{transform:translateY(0)}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="product-engagement.css">
+  <script src="product-engagement.js"></script>
 </head>
 <body>
 <nav id="navbar" class="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
@@ -37,6 +39,7 @@
         <div class="hidden md:flex items-center gap-6 lg:gap-8">
           <a href="index.html" class="nav-link">Home</a>
           <a href="products.html" class="nav-link ">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
           <a href="offers.html" class="nav-link active">Offers</a>
           <a href="contact.html" class="nav-link">Contact</a>
         </div>
@@ -106,6 +109,7 @@
     <div class="font-display text-2xl font-black mb-4 text-slate-900"><span style="color:var(--accent)">GOGO</span> <span class="text-pink-500">MART</span></div>
     <a href="index.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Home</a>
     <a href="products.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
     <a href="offers.html" class="text-2xl font-bold text-pink-600 hover:text-pink-700">Offers</a>
     <a href="contact.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Contact</a>
     <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
@@ -255,6 +259,7 @@ function renderDiscounts() {
             <span class="text-blue-600 font-black text-lg">${formatPrice(p.price)}</span>
             <span class="text-xs line-through text-slate-400">${formatPrice(p.old_price)}</span>
           </div>
+        ${ProductEngagement.render(p)}
           <div class="grid grid-cols-2 gap-2 mt-2">
             <button onclick="addToCart(${p.id},event)" class="py-2 px-2 rounded-xl border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold text-xs flex items-center justify-center gap-1 transition-all">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>

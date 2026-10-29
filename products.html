@@ -65,6 +65,8 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="product-engagement.css">
+  <script src="product-engagement.js"></script>
 </head>
 <body>
 
@@ -81,6 +83,7 @@
         <div class="hidden md:flex items-center gap-6 lg:gap-8">
           <a href="index.html" class="nav-link">Home</a>
           <a href="products.html" class="nav-link active">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
           <a href="offers.html" class="nav-link ">Offers</a>
           <a href="contact.html" class="nav-link">Contact</a>
         </div>
@@ -150,6 +153,7 @@
     <div class="font-display text-2xl font-black mb-4 text-slate-900"><span style="color:var(--accent)">GOGO</span> <span class="text-pink-500">MART</span></div>
     <a href="index.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Home</a>
     <a href="products.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Products</a>
+          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
     <a href="offers.html" class="text-2xl font-bold text-slate-800 hover:text-pink-600">Offers</a>
     <a href="contact.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Contact</a>
     <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
@@ -207,6 +211,13 @@
 
     <!-- Content -->
     <main>
+        <div class="mb-6 p-4 rounded-2xl border border-blue-100 bg-blue-50/50">
+            <label class="flex items-center gap-3 font-bold text-sm text-blue-700 cursor-pointer">
+                <input type="checkbox" id="f-wishlist" onchange="toggleWishlistView()" class="w-4 h-4 accent-blue-600">
+                My Wishlist (<span data-wishlist-count>0</span>)
+            </label>
+            <p class="wishlist-note mt-2">Your reactions and wishlist are saved in this browser. Select My Wishlist to see your saved products.</p>
+        </div>
         <button id="mob-filter-btn" onclick="toggleSidebar(true)">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-width="2"/></svg>
             Refine Catalogue
@@ -248,16 +259,38 @@ let ALL_PRODUCTS = [];
 let ALL_CATEGORIES = [];
 let selectedCats = ['all'];
 let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
+document.getElementById('f-wishlist').checked = new URLSearchParams(location.search).get('wishlist') === '1';
+
+function toggleWishlistView() {
+    const url = new URL(location.href);
+    if (document.getElementById('f-wishlist').checked) url.searchParams.set('wishlist', '1');
+    else url.searchParams.delete('wishlist');
+    history.replaceState(null, '', url);
+    updateFilters();
+}
+
+window.addEventListener('product-preferences-changed', event => {
+    if (event.detail.isWishlist && document.getElementById('f-wishlist').checked) {
+        updateFilters();
+        // A removed card cannot retain keyboard focus; return to the wishlist filter.
+        if (document.activeElement === document.body) document.getElementById('f-wishlist').focus();
+    }
+});
 
 async function initPage() {
     try {
         if (typeof getSupabase !== 'function') return setTimeout(initPage, 200);
         const sb = getSupabase();
         
-        const { data: prods } = await sb.from('products').select('*');
+        const { data: prods, error: productError } = await sb.from('products').select('*');
+        if (productError) throw productError;
         const { data: cats } = await sb.from('categories').select('*');
         
         ALL_PRODUCTS = prods || [];
+        const priceRange = document.getElementById('price-range');
+        const ceiling = ALL_PRODUCTS.reduce((max, product) => Math.max(max, Number(product.price) || 0), 10000);
+        priceRange.max = String(Math.ceil(ceiling / 100) * 100);
+        priceRange.value = priceRange.max;
         ALL_CATEGORIES = (cats || []).filter(c => !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_'));
         
         // Read search query from URL parameter if present (e.g. products.html?q=chocolate)
@@ -277,7 +310,10 @@ async function initPage() {
         renderCategories();
         updateFilters();
         updateCartCount();
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error(e);
+        document.getElementById('products-grid').innerHTML = '<p class="col-span-full py-12 text-center text-slate-500">Unable to load products. Please refresh to try again. Your wishlist is still saved.</p>';
+    }
 }
 
 function renderCategories() {
@@ -317,6 +353,7 @@ function updateFilters() {
     const maxPrice = parseInt(document.getElementById('price-range').value);
     const onlySale = document.getElementById('f-sale').checked;
     const onlyNew = document.getElementById('f-new').checked;
+    const onlyWishlist = document.getElementById('f-wishlist').checked;
     const sort = document.getElementById('f-sort').value;
     
     document.getElementById('price-display').textContent = `Rs. ${maxPrice.toLocaleString()}`;
@@ -328,7 +365,7 @@ function updateFilters() {
         const matchesSale = !onlySale || (p.old_price && Number(p.old_price) > Number(p.price));
         const matchesNew = !onlyNew || p.is_new || (p.badge && p.badge.toLowerCase().includes('new'));
         
-        return matchesCat && matchesSearch && matchesPrice && matchesSale && matchesNew;
+        return matchesCat && matchesSearch && matchesPrice && matchesSale && matchesNew && (!onlyWishlist || ProductEngagement.isSaved(p.id));
     });
 
     if (sort === 'price-asc') filtered.sort((a,b) => a.price - b.price);
@@ -380,7 +417,10 @@ function stopHoverCarousel(id) {
 function renderGrid(data) {
     const grid = document.getElementById('products-grid');
     if (data.length === 0) {
-        grid.innerHTML = '<div class="col-span-full py-20 text-center text-[var(--muted)]">No matches found for your criteria.</div>';
+        const emptyWishlist = document.getElementById('f-wishlist').checked && ProductEngagement.savedIds().length === 0;
+        grid.innerHTML = emptyWishlist
+            ? '<div class="col-span-full py-20 text-center text-slate-500"><p class="text-lg font-bold mb-2">Your wishlist is empty</p><p>Tap Add to Wishlist on a product to save it for later.</p><a href="products.html" class="wishlist-link mt-4">Browse Products</a></div>'
+            : '<div class="col-span-full py-20 text-center text-slate-500">No products match your filters. Try resetting your selection. Saved products may no longer be available.</div>';
         return;
     }
     grid.innerHTML = data.map(p => `
@@ -398,6 +438,7 @@ function renderGrid(data) {
                         ${p.old_price && Number(p.old_price) > Number(p.price) ? `<span class="text-[10px] line-through text-slate-400">${formatPrice(p.old_price)}</span>` : ''}
                     </div>
                 </div>
+        ${ProductEngagement.render(p)}
                 ${(p.stock !== undefined && p.stock !== null && Number(p.stock) <= 0) ? `
                 <div class="mt-2 py-2 px-3 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs text-center border border-slate-200">
                     Out of Stock
@@ -421,7 +462,7 @@ function renderGrid(data) {
 
 function resetFilters() {
     document.getElementById('search-input').value = '';
-    document.getElementById('price-range').value = 10000;
+    document.getElementById('price-range').value = document.getElementById('price-range').max;
     document.getElementById('f-sale').checked = false;
     document.getElementById('f-new').checked = false;
     selectedCats = ['all'];
