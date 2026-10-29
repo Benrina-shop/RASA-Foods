@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -897,13 +897,14 @@
           headers: {
             'apikey': SB_KEY,
             'Authorization': 'Bearer ' + SB_KEY,
-            'Accept': 'application/vnd.pgrst.object+json'
+            'Accept': 'application/json'
           }
         });
         if (res.ok) {
-          const row = await res.json();
+          const rows = await res.json();
+          const row = Array.isArray(rows) ? rows[0] : rows;
           if (row && row.image_url) {
-            const parsed = JSON.parse(row.image_url);
+            let parsed; try { parsed = typeof row.image_url === 'string' ? JSON.parse(row.image_url) : row.image_url; } catch(e) { parsed = []; }
             if (Array.isArray(parsed) && parsed.length > 0) {
               POPULAR_CATEGORIES = parsed;
               localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -258,7 +258,7 @@ async function initPage() {
         const { data: cats } = await sb.from('categories').select('*');
         
         ALL_PRODUCTS = prods || [];
-        ALL_CATEGORIES = (cats || []).filter(c => !c.slug.startsWith('system_') && !c.name.startsWith('SYSTEM_'));
+        ALL_CATEGORIES = (cats || []).filter(c => !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_'));
         
         // Read search query from URL parameter if present (e.g. products.html?q=chocolate)
         const urlParams = new URLSearchParams(window.location.search);
