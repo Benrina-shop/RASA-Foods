@@ -1,4 +1,4 @@
-# GOGO MART — Complete System Documentation & Architecture Guide
+﻿# GOGO MART — Complete System Documentation & Architecture Guide
 
 Welcome to the official, full-scope system documentation for **GOGO MART** (formerly RASA Foods). This document contains an exhaustive breakdown of the web application's frontend pages, admin management portals, modular JavaScript subsystems, database schemas, and all modern features developed and enhanced.
 
