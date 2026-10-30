@@ -226,7 +226,10 @@ async function initPage() {
         updateCategoryDropdown();
 
         // Load Products
-        const { data: prods } = await sb.from('products').select('*').order('created_at', { ascending: false });
+        const { data: prods, error: productsError } = await sb.from('products')
+            .select('id,name,category_slug,price,image_url,stock')
+            .order('created_at', { ascending: false });
+        if (productsError) throw productsError;
         allProducts = prods || [];
         renderTable();
 
@@ -291,7 +294,10 @@ async function uploadProductAsset(sb, file, dataUrl, prefix, originalName = '') 
     const ext = (originalName || uploadFile.name || '').split('.').pop() ||
         (uploadFile.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
     const fileName = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-    const { error } = await sb.storage.from('products').upload(fileName, uploadFile);
+    const { error } = await sb.storage.from('products').upload(fileName, uploadFile, {
+        cacheControl: '31536000',
+        upsert: false
+    });
     if (error) throw error;
     const { data } = sb.storage.from('products').getPublicUrl(fileName);
     if (!data?.publicUrl) throw new Error('Could not create a public product media URL.');
@@ -403,7 +409,7 @@ function insertDescFormat(type) {
     textarea.focus();
 }
 
-function openModal(id = null) {
+async function openModal(id = null) {
     isEditing = !!id;
     const modal = document.getElementById('product-modal');
     modal.classList.add('open');
@@ -414,7 +420,14 @@ function openModal(id = null) {
     document.getElementById('p-new-cat').value = '';
 
     if (id) {
-        const p = allProducts.find(x => x.id == id);
+        const { data: p, error } = await getSupabase().from('products')
+            .select('id,name,category_slug,price,old_price,image_url,stock,description,images,video_url')
+            .eq('id', id).single();
+        if (error || !p) {
+            alert('Could not load this product for editing: ' + (error?.message || 'Product not found.'));
+            closeModal();
+            return;
+        }
         document.getElementById('modal-title').textContent = 'Modify Asset';
         document.getElementById('p-id').value = p.id;
         document.getElementById('p-name').value = p.name;
@@ -425,7 +438,7 @@ function openModal(id = null) {
         
         // Parse description and extract any embedded video metadata if present
         let cleanDesc = p.description || '';
-        let foundVideo = null;
+        let foundVideo = p.video_url || null;
         
         // 1. Check if description has embedded <!--VIDEO:url-->
         const vidMatch = cleanDesc.match(/<!--VIDEO:([\s\S]*?)-->/);

@@ -144,7 +144,7 @@
       try {
         var sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          var { data } = await sb.from('categories').select('*').eq('slug', 'system_cover_banner').single();
+          var { data } = await sb.from('categories').select('image_url').eq('slug', 'system_cover_banner').single();
           if (data) {
             var parsed = [];
             try { parsed = JSON.parse(data.image_url || '[]'); } catch (e) {
@@ -207,7 +207,10 @@
         for (var file of files) {
           var ext = file.name.split('.').pop() || 'jpg';
           var fn = 'cover-' + Date.now() + '-' + Math.random().toString(36).substring(7) + '.' + ext;
-          var upRes = await sb.storage.from('products').upload(fn, file);
+          var upRes = await sb.storage.from('products').upload(fn, file, {
+            cacheControl: '31536000',
+            upsert: false
+          });
           if (upRes.error) throw upRes.error;
           var { data: pubData } = sb.storage.from('products').getPublicUrl(fn);
           if (!pubData?.publicUrl) throw new Error('Could not create a public URL for the uploaded cover.');

@@ -257,27 +257,21 @@
     // ── UPLOAD IMAGE TO SUPABASE STORAGE ───────────────────────────────
     async function uploadImageToStorage(dataUrl) {
       try {
-        var accessToken = await getAdminAccessToken();
         // Convert data URL to blob
         var fetchRes = await fetch(dataUrl);
         var blob = await fetchRes.blob();
         var ext = blob.type.split('/')[1] || 'jpg';
         var filename = 'promo_' + Date.now() + '_' + Math.random().toString(36).substr(2,6) + '.' + ext;
 
-        var uploadRes = await fetch(SB_URL + '/storage/v1/object/' + STORAGE_BUCKET + '/' + filename, {
-          method: 'POST',
-          headers: {
-            'apikey': SB_KEY,
-            'Authorization': 'Bearer ' + accessToken,
-            'Content-Type': blob.type,
-            'x-upsert': 'true'
-          },
-          body: blob
+        var sb = getSupabase();
+        var uploadResult = await sb.storage.from(STORAGE_BUCKET).upload(filename, blob, {
+          cacheControl: '31536000',
+          upsert: false,
+          contentType: blob.type
         });
-        if (uploadRes.ok) {
-          return SB_URL + '/storage/v1/object/public/' + STORAGE_BUCKET + '/' + filename;
-        }
-        console.warn('Storage upload failed:', await uploadRes.text());
+        if (uploadResult.error) throw uploadResult.error;
+        var publicUrl = sb.storage.from(STORAGE_BUCKET).getPublicUrl(filename).data?.publicUrl;
+        if (publicUrl) return publicUrl;
       } catch(e) {
         console.warn('uploadImageToStorage error:', e);
       }

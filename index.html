@@ -634,8 +634,7 @@
         var sb = getSupabase();
         if (!sb) return setTimeout(initStore, 200);
 
-        const { data, error } = await sb.from('products').select('id,name,price,old_price,category_slug,image_url,stock,created_at');
-        if (error) throw error;
+        const data = await getCachedProducts();
 
         console.log('Products fetched:', data.length);
         PRODUCTS = data;
@@ -792,11 +791,23 @@
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (!sb) throw new Error('Store connection unavailable');
+        const cached = (() => {
+          try {
+            const value = JSON.parse(sessionStorage.getItem('gogo-home-reviews:v1') || 'null');
+            if (value && Number.isFinite(value.t) && Date.now() - value.t < 300000 && !force) return value.data;
+          } catch (_) {}
+          return null;
+        })();
+        if (cached) {
+          rankHomepageReviews(cached);
+          return;
+        }
         const { data, error } = await sb.from('reviews')
           .select('id,product_id,author_name,rating,comment,created_at')
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(30);
         if (error) throw error;
+        try { sessionStorage.setItem('gogo-home-reviews:v1', JSON.stringify({ t: Date.now(), data: data || [] })); } catch (_) {}
         rankHomepageReviews(data);
       } catch (error) {
         console.warn('Homepage reviews unavailable:', error);
@@ -993,7 +1004,7 @@
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          const { data } = await sb.from('categories').select('*').eq('slug', 'system_cover_banner').single();
+          const { data } = await sb.from('categories').select('image_url').eq('slug', 'system_cover_banner').single();
           if (data) {
             let parsed = [];
             try { parsed = JSON.parse(data.image_url || '[]'); } catch (e) {
@@ -1054,7 +1065,7 @@
     async function loadHeroAds() {
       // 1. First check Supabase categories 'system_promo_ads' (direct REST or client)
       try {
-        const res = await fetch('https://yswekhygaebgvowdrmxk.supabase.co/rest/v1/categories?select=*&slug=eq.system_promo_ads', {
+        const res = await fetch('https://yswekhygaebgvowdrmxk.supabase.co/rest/v1/categories?select=image_url&slug=eq.system_promo_ads', {
           headers: {
             'apikey': SB_KEY,
             'Authorization': 'Bearer ' + SB_KEY,

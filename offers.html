@@ -167,13 +167,11 @@ async function initOffers() {
     const sb = getSupabase();
     
     // Fetch Products on Sale
-    const { data: prods } = await sb.from('products')
-      .select('id,name,price,old_price,category_slug,image_url,stock,created_at');
-    PRODUCTS = prods || [];
+    PRODUCTS = await getCachedProducts();
     renderDiscounts();
 
     // Fetch Active Promo Codes
-    const { data: promos } = await sb.from('promo_codes').select('*').eq('is_active', true);
+    const { data: promos } = await sb.from('promo_codes').select('code,discount_percentage').eq('is_active', true);
     PROMOS = promos || [];
     renderPromos();
 

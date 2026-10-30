@@ -4,18 +4,30 @@
  */
 
 var LIVE_SEARCH_PRODUCTS = [];
+var liveSearchRefreshTimer = null;
 
 async function initLiveSearchData() {
   if (LIVE_SEARCH_PRODUCTS.length > 0) return;
   try {
-    var sb = typeof getSupabase === 'function' ? getSupabase() : null;
-    if (sb) {
-      var res = await sb.from('products').select('id, name, price, old_price, category_slug, image_url');
-      if (res && res.data) LIVE_SEARCH_PRODUCTS = res.data;
-    }
+    if (typeof getCachedProducts === 'function') LIVE_SEARCH_PRODUCTS = await getCachedProducts();
   } catch (err) {
     console.warn('Live search fetch error:', err);
   }
+}
+
+if (typeof onStoreUpdate === 'function') {
+  onStoreUpdate(function(event) {
+    if (event.type !== 'PRODUCTS_CHANGED' && event.table !== 'products') return;
+    clearTimeout(liveSearchRefreshTimer);
+    liveSearchRefreshTimer = setTimeout(function() {
+      LIVE_SEARCH_PRODUCTS = [];
+      initLiveSearchData().then(function() {
+        document.querySelectorAll('#nav-search-input, #nav-search-input-mob').forEach(function(input) {
+          if (input.value.trim()) handleLiveSearch(input.value, input.id.endsWith('-mob'));
+        });
+      });
+    }, 3000);
+  });
 }
 
 function handleLiveSearch(query, isMobile) {

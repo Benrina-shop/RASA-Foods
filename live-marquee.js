@@ -16,7 +16,7 @@
     try {
       const sb = typeof getSupabase === 'function' ? getSupabase() : null;
       if (sb) {
-        const { data } = await sb.from('categories').select('*').eq('slug', 'system_marquee_news').single();
+        const { data } = await sb.from('categories').select('image_url').eq('slug', 'system_marquee_news').single();
         if (data && data.image_url) {
           try {
             const parsed = JSON.parse(data.image_url);

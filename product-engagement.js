@@ -10,6 +10,8 @@
   let requestVersion = 0;
   let loadTimer;
   let pickerNumber = 0;
+  const countFetchTimes = new Map();
+  const COUNT_REFRESH_TTL = 60000;
 
   function countText(value) {
     return new Intl.NumberFormat('en', { notation: value >= 1000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value);
@@ -71,24 +73,31 @@
     totals.set(id, { like: counts[0], love: counts[1], wow: counts[2], mine: row.my_reaction, ready: true, failed: false });
   }
 
-  function scheduleCounts() {
+  function scheduleCounts(force = false) {
     clearTimeout(loadTimer);
-    loadTimer = setTimeout(loadCounts, 60);
+    loadTimer = setTimeout(() => loadCounts(force), 60);
   }
 
-  async function loadCounts() {
+  async function loadCounts(force = false) {
     const ids = [...new Set([...document.querySelectorAll('[data-engagement-id]')].map(el => el.dataset.engagementId))];
     if (!ids.length || document.hidden) return;
+    const now = Date.now();
+    const idsToFetch = force ? ids : ids.filter(id => now - (countFetchTimes.get(id) || 0) >= COUNT_REFRESH_TTL);
+    if (!idsToFetch.length) return;
     const version = ++requestVersion;
     const token = visitorToken();
-    for (let start = 0; start < ids.length; start += 100) {
-      const batch = ids.slice(start, start + 100);
+    for (let start = 0; start < idsToFetch.length; start += 100) {
+      const batch = idsToFetch.slice(start, start + 100);
       try {
         const rows = await rpc('get_product_reactions', { p_product_ids: batch, p_visitor_token: token });
         if (version !== requestVersion || token !== visitorToken()) return;
         const returned = new Set(rows.map(row => String(row.product_id)));
         if (batch.some(id => !returned.has(id))) throw new Error('Product no longer available.');
-        rows.forEach(row => { if (!pending.has(String(row.product_id))) accept(row); });
+        rows.forEach(row => {
+          const id = String(row.product_id);
+          if (!pending.has(id)) accept(row);
+          countFetchTimes.set(id, Date.now());
+        });
       } catch (error) {
         if (version !== requestVersion) return;
         batch.forEach(id => { if (!pending.has(id)) totals.set(id, { ...totals.get(id), failed: true, localOnly: error.code === 'PGRST202' }); });
@@ -128,7 +137,7 @@
       const row = rows.find(item => String(item.product_id) === id);
       if (!row) throw new Error('Missing reaction result.');
       ++requestVersion;
-      if (token !== visitorToken()) { totals.delete(id); scheduleCounts(); return; }
+      if (token !== visitorToken()) { totals.delete(id); scheduleCounts(true); return; }
       accept(row);
       try { localStorage.setItem(changedKey, crypto.randomUUID()); } catch (_) { /* Saved on the server already. */ }
       announce(next ? `${reactions[next][1]} reaction saved.` : 'Reaction removed.');
@@ -136,7 +145,7 @@
       announce(error.message === 'Please allow browser storage to react.' ? error.message : 'Unable to confirm your reaction. Please try again.');
       // A timed-out request may have committed. Read the server before another edit.
       totals.set(id, { ...current, failed: true });
-      scheduleCounts();
+      scheduleCounts(true);
     } finally {
       pending.delete(id);
       refresh();
@@ -266,7 +275,7 @@
     const id = productId(widget.dataset.engagementId);
     if (!id) return;
     if (button.hasAttribute('data-reaction-trigger')) { togglePicker(widget); return; }
-    if (button.hasAttribute('data-reaction-retry')) { scheduleCounts(); return; }
+    if (button.hasAttribute('data-reaction-retry')) { scheduleCounts(true); return; }
     if (button.hasAttribute('data-product-reaction')) {
       const reaction = button.dataset.productReaction;
       closePickers(null, true);
@@ -315,7 +324,7 @@
     if (event.key === null || event.key === visitorKey || event.key === changedKey) {
       ++requestVersion;
       if (event.key === null || event.key === visitorKey) totals.clear();
-      scheduleCounts();
+      scheduleCounts(true);
     }
     if (event.key === null || event.key.startsWith(prefix)) {
       refresh();
@@ -324,7 +333,7 @@
   });
   window.addEventListener('focus', scheduleCounts);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleCounts(); });
-  setInterval(() => { if (!document.hidden) scheduleCounts(); }, 15000);
+  setInterval(() => { if (!document.hidden) scheduleCounts(); }, 120000);
   window.ProductEngagement = { render, isSaved: id => read(id).saved, savedIds, refresh };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refresh);
   else refresh();

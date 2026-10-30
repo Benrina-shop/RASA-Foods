@@ -156,7 +156,9 @@ async function loadProduct() {
     var sb = getSupabase();
     if (!sb) return setTimeout(loadProduct, 200);
 
-    const { data, error } = await sb.from('products').select('*').eq('id', id).single();
+    const { data, error } = await sb.from('products')
+      .select('id,name,description,price,old_price,category_slug,image_url,images,video_url,stock,badge')
+      .eq('id', id).single();
     if (error) throw error;
     PRODUCT = data;
     try {
@@ -261,7 +263,7 @@ function renderProduct() {
 
   // Extract video if present in images or description
   let rawImages = (PRODUCT.images && PRODUCT.images.length) ? PRODUCT.images : [PRODUCT.image_url];
-  let productVideoUrl = null;
+  let productVideoUrl = PRODUCT.video_url || null;
   let cleanImages = [];
 
   rawImages.forEach(img => {

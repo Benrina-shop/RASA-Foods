@@ -332,7 +332,10 @@
         if (!sb) throw new Error('Store connection unavailable.');
         const ext = (file.name.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
         const fileName = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-        const { error } = await sb.storage.from('products').upload(fileName, file);
+        const { error } = await sb.storage.from('products').upload(fileName, file, {
+          cacheControl: '31536000',
+          upsert: false
+        });
         if (error) throw error;
         const { data } = sb.storage.from('products').getPublicUrl(fileName);
         if (!data || !data.publicUrl) throw new Error('Could not get the uploaded image URL.');

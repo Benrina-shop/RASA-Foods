@@ -181,7 +181,9 @@
     async function fetchOrders() {
         if (typeof getSupabase !== 'function') return setTimeout(fetchOrders, 200);
         const sb = getSupabase();
-        const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: false });
+        const { data, error } = await sb.from('orders')
+            .select('id,customer_name,customer_email,note,shipping_address,status,total_amount,created_at')
+            .order('created_at', { ascending: false }).limit(200);
         if (data) {
             ALL_ORDERS = data;
             applyFilters();
@@ -251,9 +253,12 @@
     async function viewOrder(id) {
         CURRENT_ORDER_ID = id;
         const sb = getSupabase();
-        const { data: order } = await sb.from('orders').select('*').eq('id', id).single();
+        const { data: order } = await sb.from('orders')
+            .select('id,created_at,customer_name,customer_email,customer_phone,whatsapp_number,shipping_address,note,total_amount,status')
+            .eq('id', id).single();
         if (!order) return;
-        const { data: items } = await sb.from('order_items').select('*, products(name, image_url)').eq('order_id', id);
+        const { data: items } = await sb.from('order_items')
+            .select('quantity,unit_price,products(name,image_url)').eq('order_id', id);
 
         const orderDate = new Date(order.created_at).toLocaleString('en-US', { 
             year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
@@ -332,7 +337,9 @@
         if (!CURRENT_ORDER_ID) return;
         
         const sb = getSupabase();
-        const { data: order } = await sb.from('orders').select('*, order_items(*, products(*))').eq('id', CURRENT_ORDER_ID).single();
+        const { data: order } = await sb.from('orders')
+            .select('id,customer_name,customer_phone,whatsapp_number,shipping_address,note,total_amount,order_items(quantity,products(name))')
+            .eq('id', CURRENT_ORDER_ID).single();
         if (!order) return;
 
         const targetPhone = order.whatsapp_number || order.customer_phone;

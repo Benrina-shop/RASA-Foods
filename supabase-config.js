@@ -81,6 +81,7 @@ var _gogoBroadcast = (typeof BroadcastChannel !== 'undefined') ? new BroadcastCh
  */
 function notifyStoreUpdate(type, payload) {
     var eventData = { type: type, payload: payload || {}, timestamp: Date.now() };
+    invalidateStoreCacheForEvent(eventData);
     if (_gogoBroadcast) {
         try { _gogoBroadcast.postMessage(eventData); } catch(e){}
     }
@@ -97,13 +98,17 @@ function onStoreUpdate(callback) {
     if (typeof callback !== 'function') return;
     if (_gogoBroadcast) {
         _gogoBroadcast.addEventListener('message', function(e) {
-            if (e && e.data) callback(e.data);
+            if (e && e.data) {
+                invalidateStoreCacheForEvent(e.data);
+                callback(e.data);
+            }
         });
     }
     window.addEventListener('storage', function(e) {
         if (e.key === 'gogo_store_sync_event' && e.newValue) {
             try {
                 var data = JSON.parse(e.newValue);
+                invalidateStoreCacheForEvent(data);
                 callback(data);
             } catch(err){}
         }
@@ -127,7 +132,9 @@ function subscribeToSupabaseRealtime(sb, tables, callback) {
             var realtimeConfig = { event: '*', schema: 'public', table: tbl };
             if (tbl === 'products' || tbl === 'categories') realtimeConfig.select = ['id'];
             ch = ch.on('postgres_changes', realtimeConfig, function(payload) {
-                callback({ source: 'supabase', table: tbl, payload: payload, timestamp: Date.now() });
+                var eventData = { source: 'supabase', table: tbl, payload: payload, timestamp: Date.now() };
+                invalidateStoreCacheForEvent(eventData);
+                callback(eventData);
             });
         });
         ch.subscribe(function(status) {
@@ -142,26 +149,96 @@ function subscribeToSupabaseRealtime(sb, tables, callback) {
     }
 }
 
+var GOGO_SESSION_CACHE_TTL = 5 * 60 * 1000;
+var GOGO_PRODUCTS_CACHE_KEY = 'gogo-products-list:v1';
+var GOGO_CATEGORIES_CACHE_KEY = 'gogo-store-categories:v1';
+var _gogoProductsRequest = null;
+var _gogoCategoriesRequest = null;
+var _gogoProductsCacheVersion = 0;
+var _gogoCategoriesCacheVersion = 0;
+
+function readGogoSessionCache(key) {
+    try {
+        var cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+        if (cached && Number.isFinite(cached.t) && Date.now() - cached.t < GOGO_SESSION_CACHE_TTL) return cached.data;
+        if (cached) sessionStorage.removeItem(key);
+    } catch (_) {}
+    return null;
+}
+
+function writeGogoSessionCache(key, data) {
+    try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), data: data })); } catch (_) {}
+}
+
+function invalidateCachedProducts() {
+    _gogoProductsCacheVersion++;
+    _gogoProductsRequest = null;
+    try { sessionStorage.removeItem(GOGO_PRODUCTS_CACHE_KEY); } catch (_) {}
+}
+
+function invalidateCachedCategories() {
+    _gogoCategoriesCacheVersion++;
+    _gogoCategoriesRequest = null;
+    try { sessionStorage.removeItem(GOGO_CATEGORIES_CACHE_KEY); } catch (_) {}
+}
+
+function invalidateStoreCacheForEvent(eventData) {
+    if (!eventData) return;
+    var table = eventData.table;
+    var type = eventData.type;
+    if (table === 'products' || type === 'PRODUCTS_CHANGED') invalidateCachedProducts();
+    if (table === 'categories' || type === 'CATEGORIES_CHANGED') invalidateCachedCategories();
+}
+
+async function getCachedProducts() {
+    var cached = readGogoSessionCache(GOGO_PRODUCTS_CACHE_KEY);
+    if (cached) return cached;
+    if (_gogoProductsRequest) return _gogoProductsRequest;
+    var sb = getSupabase();
+    if (!sb) throw new Error('Store connection unavailable');
+    var version = _gogoProductsCacheVersion;
+    var request = (async function() {
+        var result = await sb.from('products')
+            .select('id,name,price,old_price,category_slug,image_url,stock,created_at,images,badge,is_new');
+        if (result.error) throw result.error;
+        var rows = result.data || [];
+        if (version === _gogoProductsCacheVersion) writeGogoSessionCache(GOGO_PRODUCTS_CACHE_KEY, rows);
+        return rows;
+    })();
+    _gogoProductsRequest = request;
+    try { return await request; }
+    finally { if (_gogoProductsRequest === request) _gogoProductsRequest = null; }
+}
+
 // Category rows are authoritative; legacy popular metadata cannot resurrect deleted rows.
 async function loadStoreCategories() {
+    var cached = readGogoSessionCache(GOGO_CATEGORIES_CACHE_KEY);
+    if (cached) return cached;
+    if (_gogoCategoriesRequest) return _gogoCategoriesRequest;
     const sb = getSupabase();
     if (!sb) throw new Error('Store connection unavailable');
-    const { data, error } = await sb.from('categories').select('*').order('name');
-    if (error) throw error;
-    let metadata = [];
-    try {
-        const row = (data || []).find(c => c.slug === 'system_popular_categories');
-        metadata = row ? JSON.parse(row.image_url || '[]') : [];
-    } catch (_) {}
-    if (!Array.isArray(metadata)) metadata = [];
-    return (data || []).filter(c => c.name && c.slug && !/^system_/i.test(c.slug)).map(c => {
-        const extra = metadata.find(m => m.slug === c.slug) || {};
-        const popularImage = extra.image_url && extra.image_url !== 'logo.png' ? extra.image_url : '';
-        const categoryImage = c.image_url && c.image_url !== 'logo.png' ? c.image_url : '';
-        // Prefer the image saved specifically for the popular card. The category
-        // row may contain the legacy/default logo.png placeholder.
-        return { ...c, subtitle: extra.subtitle || '', image_url: popularImage || categoryImage || extra.image_url || c.image_url || 'logo.png' };
-    });
+    var version = _gogoCategoriesCacheVersion;
+    var request = (async function() {
+        const { data, error } = await sb.from('categories').select('id,name,slug,image_url').order('name');
+        if (error) throw error;
+        let metadata = [];
+        try {
+            const row = (data || []).find(c => c.slug === 'system_popular_categories');
+            metadata = row ? JSON.parse(row.image_url || '[]') : [];
+        } catch (_) {}
+        if (!Array.isArray(metadata)) metadata = [];
+        var categories = (data || []).filter(c => c.name && c.slug && !/^system_/i.test(c.slug)).map(c => {
+            const extra = metadata.find(m => m.slug === c.slug) || {};
+            const popularImage = extra.image_url && extra.image_url !== 'logo.png' ? extra.image_url : '';
+            const categoryImage = c.image_url && c.image_url !== 'logo.png' ? c.image_url : '';
+            return { ...c, subtitle: extra.subtitle || '', image_url: popularImage || categoryImage || extra.image_url || c.image_url || 'logo.png' };
+        });
+        if (version === _gogoCategoriesCacheVersion) writeGogoSessionCache(GOGO_CATEGORIES_CACHE_KEY, categories);
+        return categories;
+    })();
+    _gogoCategoriesRequest = request;
+    try { return await request; }
+    finally { if (_gogoCategoriesRequest === request) _gogoCategoriesRequest = null; }
 }
 async function checkedStoreWrite(query) {
     const { data, error } = await query.select();

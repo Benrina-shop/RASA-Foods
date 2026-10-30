@@ -168,7 +168,7 @@
       try {
         var sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          var { data } = await sb.from('categories').select('*').eq('slug', 'system_marquee_news').single();
+          var { data } = await sb.from('categories').select('image_url').eq('slug', 'system_marquee_news').single();
           if (data && data.image_url) {
             try {
               var parsed = JSON.parse(data.image_url);

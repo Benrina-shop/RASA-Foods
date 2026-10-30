@@ -140,12 +140,15 @@ async function initDashboard() {
     if (!sb) return setTimeout(initDashboard, 200);
 
     // Fetch Stats
-    const { data: orders } = await sb.from('orders').select('*').order('created_at', {ascending: false});
-    const { count: prodCount } = await sb.from('products').select('*', { count: 'exact', head: true });
+    const { data: orderTotals } = await sb.from('orders').select('total_amount,status,created_at');
+    const { data: orders } = await sb.from('orders')
+      .select('id,customer_name,status,total_amount,created_at')
+      .order('created_at', { ascending: false }).limit(200);
+    const { count: prodCount } = await sb.from('products').select('id', { count: 'exact', head: true });
 
-    if (orders) {
-      document.getElementById('stat-orders').textContent = orders.length;
-      const revenue = orders.reduce((s, o) => s + parseFloat(o.total_amount), 0);
+    if (orderTotals) {
+      document.getElementById('stat-orders').textContent = orderTotals.length;
+      const revenue = orderTotals.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
       document.getElementById('stat-revenue').textContent = formatPrice(revenue);
       
       if (orders.length === 0) {
