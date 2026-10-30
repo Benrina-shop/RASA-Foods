@@ -43,25 +43,30 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 - Browser verification: install Playwright and `@electric-sql/pglite` in the test environment, then run `node tests/product-engagement.cjs`. `PLAYWRIGHT_CHANNEL=msedge` can select installed Edge; `PLAYWRIGHT_MODULE_PATH` can point to an existing Playwright package. The test uses product API fixtures and the actual reaction SQL in local PostgreSQL, without production writes. It covers separate counts across independent browsers, reaction changes/removal, persistence, cross-page/tab synchronization, wishlist, cart, mobile, and network/storage errors. `node tests/product-reactions-db.cjs` separately checks SQL idempotency, validation, permissions, RLS, and product-delete cleanup.
 
 ### 2.1. Home Page (`index.html`)
-- **Best Sellers** remains on the homepage.
-- **New Arrivals** follows Best Sellers and displays up to eight products chosen independently in `admin-new-arrivals.html`. Selection is stored as JSON in `categories.slug = system_new_arrivals`; product details continue to come from `products`.
-- **Popular Categories** follows New Arrivals and displays four unique category cards. A new random set appears every five seconds without reloading the page; each set has no duplicate categories and differs from the preceding set.
+- **Responsive shared content width**: Header and hero use a 1,648px outer container with 24px desktop side padding, giving the same 1,600px inner content width as lower homepage sections. The hero promo ad card is capped at 520px so it does not grow too large at 100% browser zoom. Products, Best Sellers, New Arrivals, Browse Departments, and Customer Reviews share the 1,600px content width.
+- **Homepage section order**: Hero cover and promo ad; Popular Categories; Best Sellers; New Arrivals; Browse Departments; Customer Reviews; footer.
+- **Popular Categories**: Loads regular category rows and card image metadata from Supabase `categories`. The first four unique categories show on initial load. If more than four categories exist, the visible set shuffles every five seconds without reloading; cards are unique and the exact previous set is not repeated. Cards fill four columns on desktop and two on tablet/mobile. Category image, name, add/update/delete changes, and catalogue links follow admin-managed category rows. Arrow controls request another set.
+- **Best Sellers**: Displays up to eight products selected independently in `admin-best-sellers.html`. Selection is stored as product IDs in `categories.slug = system_best_sellers`; product details always come from `products`, so product edits appear automatically.
+- **New Arrivals**: Displays up to eight products selected independently in `admin-new-arrivals.html`. Selection is stored as product IDs in `categories.slug = system_new_arrivals`; product details always come from `products`.
+- **Browse Departments**: Groups current products by `category_slug`, shows up to five products from one category at a time, and switches category every ten seconds without reloading. Section heading and product-card labels use the matching display name from `categories.name`, with a readable slug fallback. Products use a four-column desktop grid, two columns on tablet, and one on mobile. Categories with no products are not shown.
+- **Customer Reviews**: Appears above the footer. It ranks products by average rating, shows reviews for the four highest-rated products, includes product names and ratings, supports responsive cards and arrow navigation, and shuffles reviews every five seconds. A cross-tab `localStorage` event refreshes the list when another tab saves a product review.
+- **Review data limitation**: A read-only check of the configured Supabase project returned `PGRST205` because `public.reviews` is not present. Product-detail reviews are saved under browser keys `gogo-reviews-<product-id>`; the homepage tries the database and falls back to those browser-local entries. Reviews are not shared across customers, browsers, or devices. No reviews-table SQL migration is included, and a Git push does not create or apply it. A shared review system needs a designed table and access policies, especially because the product form collects customer email addresses.
 - Clicking a category opens the catalogue filtered to that category. Category data is read from Supabase `categories` and respects admin updates.
 - **Full-Width Hero Background Slideshow**:
   - Dynamically cycles high-resolution background covers (configured via `admin-banners.html`) every 5 seconds with smooth cross-fade animation.
 - **Interactive Promo Ads Card (Multi-Image Auto-Rotating)**:
   - Supports multiple images per promotion advertisement with an internal 2.5-second image flipper and manual arrow/dot controls.
 - **Real-Time Live Search Bar**:
-  - Dedicated search bar on both Desktop and Mobile (`#nav-search-input-mob`) with placeholder `"Search Your Products"`.
+  - Dedicated search bar on both Desktop and Mobile (`#nav-search-input-mob`) with placeholder `Search Your Products`.
   - Instant live dropdown search powered by `live-search.js` displaying product thumbnails, categories, and prices as the customer types.
 - **Top Announcement Marquee Ticker**:
   - Dynamic announcement bar (`live-marquee.js`) with live status badge and customizable scrolling ticker messages.
 - **Hover Slideshow on Product Cards**:
-  - Hovering mouse over any product card automatically loops through all additional product images (1.2s intervals), previewing different angles without leaving the catalogue.
-- **Featured Bestsellers & New Arrivals**:
-  - Best Sellers use the existing product catalogue; New Arrivals use the separately managed `system_new_arrivals` selection.
+  - Hovering over a product card cycles through its additional product images every 850ms, previewing different angles without leaving the catalogue.
 - **Integrated Direct Navigation**:
-  - Clean sticky 2-row mobile navbar with responsive slide-out drawer menu (`#mob-menu`).
+  - Clean sticky two-row mobile navbar with responsive slide-out drawer menu (`#mob-menu`).
+
+---
 
 ### 2.2. Products Catalogue (`products.html`)
 - **Desktop Sticky Sidebar & Mobile Filter Drawer**:
@@ -83,9 +88,9 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
   - ?? `Quality Products`
   - ??? `Best Prices`
   - ??? `Peace of Mind`
-- **Customer Verified Feedback & Review System**:
+- **Customer Feedback & Product Review System**:
   - 5-Star interactive star rating selector with average score calculation.
-  - Customer review submission with optional **Review Photo Attachment** (uploaded directly to Supabase storage `products` bucket).
+  - Customer review submission with optional **Review Photo Attachment** (uploaded directly to Supabase storage `products` bucket). Review text is also saved in browser `localStorage` as `gogo-reviews-<product-id>`; the configured project currently has no `public.reviews` table, so review text is not globally shared through the database.
   - Review photo thumbnail gallery with clickable Lightbox Modal zoom-in preview.
 
 ### 2.4. Exclusive Offers Page (`offers.html`)
@@ -279,6 +284,12 @@ Stores standard store product categories as well as system configurations:
   - `system_new_arrivals`: Ordered product IDs selected for the home page New Arrivals section (JSON array).
   - `system_best_sellers`: Ordered product IDs selected for the home page Best Sellers section (JSON array).
 
+
+### Reviews storage status
+- The frontend refers to `public.reviews`, but the configured Supabase project currently returns `PGRST205` for that table. It is not included in the checked-in SQL schema and no migration is provided yet.
+- Product review text currently falls back to browser-local `localStorage`; it is not a shared database table. The homepage uses these local entries when its database read fails, then calculates average product ratings and selects reviews from the top-rated products.
+- Do not describe the homepage average as a store-wide/customer-wide rating until a shared table, safe email access rules, and review read/insert policies are installed and verified.
+
 ---
 
 ## 6. Storage Buckets (Supabase Storage)
@@ -312,6 +323,8 @@ Stores standard store product categories as well as system configurations:
 13. **Touch Swipe on Mobile Gallery**: Seamless swipe gestures for mobile product browsing.
 14. **Checkout & Cart Mobile Ground-Up Restructure**: Auto-fits 100% viewport width without horizontal scroll or manual zoom-out, with order summary on top followed by delivery details.
 15. **Mobile Menu Drawer Fixes**: Unified slide-down drawer across all customer storefront pages.
+16. **Homepage Width and Category Sections**: Aligned home content to a shared 1,600px inner width, capped the hero promo card at 520px, rendered Popular Categories as responsive full-width cards, kept the initial set visible before five-second shuffling, and added the ten-second Browse Departments product rotation using category display names.
+17. **Homepage Customer Reviews**: Added a responsive review summary/cards section before the footer, ranking locally available reviews by product average and shuffling every five seconds. Confirmed the configured Supabase project does not currently have `public.reviews`; the homepage falls back to per-browser review data and documents that reviews are not globally shared.
 
 ---
 *Maintained by GOGO MART Core Engineering Team — Comprehensive Documentation Updated: October 2026.*

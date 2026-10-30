@@ -1,5 +1,9 @@
 # Shared product reaction counts
 
+## Homepage customer reviews
+
+The configured Supabase project was checked read-only and returned `PGRST205` for `public.reviews`, meaning the table is absent from its API schema cache. Product detail reviews are saved under browser-local keys `gogo-reviews-<product-id>`. The homepage first attempts a database read and falls back to those local entries; it ranks available product reviews by average, shows reviews from the top-rated products, and shuffles them every five seconds. This fallback only covers the current browser and does not share reviews across customers or devices. No reviews table migration or RLS policy is currently supplied. A Git push does not apply database SQL.
+
 ## Customer accounts, carts and wishlists
 
 `customer-accounts.sql` creates private account cart and wishlist tables with
