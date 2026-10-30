@@ -789,7 +789,7 @@
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (!sb) throw new Error('Store connection unavailable');
         const { data, error } = await sb.from('reviews')
-          .select('id, product_id, author_name, rating, comment, created_at')
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(500);
         if (error) throw error;
