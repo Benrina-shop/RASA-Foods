@@ -569,18 +569,22 @@
           <h2 class="font-display font-bold text-3xl sm:text-4xl text-slate-900">What Our Customers Say</h2>
           <div class="divider"></div>
         </div>
-        <div class="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 p-4 sm:px-6 bg-slate-50 border border-slate-200 rounded-2xl sm:rounded-3xl">
+        <div
+          class="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 p-4 sm:px-6 bg-slate-50 border border-slate-200 rounded-2xl sm:rounded-3xl">
           <div class="text-center min-w-14">
             <span id="homepage-review-average" class="text-3xl sm:text-4xl font-black text-slate-900">—</span>
             <span class="text-xs text-slate-400 block font-bold">out of 5</span>
           </div>
           <div class="border-l border-slate-200 pl-4 sm:pl-5">
-            <div id="homepage-review-stars" class="flex items-center text-amber-400 text-base mb-1" aria-label="No ratings yet">★★★★★</div>
+            <div id="homepage-review-stars" class="flex items-center text-amber-400 text-base mb-1"
+              aria-label="No ratings yet">★★★★★</div>
             <span id="homepage-review-count" class="text-xs font-bold text-slate-500">Loading reviews...</span>
           </div>
           <div id="homepage-review-controls" class="hidden items-center gap-2 sm:ml-3">
-            <button onclick="shiftHomepageReviews(-1)" aria-label="Previous customer reviews" class="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 flex items-center justify-center transition-all">‹</button>
-            <button onclick="shiftHomepageReviews(1)" aria-label="Next customer reviews" class="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 flex items-center justify-center transition-all">›</button>
+            <button onclick="shiftHomepageReviews(-1)" aria-label="Previous customer reviews"
+              class="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 flex items-center justify-center transition-all">‹</button>
+            <button onclick="shiftHomepageReviews(1)" aria-label="Next customer reviews"
+              class="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 flex items-center justify-center transition-all">›</button>
           </div>
         </div>
       </div>
@@ -630,7 +634,7 @@
         var sb = getSupabase();
         if (!sb) return setTimeout(initStore, 200);
 
-        const { data, error } = await sb.from('products').select('*');
+        const { data, error } = await sb.from('products').select('id,name,price,old_price,category_slug,image_url,stock,created_at');
         if (error) throw error;
 
         console.log('Products fetched:', data.length);
@@ -1360,10 +1364,10 @@
     }
 
     // Refresh storefront data without reloading the page.
-    setInterval(function () {
-      loadPopularCategories();
-      initStore();
-    }, 20000);
+    //  setInterval(function () {
+    //   loadPopularCategories();
+    //   initStore();
+    // }, 20000);
 
   </script>
   <script src="live-search.js"></script>
