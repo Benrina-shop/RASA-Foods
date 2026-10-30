@@ -112,7 +112,11 @@ async function loadStoreCategories() {
     if (!Array.isArray(metadata)) metadata = [];
     return (data || []).filter(c => c.name && c.slug && !/^system_/i.test(c.slug)).map(c => {
         const extra = metadata.find(m => m.slug === c.slug) || {};
-        return { ...c, subtitle: extra.subtitle || '', image_url: c.image_url || extra.image_url || 'logo.png' };
+        const popularImage = extra.image_url && extra.image_url !== 'logo.png' ? extra.image_url : '';
+        const categoryImage = c.image_url && c.image_url !== 'logo.png' ? c.image_url : '';
+        // Prefer the image saved specifically for the popular card. The category
+        // row may contain the legacy/default logo.png placeholder.
+        return { ...c, subtitle: extra.subtitle || '', image_url: popularImage || categoryImage || extra.image_url || c.image_url || 'logo.png' };
     });
 }
 async function checkedStoreWrite(query) {
