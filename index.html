@@ -235,6 +235,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="product-engagement.css">
   <script src="product-engagement.js"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
 
 <body>
@@ -250,7 +251,7 @@
           </a>
 
           <!-- Desktop Navigation Links -->
-          <div class="hidden md:flex items-center gap-1 lg:gap-1.5 pl-1">
+          <div class="hidden lg:flex items-center gap-1 lg:gap-1.5 pl-1">
             <a href="index.html" class="nav-link active">Home</a>
             <a href="products.html" class="nav-link">Products</a>
             <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
@@ -289,7 +290,7 @@
             <svg width="19" height="19" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             <span id="cart-count" class="absolute -top-1 -right-1 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold bg-pink-500 shadow-md">0</span>
           </a>
-          <button id="menu-toggle" class="md:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none" aria-label="Open Navigation Menu">
+          <button id="menu-toggle" class="lg:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none" aria-label="Open Navigation Menu">
             <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
         </div>
@@ -909,57 +910,10 @@
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          const { data: dbCats } = await sb.from('categories').select('*').order('name');
-          const { data: popRow } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
-
-          let popList = [];
-          if (popRow && popRow.image_url) {
-            try {
-              const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
-              if (Array.isArray(parsed)) popList = parsed;
-            } catch (err) {}
-          }
-
-          const catMap = new Map();
-          popList.forEach(c => {
-            if (c && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
-              catMap.set(c.slug.toLowerCase(), {
-                name: c.name,
-                slug: c.slug.toLowerCase(),
-                subtitle: c.subtitle || '',
-                image_url: c.image_url || 'logo.png'
-              });
-            }
-          });
-
-          (dbCats || []).forEach(c => {
-            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_')) {
-              const key = c.slug.toLowerCase();
-              if (catMap.has(key)) {
-                const existing = catMap.get(key);
-                catMap.set(key, {
-                  name: c.name || existing.name,
-                  slug: key,
-                  subtitle: existing.subtitle || '',
-                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : existing.image_url
-                });
-              } else {
-                catMap.set(key, {
-                  name: c.name,
-                  slug: key,
-                  subtitle: '',
-                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : 'logo.png'
-                });
-              }
-            }
-          });
-
-          POPULAR_CATEGORIES = Array.from(catMap.values());
-          if (POPULAR_CATEGORIES.length > 0) {
-            localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
-            renderPopularCategories();
-            return;
-          }
+          POPULAR_CATEGORIES = await loadStoreCategories();
+          localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
+          renderPopularCategories();
+          return;
         }
       } catch (err) {
         console.warn('loadPopularCategories error:', err);

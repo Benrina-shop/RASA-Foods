@@ -24,8 +24,9 @@
     .loader-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1100;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
-<body>
+<body class="admin-layout">
   <div id="loader" class="loader-overlay">
       <div class="w-10 h-10 border-4 border-blue-400/40 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-xs font-bold uppercase tracking-widest">Processing Assets...</p>
@@ -219,29 +220,7 @@ async function initPage() {
         if (typeof getSupabase !== 'function') return setTimeout(initPage, 200);
         const sb = getSupabase();
         
-        // Load Categories from DB and Popular Categories
-        const { data: dbCats } = await sb.from('categories').select('*').order('name');
-        let popCats = [];
-        try {
-            const { data: popRow } = await sb.from('categories').select('image_url').eq('slug', 'system_popular_categories').single();
-            if (popRow && popRow.image_url) {
-                const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
-                if (Array.isArray(parsed)) popCats = parsed;
-            }
-        } catch (e) {}
-
-        const catMap = new Map();
-        (dbCats || []).forEach(c => {
-            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
-                catMap.set(c.slug.toLowerCase(), { name: c.name, slug: c.slug });
-            }
-        });
-        popCats.forEach(c => {
-            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
-                catMap.set(c.slug.toLowerCase(), { name: c.name, slug: c.slug });
-            }
-        });
-        allCategories = Array.from(catMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+        allCategories = await loadStoreCategories();
         updateCategoryDropdown();
 
         // Load Products
@@ -254,7 +233,9 @@ async function initPage() {
 
 function updateCategoryDropdown() {
     const select = document.getElementById('p-cat-select');
-    select.innerHTML = allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+    const previous = select.value;
+    select.innerHTML = '<option value="">Unassigned</option>' + allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+    if (allCategories.some(c => c.slug === previous)) select.value = previous;
 }
 
 
@@ -482,9 +463,10 @@ document.getElementById('product-form').onsubmit = async (e) => {
         // 1. Handle New Category
         if (newCatName) {
             const slug = newCatName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            if (!slug || /^system[-_]/i.test(slug)) throw new Error('Enter a valid category name.');
             const { data: existCat } = await sb.from('categories').select('id, slug').eq('slug', slug).single();
             if (!existCat) {
-                await sb.from('categories').insert({ name: newCatName, slug: slug });
+                await checkedStoreWrite(sb.from('categories').insert({ name: newCatName, slug: slug }));
                 allCategories.push({ name: newCatName, slug: slug });
                 updateCategoryDropdown();
             }
@@ -629,5 +611,6 @@ if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
 
 initPage();
 </script>
+  <script src="responsive.js"></script>
 </body>
 </html>

@@ -68,6 +68,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="product-engagement.css">
   <script src="product-engagement.js"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
 <body>
 
@@ -83,7 +84,7 @@
           </a>
 
           <!-- Desktop Navigation Links -->
-          <div class="hidden md:flex items-center gap-1 lg:gap-1.5 pl-1">
+          <div class="hidden lg:flex items-center gap-1 lg:gap-1.5 pl-1">
             <a href="index.html" class="nav-link">Home</a>
             <a href="products.html" class="nav-link active">Products</a>
             <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
@@ -122,7 +123,7 @@
             <svg width="19" height="19" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             <span id="cart-count" class="absolute -top-1 -right-1 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold bg-pink-500 shadow-md">0</span>
           </a>
-          <button onclick="document.getElementById('mob-menu').style.transform='translateY(0)'" class="md:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none" aria-label="Open Navigation Menu">
+          <button onclick="document.getElementById('mob-menu').style.transform='translateY(0)'" class="lg:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none" aria-label="Open Navigation Menu">
             <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
         </div>
@@ -281,6 +282,7 @@ window.addEventListener('product-preferences-changed', event => {
     }
 });
 
+let filtersInitialized = false;
 async function initPage() {
     try {
         if (typeof getSupabase !== 'function') return setTimeout(initPage, 200);
@@ -291,57 +293,31 @@ async function initPage() {
 
         ALL_PRODUCTS = prods || [];
 
-        // Load all active categories created in the Admin Panel
-        const { data: dbCats } = await sb.from('categories').select('*').order('name');
-        let popCats = [];
-        try {
-            const { data: popRow } = await sb.from('categories').select('image_url').eq('slug', 'system_popular_categories').single();
-            if (popRow && popRow.image_url) {
-                const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
-                if (Array.isArray(parsed)) popCats = parsed;
-            }
-        } catch (err) {}
-
-        const catMap = new Map();
-
-        // 1. From categories table (e.g. Mens, Animal, Birds, Womens, Cricket)
-        (dbCats || []).forEach(c => {
-            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_')) {
-                const key = c.slug.toLowerCase();
-                catMap.set(key, { name: c.name, slug: key });
-            }
-        });
-
-        // 2. From system_popular_categories (Popular Categories manager)
-        popCats.forEach(c => {
-            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
-                const key = c.slug.toLowerCase();
-                if (!catMap.has(key)) {
-                    catMap.set(key, { name: c.name, slug: key });
-                }
-            }
-        });
-
-        ALL_CATEGORIES = Array.from(catMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+        ALL_CATEGORIES = await loadStoreCategories();
         const priceRange = document.getElementById('price-range');
         const ceiling = ALL_PRODUCTS.reduce((max, product) => Math.max(max, Number(product.price) || 0), 10000);
+        const previousMax = priceRange.max;
+        const previousValue = priceRange.value;
         priceRange.max = String(Math.ceil(ceiling / 100) * 100);
-        priceRange.value = priceRange.max;
+        priceRange.value = !filtersInitialized || previousValue === previousMax ? priceRange.max : Math.min(Number(previousValue), Number(priceRange.max));
         
         // Read search query from URL parameter if present (e.g. products.html?q=chocolate)
         const urlParams = new URLSearchParams(window.location.search);
         const qParam = urlParams.get('q');
         const catParam = urlParams.get('cat');
-        if (catParam) {
+        if (!filtersInitialized && catParam) {
             selectedCats = [catParam];
         }
-        if (qParam) {
+        if (!filtersInitialized && qParam) {
             const sInput = document.getElementById('search-input');
             if (sInput) sInput.value = qParam;
             const navInput = document.getElementById('nav-search-input');
             if (navInput) navInput.value = qParam;
         }
 
+        selectedCats = selectedCats.filter(slug => slug === 'all' || ALL_CATEGORIES.some(c => c.slug.toLowerCase() === slug.toLowerCase()));
+        if (!selectedCats.length) selectedCats = ['all'];
+        filtersInitialized = true;
         renderCategories();
         updateFilters();
         updateCartCount();
@@ -396,7 +372,7 @@ function updateFilters() {
 
     let filtered = ALL_PRODUCTS.filter(p => {
         const matchesCat = selectedCats.includes('all') || selectedCats.some(s => s.toLowerCase() === (p.category_slug || '').toLowerCase());
-        const matchesSearch = p.name.toLowerCase().includes(search) || p.category_slug.toLowerCase().includes(search);
+        const matchesSearch = p.name.toLowerCase().includes(search) || (p.category_slug || '').toLowerCase().includes(search);
         const matchesPrice = Number(p.price) <= maxPrice;
         const matchesSale = !onlySale || (p.old_price && Number(p.old_price) > Number(p.price));
         const matchesNew = !onlyNew || p.is_new || (p.badge && p.badge.toLowerCase().includes('new'));

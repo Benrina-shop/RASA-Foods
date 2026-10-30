@@ -17,8 +17,9 @@
     .stat-card:hover{border-color:var(--accent)}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
-<body>
+<body class="admin-layout">
   <div class="sidebar flex flex-col justify-between">
     <div>
       <div class="font-display text-2xl font-black mb-12 flex items-center gap-3" style="font-family:'Plus Jakarta Sans', sans-serif">
@@ -171,5 +172,6 @@ async function initDashboard() {
 
 initDashboard();
 </script>
+  <script src="responsive.js"></script>
 </body>
 </html>

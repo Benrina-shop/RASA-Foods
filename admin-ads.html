@@ -32,8 +32,9 @@
     .thumb-remove { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 9999px; background: rgba(239, 68, 68, 0.9); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; cursor: pointer; transition: transform 0.15s; }
     .thumb-remove:hover { transform: scale(1.15); }
   </style>
+  <link rel="stylesheet" href="responsive.css">
 </head>
-<body>
+<body class="admin-layout">
 
   <!-- Modal for Creating/Editing Ads -->
   <div id="ad-modal" class="modal">
@@ -455,5 +456,6 @@
     // ── INIT ───────────────────────────────────────────────────────────
     initAds();
   </script>
+  <script src="responsive.js"></script>
 </body>
 </html>

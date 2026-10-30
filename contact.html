@@ -24,11 +24,12 @@
     #mob-menu.open { transform: translateY(0); }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
 <body>
 
   <!-- Navigation -->
-  <nav id="navbar">
+  <nav id="navbar" class="sticky top-0 z-[100] bg-white/95 border-b border-slate-200 px-4 sm:px-6 py-3">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 lg:gap-6">
       <!-- Left: Brand Logo & Navigation Links Group -->
         <div class="flex items-center gap-3 lg:gap-5 shrink-0">
@@ -39,7 +40,7 @@
           </a>
 
           <!-- Desktop Navigation Links -->
-          <div class="hidden md:flex items-center gap-1 lg:gap-1.5 pl-1">
+          <div class="hidden lg:flex items-center gap-1 lg:gap-1.5 pl-1">
             <a href="index.html" class="nav-link ">Home</a>
             <a href="products.html" class="nav-link ">Products</a>
             <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
@@ -75,7 +76,7 @@
           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
           <span id="cart-count" class="absolute -top-1 -right-1 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold bg-pink-500 shadow-md">0</span>
         </a>
-        <button id="menu-toggle" class="md:hidden p-2 text-slate-700" onclick="document.getElementById('mob-menu').classList.add('open')">
+        <button id="menu-toggle" class="lg:hidden p-2 text-slate-700" onclick="document.getElementById('mob-menu').classList.add('open')">
           <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>

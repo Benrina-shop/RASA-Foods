@@ -56,9 +56,9 @@ function notifyStoreUpdate(type, payload) {
 function onStoreUpdate(callback) {
     if (typeof callback !== 'function') return;
     if (_gogoBroadcast) {
-        _gogoBroadcast.onmessage = function(e) {
+        _gogoBroadcast.addEventListener('message', function(e) {
             if (e && e.data) callback(e.data);
-        };
+        });
     }
     window.addEventListener('storage', function(e) {
         if (e.key === 'gogo_store_sync_event' && e.newValue) {
@@ -96,4 +96,28 @@ function subscribeToSupabaseRealtime(sb, tables, callback) {
         console.warn('Supabase realtime init error:', e);
         return null;
     }
+}
+
+// Category rows are authoritative; legacy popular metadata cannot resurrect deleted rows.
+async function loadStoreCategories() {
+    const sb = getSupabase();
+    if (!sb) throw new Error('Store connection unavailable');
+    const { data, error } = await sb.from('categories').select('*').order('name');
+    if (error) throw error;
+    let metadata = [];
+    try {
+        const row = (data || []).find(c => c.slug === 'system_popular_categories');
+        metadata = row ? JSON.parse(row.image_url || '[]') : [];
+    } catch (_) {}
+    if (!Array.isArray(metadata)) metadata = [];
+    return (data || []).filter(c => c.name && c.slug && !/^system_/i.test(c.slug)).map(c => {
+        const extra = metadata.find(m => m.slug === c.slug) || {};
+        return { ...c, subtitle: extra.subtitle || '', image_url: c.image_url || extra.image_url || 'logo.png' };
+    });
+}
+async function checkedStoreWrite(query) {
+    const { data, error } = await query.select();
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('No records changed. Check your access and refresh before retrying.');
+    return data;
 }

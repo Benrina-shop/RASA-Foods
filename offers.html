@@ -27,6 +27,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="product-engagement.css">
   <script src="product-engagement.js"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
 <body>
 <nav id="navbar" class="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
@@ -41,7 +42,7 @@
           </a>
 
           <!-- Desktop Navigation Links -->
-          <div class="hidden md:flex items-center gap-1 lg:gap-1.5 pl-1">
+          <div class="hidden lg:flex items-center gap-1 lg:gap-1.5 pl-1">
             <a href="index.html" class="nav-link ">Home</a>
             <a href="products.html" class="nav-link ">Products</a>
             <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
@@ -80,7 +81,7 @@
             <svg width="19" height="19" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             <span id="cart-count" class="absolute -top-1 -right-1 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold bg-pink-500 shadow-md">0</span>
           </a>
-          <button onclick="document.getElementById('mob-menu').style.transform='translateY(0)'" class="md:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none" aria-label="Open Navigation Menu">
+          <button onclick="document.getElementById('mob-menu').style.transform='translateY(0)'" class="lg:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none" aria-label="Open Navigation Menu">
             <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
         </div>

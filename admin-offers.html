@@ -23,8 +23,9 @@
     .toggle-pill.active::after{left:21px}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
-<body>
+<body class="admin-layout">
   <div id="offer-modal" class="modal">
     <div class="bg-[var(--surface)] p-10 rounded-3xl border border-[var(--border)] w-full max-w-md shadow-2xl">
       <h2 id="modal-title" class="text-3xl font-black mb-8 font-display" style="font-family:'Plus Jakarta Sans', sans-serif">New Promo Code</h2>
@@ -204,5 +205,6 @@ function editOffer(id) { openModal(id); }
 
 initOffers();
 </script>
+  <script src="responsive.js"></script>
 </body>
 </html>

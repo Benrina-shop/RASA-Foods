@@ -30,11 +30,12 @@
     .search-box:focus{border-color:var(--accent)}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
-<body class="min-h-screen flex">
+<body class="admin-layout min-h-screen flex">
 
   <!-- Sidebar -->
-  <aside class="w-72 border-r border-[var(--border)] p-8 flex flex-col fixed h-full bg-[var(--bg)]">
+  <aside class="sidebar w-72 border-r border-[var(--border)] p-8 flex flex-col fixed h-full bg-[var(--bg)]">
     <div class="mb-12 flex items-center gap-3">
       <img src="logo.png" alt="GOGO MART" class="w-8 h-8 object-contain rounded-full border border-blue-400/40">
       <h1 class="font-display text-2xl font-bold" style="font-family:'Plus Jakarta Sans', sans-serif">GOGO <span class="text-xs text-[var(--muted)]">Admin</span></h1>
@@ -48,7 +49,7 @@
         </a>
         <a href="admin-products.html" class="nav-link"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-width="2"/></svg> Products</a>
       <a href="admin-orders.html" class="nav-link active"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="2"/></svg> Orders</a>
-      <a href="admin-offers.html" class="nav-link">
+      <a href="admin-offers.html" class="nav-link">Offers</a>
                         <a href="admin-marquee.html" class="nav-link ">
           <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
           Live Marquee
@@ -57,14 +58,14 @@
           <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           Cover Banners
         </a>
-        <a href="admin-ads.html" class="nav-link"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg> Promo Ads</a><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 00-2 2h2zM5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-width="2"/></svg> Offers</a>
+        <a href="admin-ads.html" class="nav-link"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg> Promo Ads</a>
     </nav>
 
     <a href="index.html" class="nav-link text-red-500/50 hover:text-red-500"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2"/></svg> Exit Portal</a>
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 ml-72 p-12">
+  <main class="main-content flex-1 ml-72 p-12">
     <div class="flex justify-between items-end mb-12">
       <div>
         <h2 class="text-4xl font-black mb-2" style="font-family:'Plus Jakarta Sans', sans-serif">Order Flow</h2>
@@ -353,5 +354,6 @@
 
     fetchOrders();
   </script>
+  <script src="responsive.js"></script>
 </body>
 </html>

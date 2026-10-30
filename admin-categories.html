@@ -26,8 +26,9 @@
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
-<body>
+<body class="admin-layout">
 
   <!-- Sidebar -->
   <div class="sidebar flex flex-col justify-between">
@@ -193,65 +194,18 @@
       }
     }
 
+    let categoryWriteInProgress = false;
     async function loadCategories() {
+      if (categoryWriteInProgress) return;
       loadStoreCategoriesDropdown();
       const grid = document.getElementById('categories-grid');
       
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
-          // 1. Fetch real categories table rows
-          const { data: dbCats } = await sb.from('categories').select('*').order('name');
-
-          // 2. Fetch system_popular_categories JSON
-          const { data: popRow } = await sb.from('categories').select('*').eq('slug', 'system_popular_categories').single();
-          let popList = [];
-          if (popRow && popRow.image_url) {
-            try {
-              const parsed = typeof popRow.image_url === 'string' ? JSON.parse(popRow.image_url) : popRow.image_url;
-              if (Array.isArray(parsed)) popList = parsed;
-            } catch (err) {}
-          }
-
-          const catMap = new Map();
-
-          // Add popular categories first
-          popList.forEach(c => {
-            if (c && c.slug && !c.slug.toLowerCase().startsWith('system_')) {
-              const key = c.slug.toLowerCase();
-              catMap.set(key, {
-                name: c.name || key,
-                slug: key,
-                subtitle: c.subtitle || '',
-                image_url: c.image_url || 'logo.png'
-              });
-            }
-          });
-
-          // Merge actual DB categories (including any added via Inventory)
-          (dbCats || []).forEach(c => {
-            if (c && c.name && c.slug && !c.slug.toLowerCase().startsWith('system_') && !c.name.toUpperCase().startsWith('SYSTEM_')) {
-              const key = c.slug.toLowerCase();
-              if (catMap.has(key)) {
-                const existing = catMap.get(key);
-                catMap.set(key, {
-                  name: c.name || existing.name,
-                  slug: key,
-                  subtitle: existing.subtitle || '',
-                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : existing.image_url
-                });
-              } else {
-                catMap.set(key, {
-                  name: c.name,
-                  slug: key,
-                  subtitle: '',
-                  image_url: c.image_url && !c.image_url.startsWith('[') ? c.image_url : 'logo.png'
-                });
-              }
-            }
-          });
-
-          CATEGORIES = Array.from(catMap.values());
+          const loadedCategories = await loadStoreCategories();
+          if (categoryWriteInProgress) return;
+          CATEGORIES = loadedCategories;
           renderGrid();
           return;
         }
@@ -404,6 +358,8 @@
     async function saveCategory(e) {
       e.preventDefault();
       const saveBtn = document.getElementById('save-btn');
+      if (categoryWriteInProgress) return;
+      categoryWriteInProgress = true;
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
 
@@ -415,29 +371,38 @@
         const subtitle = document.getElementById('cat-subtitle').value.trim();
         const image_url = document.getElementById('cat-img').value.trim() || 'logo.png';
 
+        if (!name || !slug || /^system[-_]/i.test(slug)) throw new Error('Enter a valid category name and slug.');
+        if (CATEGORIES.some((c, i) => c.slug === slug && String(i) !== idx)) throw new Error('This category slug already exists.');
         const catData = { name, slug, subtitle, image_url };
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
 
+        if (!sb) throw new Error('Store connection unavailable');
         if (sb) {
           // 1. If renaming / changing slug of an existing category
           if (oldSlug && oldSlug !== slug) {
-            // CASCADE UPDATE PRODUCTS
-            await sb.from('products').update({ category_slug: slug }).eq('category_slug', oldSlug);
-
-            // UPDATE OR RENAME IN CATEGORIES TABLE
-            const { data: existOld } = await sb.from('categories').select('id').eq('slug', oldSlug).single();
-            if (existOld) {
-              await sb.from('categories').update({ name, slug, image_url }).eq('id', existOld.id);
-            } else {
-              await sb.from('categories').insert({ name, slug, image_url });
+            const { data: linked, error: readError } = await sb.from('products').select('id').eq('category_slug', oldSlug);
+            if (readError) throw readError;
+            const ids = (linked || []).map(p => p.id);
+            if (ids.length) {
+              const { error } = await sb.from('products').update({ category_slug: slug }).in('id', ids);
+              if (error) throw error;
+            }
+            try {
+              await checkedStoreWrite(sb.from('categories').update({ name, slug, image_url }).eq('slug', oldSlug));
+            } catch (error) {
+              if (ids.length) {
+                const { error: rollbackError } = await sb.from('products').update({ category_slug: oldSlug }).in('id', ids);
+                if (rollbackError) throw new Error(error.message + '; restoring product categories also failed: ' + rollbackError.message);
+              }
+              throw error;
             }
           } else {
             // New category or slug didn't change
             const { data: existNew } = await sb.from('categories').select('id').eq('slug', slug).single();
             if (existNew) {
-              await sb.from('categories').update({ name, image_url }).eq('id', existNew.id);
+              await checkedStoreWrite(sb.from('categories').update({ name, image_url }).eq('id', existNew.id));
             } else {
-              await sb.from('categories').insert({ name, slug, image_url });
+              await checkedStoreWrite(sb.from('categories').insert({ name, slug, image_url }));
             }
           }
         }
@@ -466,43 +431,52 @@
         console.error('Save category error:', err);
         alert('Failed to save category: ' + (err.message || err));
       } finally {
+        categoryWriteInProgress = false;
+        notifyStoreUpdate('CATEGORIES_CHANGED');
+        notifyStoreUpdate('PRODUCTS_CHANGED');
+        await loadCategories();
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Category';
       }
     }
 
     async function deleteCategory(idx) {
+      if (categoryWriteInProgress) return;
       const cat = CATEGORIES[idx];
-      if (!cat) return;
-      if (confirm('Are you sure you want to remove "' + cat.name + '"? Linked products will be unassigned so no ghost categories remain.')) {
-        const removed = CATEGORIES.splice(idx, 1)[0];
-        const delSlug = (removed.slug || '').toLowerCase();
-
+      if (!cat || !confirm('Remove "' + cat.name + '"? Linked products will become unassigned.')) return;
+      categoryWriteInProgress = true;
+      try {
+        const sb = getSupabase();
+        if (!sb) throw new Error('Store connection unavailable');
+        const { data: linked, error: readError } = await sb.from('products').select('id').eq('category_slug', cat.slug);
+        if (readError) throw readError;
+        const ids = (linked || []).map(p => p.id);
+        if (ids.length) {
+          const { error } = await sb.from('products').update({ category_slug: '' }).in('id', ids);
+          if (error) throw error;
+        }
         try {
-          const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-          if (sb && delSlug) {
-            // 1. Delete from categories table
-            await sb.from('categories').delete().eq('slug', delSlug);
-
-            // 2. Cascade unassign any products referencing this category
-            await sb.from('products').update({ category_slug: '' }).eq('category_slug', delSlug);
+          await checkedStoreWrite(sb.from('categories').delete().eq('slug', cat.slug));
+        } catch (error) {
+          if (ids.length) {
+            const { error: rollbackError } = await sb.from('products').update({ category_slug: cat.slug }).in('id', ids);
+            if (rollbackError) throw new Error(error.message + '; restoring product categories also failed: ' + rollbackError.message);
           }
-        } catch (err) {
-          console.warn('Delete category cascade error:', err);
+          throw error;
         }
-
+        CATEGORIES = CATEGORIES.filter(c => c.slug !== cat.slug);
         await syncCategories();
-
-        // Broadcast real-time change to all tabs
-        if (typeof notifyStoreUpdate === 'function') {
-          notifyStoreUpdate('CATEGORIES_CHANGED', { action: 'delete', slug: delSlug });
-          notifyStoreUpdate('PRODUCTS_CHANGED', { action: 'unlink_category', slug: delSlug });
-        }
+      } catch (error) {
+        alert('Category update failed: ' + error.message);
+      } finally {
+        categoryWriteInProgress = false;
+        notifyStoreUpdate('CATEGORIES_CHANGED');
+        notifyStoreUpdate('PRODUCTS_CHANGED');
+        await loadCategories();
       }
     }
 
     async function syncCategories() {
-      localStorage.setItem('gogo-popular-categories', JSON.stringify(CATEGORIES));
 
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
@@ -514,15 +488,16 @@
           };
           const { data: exist } = await sb.from('categories').select('id').eq('slug', 'system_popular_categories').single();
           if (exist) {
-            await sb.from('categories').update(payload).eq('id', exist.id);
+            await checkedStoreWrite(sb.from('categories').update(payload).eq('id', exist.id));
           } else {
-            await sb.from('categories').insert(payload);
+            await checkedStoreWrite(sb.from('categories').insert(payload));
           }
         }
       } catch (e) {
-        console.warn('DB sync error', e);
+        throw e;
       }
 
+      try { localStorage.setItem('gogo-popular-categories', JSON.stringify(CATEGORIES)); } catch (_) {}
       renderGrid();
     }
 
@@ -544,5 +519,6 @@
 
     loadCategories();
   </script>
+  <script src="responsive.js"></script>
 </body>
 </html>

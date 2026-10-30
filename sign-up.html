@@ -29,6 +29,7 @@
     .gbtn:hover::before{left:100%}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
 </head>
 <body>
 <div class="min-h-screen flex items-center justify-center p-6">
@@ -68,7 +69,7 @@
 
   const supabaseUrl = 'https://yswekhygaebgvowdrmxk.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzd2VraHlnYWViZ3Zvd2RybXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1Njk0ODksImV4cCI6MjA5MTE0NTQ4OX0.Ou_il3hORcuIvsmUix4dH73lCy-CVRbAJAntEWM-Z1U';
-  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  const signupClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   document.getElementById('sign-up-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -96,7 +97,7 @@
     const fname = nameParts[0];
     const lname = nameParts.slice(1).join(' ');
 
-    const { data, error } = await supabase.from('customers').insert({
+    const { data, error } = await signupClient.from('customers').insert({
         first_name: fname,
         last_name: lname,
         email: email
