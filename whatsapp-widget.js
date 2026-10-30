@@ -4,7 +4,7 @@
  */
 
 (function () {
-  const SHOP_PHONE = '94711289934'; // +94 71 128 9934
+  const SHOP_PHONE = '94722423669'; // +94 72 242 3669
 
   function initWhatsAppWidget() {
     if (document.getElementById('whatsapp-floating-widget')) return;
