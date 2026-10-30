@@ -561,6 +561,35 @@
     </div>
   </section>
 
+  <section id="homepage-reviews-section" class="py-16 sm:py-20 px-4 sm:px-6 bg-white border-b border-slate-200">
+    <div class="max-w-[1600px] mx-auto">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8 sm:mb-10">
+        <div>
+          <p class="text-xs font-bold tracking-[.25em] uppercase mb-2 text-blue-600">Customer Feedback</p>
+          <h2 class="font-display font-bold text-3xl sm:text-4xl text-slate-900">What Our Customers Say</h2>
+          <div class="divider"></div>
+        </div>
+        <div class="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 p-4 sm:px-6 bg-slate-50 border border-slate-200 rounded-2xl sm:rounded-3xl">
+          <div class="text-center min-w-14">
+            <span id="homepage-review-average" class="text-3xl sm:text-4xl font-black text-slate-900">—</span>
+            <span class="text-xs text-slate-400 block font-bold">out of 5</span>
+          </div>
+          <div class="border-l border-slate-200 pl-4 sm:pl-5">
+            <div id="homepage-review-stars" class="flex items-center text-amber-400 text-base mb-1" aria-label="No ratings yet">★★★★★</div>
+            <span id="homepage-review-count" class="text-xs font-bold text-slate-500">Loading reviews...</span>
+          </div>
+          <div id="homepage-review-controls" class="hidden items-center gap-2 sm:ml-3">
+            <button onclick="shiftHomepageReviews(-1)" aria-label="Previous customer reviews" class="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 flex items-center justify-center transition-all">‹</button>
+            <button onclick="shiftHomepageReviews(1)" aria-label="Next customer reviews" class="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 flex items-center justify-center transition-all">›</button>
+          </div>
+        </div>
+      </div>
+      <div id="homepage-review-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        <div class="col-span-full py-10 text-center text-slate-400">Loading customer reviews...</div>
+      </div>
+    </div>
+  </section>
+
   <footer class="py-16 px-6 border-t border-slate-200 bg-slate-50 text-center">
     <div class="flex items-center justify-center gap-3 mb-4">
       <img src="logo.png" alt="GOGO MART"
@@ -745,6 +774,96 @@
         </div>`).join('');
     }
 
+    async function loadHomepageReviews() {
+      if (homepageReviewsLoaded) return;
+      homepageReviewsLoaded = true;
+      const grid = document.getElementById('homepage-review-grid');
+      if (!grid) return;
+      try {
+        const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (!sb) throw new Error('Store connection unavailable');
+        const { data, error } = await sb.from('reviews')
+          .select('id, author_name, rating, comment, created_at')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        HOMEPAGE_REVIEWS = Array.isArray(data) ? data : [];
+        renderHomepageReviews();
+      } catch (error) {
+        console.warn('Homepage reviews unavailable:', error);
+        grid.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500">Customer reviews are temporarily unavailable.</div>';
+        document.getElementById('homepage-review-average').textContent = '—';
+        document.getElementById('homepage-review-count').textContent = 'Reviews unavailable';
+      }
+    }
+
+    function escapeReviewText(value) {
+      return String(value || '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+    }
+
+    function renderHomepageReviews() {
+      const grid = document.getElementById('homepage-review-grid');
+      const averageEl = document.getElementById('homepage-review-average');
+      const starsEl = document.getElementById('homepage-review-stars');
+      const countEl = document.getElementById('homepage-review-count');
+      const controls = document.getElementById('homepage-review-controls');
+      if (!grid || !averageEl || !starsEl || !countEl || !controls) return;
+      if (!HOMEPAGE_REVIEWS.length) {
+        averageEl.textContent = '—';
+        starsEl.textContent = '★★★★★';
+        starsEl.setAttribute('aria-label', 'No ratings yet');
+        countEl.textContent = 'No reviews yet';
+        controls.classList.add('hidden');
+        controls.classList.remove('flex');
+        grid.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500">No customer reviews yet. Be the first to share your experience.</div>';
+        return;
+      }
+
+      const average = HOMEPAGE_REVIEWS.reduce((sum, review) => sum + Number(review.rating || 0), 0) / HOMEPAGE_REVIEWS.length;
+      averageEl.textContent = average.toFixed(1);
+      starsEl.textContent = '★'.repeat(Math.round(average)) + '☆'.repeat(5 - Math.round(average));
+      starsEl.setAttribute('aria-label', `${average.toFixed(1)} out of 5 stars`);
+      countEl.textContent = `Based on ${HOMEPAGE_REVIEWS.length} recent review${HOMEPAGE_REVIEWS.length === 1 ? '' : 's'}`;
+
+      const perView = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
+      const shownCount = Math.min(perView, HOMEPAGE_REVIEWS.length);
+      const visibleReviews = Array.from({ length: shownCount }, (_, offset) =>
+        HOMEPAGE_REVIEWS[(homepageReviewStart + offset) % HOMEPAGE_REVIEWS.length]);
+      const canNavigate = HOMEPAGE_REVIEWS.length > shownCount;
+      controls.classList.toggle('hidden', !canNavigate);
+      controls.classList.toggle('flex', canNavigate);
+      grid.innerHTML = visibleReviews.map(review => {
+        const author = String(review.author_name || 'Customer').trim();
+        const initials = author.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
+        const rating = Math.max(0, Math.min(5, Math.round(Number(review.rating) || 0)));
+        const date = review.created_at
+          ? new Date(review.created_at).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })
+          : '';
+        return `<article class="h-full rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-200 p-5 sm:p-6 flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-full bg-gradient-to-br from-blue-600 to-pink-500 text-white font-black text-xs flex items-center justify-center shrink-0">${escapeReviewText(initials)}</div>
+              <div class="min-w-0"><h3 class="font-bold text-sm text-slate-900 truncate">${escapeReviewText(author)}</h3><p class="text-xs text-slate-500">${escapeReviewText(date)}</p></div>
+            </div>
+            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">Customer</span>
+          </div>
+          <div class="text-amber-500 tracking-wider" aria-label="${rating} out of 5 stars">${'★'.repeat(rating)}<span class="text-slate-300">${'★'.repeat(5 - rating)}</span></div>
+          <p class="text-sm text-slate-600 leading-relaxed line-clamp-4">${escapeReviewText(review.comment)}</p>
+        </article>`;
+      }).join('');
+    }
+
+    function shiftHomepageReviews(direction) {
+      if (!HOMEPAGE_REVIEWS.length) return;
+      const perView = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
+      homepageReviewStart = (homepageReviewStart + direction * perView + HOMEPAGE_REVIEWS.length) % HOMEPAGE_REVIEWS.length;
+      renderHomepageReviews();
+    }
+
+    window.addEventListener('resize', renderHomepageReviews);
+
     let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
     function updateCartCount() { document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0)); }
     window.addEventListener('customer-cart-changed', event => { cart = event.detail.cart; updateCartCount(); });
@@ -786,6 +905,7 @@
     // Initialize components after all declarations
     window.addEventListener('DOMContentLoaded', () => {
       initStore();
+      loadHomepageReviews();
       loadPopularCategories();
       loadHeroCoverBanners();
       loadHeroAds();
