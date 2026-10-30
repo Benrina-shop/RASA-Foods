@@ -3,23 +3,33 @@
 ## Customer accounts, carts and wishlists
 
 `customer-accounts.sql` creates private account cart and wishlist tables with
-row-level security. Run this SQL once in the Supabase SQL Editor for this store
-before enabling the updated storefront. GitHub deployment does not run SQL.
+row-level security, plus a private customer profile table for names and delivery
+addresses. Run this updated SQL in the Supabase SQL Editor for this store. It is
+safe to re-run after the earlier cart/wishlist setup. GitHub deployment does
+not run SQL.
 Each signed-in customer can read and change only rows whose `user_id` matches
 their Supabase Auth user ID; deleting a product or Auth account cascades to its
 saved rows.
 
-Customer signup and password login use Supabase Auth. The current project
-requires email confirmation, so a new customer must confirm the email before
-signing in and syncing saved data. The required mobile number is stored in Auth
-user metadata alongside the name. It is collected for contact purposes and is
-not verified by an SMS code.
+Passwords are submitted only to Supabase Auth, which stores salted password
+hashes. The app does not save passwords in the profile table. Profile rows are
+restricted by RLS to their owning Auth user. Project owners and anyone with
+database-owner/service-role access can still read database rows; RLS does not
+hide data from the project operator or protect against a modified frontend.
 
-To verify the setup, run the SQL, sign up with a test email and mobile number,
-confirm the email, add a product to the cart and wishlist, then sign in from a
-second browser profile. Both saved items should load. Clear site storage in the
-first profile, sign in again, and confirm the same account data returns. Signing
-out clears the local account cache from that browser.
+Phone signup verifies the number with an SMS OTP; phone/password login uses the
+verified Auth phone number. Before using it, enable **Authentication → Sign In
+/ Providers → Phone** in Supabase and configure an SMS provider such as Twilio,
+Vonage, or MessageBird. SMS delivery can incur provider charges. Existing
+email-based customers can still sign in with email, then verify their phone
+from **My Account** to enable phone login without changing the Auth user ID or
+losing that account's cart and wishlist.
+
+To verify the setup, configure the SQL and SMS provider, register with a test
+mobile number, confirm the SMS code, save the profile, and add products to the
+cart and wishlist. Then sign in from a second browser profile. The profile and
+saved items should load from Supabase. Signing out clears the local account
+cache from that browser.
 
 The storefront displays separate Like, Love and Wow totals. The SQL must be
 installed in the existing Supabase project; pushing to GitHub does not apply it.

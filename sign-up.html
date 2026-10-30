@@ -39,7 +39,7 @@
     <div class="text-center mb-8">
       <img src="logo.png" alt="GOGO MART Logo" class="w-16 h-16 object-contain rounded-full mx-auto mb-3 shadow-md border border-blue-200">
       <div class="font-display text-3xl font-black mb-1"><span style="color:var(--accent)">GOGO</span> MART</div>
-      <p class="text-sm text-[var(--muted)]">Create your account for a premium experience.</p>
+      <p class="text-sm text-[var(--muted)]">Create an account using your mobile number.</p>
     </div>
     <form id="sign-up-form" class="space-y-4">
       <div>
@@ -47,12 +47,12 @@
         <input id="full-name" type="text" autocomplete="name" required maxlength="120" class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
       </div>
       <div>
-        <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Email</label>
-        <input id="signup-email" type="email" autocomplete="email" required class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
+        <label class="block text-sm font-semibold mb-2 text-[var(--cream)]" for="customer-address">Address</label>
+        <textarea id="customer-address" autocomplete="street-address" required maxlength="500" rows="3" placeholder="House number, street, town/city" class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors"></textarea>
       </div>
       <div>
         <label class="block text-sm font-semibold mb-2 text-[var(--cream)]" for="mobile-number">Mobile Number</label>
-        <input id="mobile-number" type="tel" autocomplete="tel" inputmode="tel" required minlength="7" maxlength="20" placeholder="+94 7X XXX XXXX" class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
+        <input id="mobile-number" type="tel" autocomplete="tel" inputmode="tel" required minlength="9" maxlength="20" placeholder="077 123 4567 or +94 77 123 4567" class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)] transition-colors">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-2 text-[var(--cream)]">Password</label>
@@ -68,10 +68,49 @@
         <a href="sign-in.html" class="text-sm text-[var(--muted)] hover:text-[var(--accent)] transition-colors">Already have an account? Sign in</a>
       </div>
     </form>
+    <form id="phone-otp-form" class="space-y-4" hidden>
+      <p id="otp-description" class="text-sm text-center text-[var(--muted)]">Enter the verification code sent to your phone.</p>
+      <label class="block text-sm font-semibold mb-2" for="phone-otp">SMS verification code</label>
+      <input id="phone-otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required class="w-full p-3 rounded-xl bg-white border border-[var(--border)] outline-none text-[#0f172a] focus:border-[var(--accent)]">
+      <p id="otp-message" role="status" aria-live="polite" class="text-sm text-center text-[var(--muted)]"></p>
+      <button type="submit" class="gbtn w-full py-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-pink-500">Verify phone</button>
+    </form>
   </div>
 </div>
 
 <script>
+  function normalizeSignupPhone(value) {
+    const raw = value.trim().replace(/[\s()-]/g, '');
+    if (raw.startsWith('+')) return raw;
+    if (raw.startsWith('00')) return '+' + raw.slice(2);
+    if (raw.startsWith('94') && raw.length === 11) return '+' + raw;
+    if (raw.startsWith('0')) return '+94' + raw.slice(1);
+    return '+94' + raw;
+  }
+
+  let pendingSignupPhone = '';
+  try {
+    const pendingProfile = JSON.parse(sessionStorage.getItem('gogo-pending-signup-profile') || 'null');
+    if (pendingProfile?.phone) {
+      pendingSignupPhone = pendingProfile.phone;
+      document.getElementById('sign-up-form').hidden = true;
+      document.getElementById('phone-otp-form').hidden = false;
+      document.getElementById('otp-description').textContent = `Enter the SMS code sent to ${pendingProfile.phone}.`;
+    }
+  } catch (_) {}
+  async function saveSignupProfile(user) {
+    const profile = JSON.parse(sessionStorage.getItem('gogo-pending-signup-profile') || '{}');
+    const sb = getSupabase();
+    const { error } = await sb.from('customer_profiles').upsert({
+      user_id: user.id,
+      full_name: profile.full_name,
+      address: profile.address,
+      phone: user.phone || profile.phone || pendingSignupPhone
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
+    sessionStorage.removeItem('gogo-pending-signup-profile');
+  }
+
   document.getElementById('sign-up-form').addEventListener('submit', async event => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -79,33 +118,62 @@
     const originalText = button.textContent;
     const message = document.getElementById('signup-message');
     const name = document.getElementById('full-name').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
-    const phone = document.getElementById('mobile-number').value.trim().replace(/[\s()-]/g, '');
+    const address = document.getElementById('customer-address').value.trim();
+    const phone = normalizeSignupPhone(document.getElementById('mobile-number').value);
     const password = document.getElementById('signup-password').value;
     const confirmation = document.getElementById('confirm-password').value;
     if (password !== confirmation) { message.textContent = 'Passwords do not match.'; return; }
-    if (!/^\+?[0-9]{7,15}$/.test(phone)) { message.textContent = 'Enter a valid mobile number, with country code if needed.'; return; }
+    if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) { message.textContent = 'Enter a valid mobile number with country code.'; return; }
     button.disabled = true;
     button.textContent = 'Creating account...';
     message.textContent = '';
     try {
       const sb = getSupabase();
       if (!sb) throw new Error('Account service is unavailable. Refresh and try again.');
+      sessionStorage.setItem('gogo-pending-signup-profile', JSON.stringify({ full_name: name, address, phone }));
+      pendingSignupPhone = phone;
       const { data, error } = await sb.auth.signUp({
-        email, password,
-        options: { data: { full_name: name, phone } }
+        phone, password
       });
       if (error) throw error;
-      if (data.session) location.href = 'account.html';
+      form.reset();
+      if (data.session) {
+        await saveSignupProfile(data.user);
+        location.href = 'account.html';
+      }
       else {
-        message.textContent = 'Account created. Check your email and confirm it, then sign in to load your saved cart and wishlist.';
-        form.reset();
-        button.textContent = originalText;
-        button.disabled = false;
+        message.textContent = '';
+        form.hidden = true;
+        document.getElementById('phone-otp-form').hidden = false;
+        document.getElementById('otp-description').textContent = `Enter the SMS code sent to ${phone}.`;
       }
     } catch (error) {
+      sessionStorage.removeItem('gogo-pending-signup-profile');
+      pendingSignupPhone = '';
       message.textContent = error.message || 'Could not create your account. Please try again.';
       button.textContent = originalText;
+      button.disabled = false;
+    }
+  });
+
+  document.getElementById('phone-otp-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = event.currentTarget.querySelector('button[type="submit"]');
+    const message = document.getElementById('otp-message');
+    button.disabled = true;
+    message.textContent = '';
+    try {
+      const sb = getSupabase();
+      const { data, error } = await sb.auth.verifyOtp({
+        phone: pendingSignupPhone,
+        token: document.getElementById('phone-otp').value.trim(),
+        type: 'sms'
+      });
+      if (error) throw error;
+      await saveSignupProfile(data.user);
+      location.href = 'account.html';
+    } catch (error) {
+      message.textContent = error.message || 'Phone verification failed. Check the code and try again.';
       button.disabled = false;
     }
   });

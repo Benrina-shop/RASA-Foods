@@ -36,8 +36,8 @@
     
     <form id="sign-in-form" class="space-y-5">
       <div>
-        <label class="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Email Address</label>
-        <input type="email" id="email" required class="input-field" placeholder="your@email.com">
+        <label class="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Mobile Number or Email</label>
+        <input type="text" id="login-identifier" autocomplete="username" required class="input-field" placeholder="077 123 4567 or existing email">
       </div>
       <div>
         <label class="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2 block">Password</label>
@@ -75,7 +75,9 @@
       const sb = getSupabase();
       if (!sb) throw new Error('Account service is unavailable. Refresh and try again.');
       const { error } = await sb.auth.signInWithPassword({
-        email: document.getElementById('email').value.trim(),
+        ...(document.getElementById('login-identifier').value.trim().includes('@')
+          ? { email: document.getElementById('login-identifier').value.trim() }
+          : { phone: normalizeLoginPhone(document.getElementById('login-identifier').value) }),
         password: document.getElementById('password').value
       });
       if (error) throw error;
@@ -86,6 +88,15 @@
       button.disabled = false;
     }
   });
+
+  function normalizeLoginPhone(value) {
+    const raw = value.trim().replace(/[\s()-]/g, '');
+    if (raw.startsWith('+')) return raw;
+    if (raw.startsWith('00')) return '+' + raw.slice(2);
+    if (raw.startsWith('94') && raw.length === 11) return '+' + raw;
+    if (raw.startsWith('0')) return '+94' + raw.slice(1);
+    return '+94' + raw;
+  }
 </script>
 </body>
 </html>

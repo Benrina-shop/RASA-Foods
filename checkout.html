@@ -370,8 +370,9 @@
       const city = document.getElementById('city').value.trim();
       const note = document.getElementById('special-note') ? document.getElementById('special-note').value.trim() : '';
 
-      if (!fname || !phone || !address || !city) {
-        alert('Please fill in Name, Phone, Street Address, and City.');
+      const signedInCustomer = window.GogoCustomerData?.getUser();
+      if (!fname || !phone || !address || (!city && !signedInCustomer)) {
+        alert('Please fill in Name, Phone, and your full delivery address.');
         return;
       }
 
@@ -382,9 +383,8 @@
         const discountAmount = (subtotal * discountPercent) / 100;
         const finalTotal = (subtotal - discountAmount) + 399;
 
-        const formattedAddress = note
-          ? `${address}, ${city} [Special Note: ${note}]`
-          : `${address}, ${city}`;
+        const deliveryAddress = city ? `${address}, ${city}` : address;
+        const formattedAddress = note ? `${deliveryAddress} [Special Note: ${note}]` : deliveryAddress;
 
         const orderPayload = {
           customer_name: fname,
@@ -452,6 +452,16 @@
       cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
       renderSummary();
       if (!cart.length) location.href = 'products.html';
+      const user = window.GogoCustomerData?.getUser();
+      if (user) {
+        getSupabase().from('customer_profiles').select('full_name,address,phone')
+          .eq('user_id', user.id).maybeSingle().then(({ data, error }) => {
+            if (error || !data) return;
+            if (!document.getElementById('fname').value) document.getElementById('fname').value = data.full_name || '';
+            if (!document.getElementById('phone').value) document.getElementById('phone').value = data.phone || user.phone || '';
+            if (!document.getElementById('address').value) document.getElementById('address').value = data.address || '';
+          }).catch(error => console.warn('Saved delivery details unavailable:', error));
+      }
     });
   </script>
 </body>
