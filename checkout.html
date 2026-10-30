@@ -249,9 +249,9 @@
   </footer>
 
   <script src="supabase-config.js"></script>
+  <script src="customer-data.js"></script>
   <script>
     let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
-    if (cart.length === 0) location.href = 'products.html';
 
     let subtotal = 0;
     let discountPercent = 0;
@@ -305,7 +305,7 @@
       if (item.qty <= 0) {
         cart = cart.filter(x => x.id != id);
       }
-      localStorage.setItem('rasa-cart', JSON.stringify(cart));
+      if (window.GogoCustomerData) window.GogoCustomerData.saveCart(cart); else localStorage.setItem('rasa-cart', JSON.stringify(cart));
       renderSummary();
       if (cart.length === 0) {
         setTimeout(() => { location.href = 'products.html'; }, 600);
@@ -314,7 +314,7 @@
 
     function removeItem(id) {
       cart = cart.filter(x => x.id != id);
-      localStorage.setItem('rasa-cart', JSON.stringify(cart));
+      if (window.GogoCustomerData) window.GogoCustomerData.saveCart(cart); else localStorage.setItem('rasa-cart', JSON.stringify(cart));
       renderSummary();
       if (cart.length === 0) {
         setTimeout(() => { location.href = 'products.html'; }, 600);
@@ -359,6 +359,9 @@
     }
 
     async function placeOrder() {
+      await (window.GogoCustomerData?.ready || Promise.resolve());
+      cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
+      if (!cart.length) { location.href = 'products.html'; return; }
       const fname = document.getElementById('fname').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const email = document.getElementById('email').value.trim();
@@ -427,7 +430,9 @@
           }
         }
 
-        localStorage.removeItem('rasa-cart');
+        if (window.GogoCustomerData) window.GogoCustomerData.saveCart([]);
+        else localStorage.removeItem('rasa-cart');
+        await window.GogoCustomerData?.flush();
         localStorage.setItem('rasa-last-order', JSON.stringify({ id: order.id, total: finalTotal }));
         location.href = 'thank-you.html';
 
@@ -439,6 +444,15 @@
     }
 
     renderSummary();
+    window.addEventListener('customer-cart-changed', event => {
+      cart = event.detail.cart;
+      renderSummary();
+    });
+    window.GogoCustomerData?.ready.then(() => {
+      cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
+      renderSummary();
+      if (!cart.length) location.href = 'products.html';
+    });
   </script>
 </body>
 

@@ -144,6 +144,7 @@
 </footer>
 
 <script src="supabase-config.js"></script>
+<script src="customer-data.js"></script>
 <script>
 let PRODUCT = null;
 let qty = 1;
@@ -153,6 +154,7 @@ async function loadProduct() {
   if (!id) return location.href = 'products.html';
 
   try {
+    await window.GogoCustomerData?.ready;
     if (typeof getSupabase !== 'function') return setTimeout(loadProduct, 200);
     var sb = getSupabase();
     if (!sb) return setTimeout(loadProduct, 200);
@@ -635,21 +637,22 @@ function updateCartCount() {
   document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0));
 }
 
-function buyNow() {
+async function buyNow() {
   if (!PRODUCT) return;
   const cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
   const ex = cart.find(x => x.id == PRODUCT.id);
   if (ex) ex.qty += qty;
   else cart.push({ ...PRODUCT, qty: qty });
-  localStorage.setItem('rasa-cart', JSON.stringify(cart));
+  if (window.GogoCustomerData) window.GogoCustomerData.saveCart(cart); else localStorage.setItem('rasa-cart', JSON.stringify(cart));
   updateCartCount();
+  await window.GogoCustomerData?.flush();
   window.location.href = 'checkout.html';
 }
 function addToCart() {
   const cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
   const ex = cart.find(x => x.id == PRODUCT.id);
   if (ex) ex.qty += qty; else cart.push({ ...PRODUCT, qty: qty });
-  localStorage.setItem('rasa-cart', JSON.stringify(cart));
+  if (window.GogoCustomerData) window.GogoCustomerData.saveCart(cart); else localStorage.setItem('rasa-cart', JSON.stringify(cart));
   updateCartCount();
   showToast('🛒 Selection appended to basket.');
 }

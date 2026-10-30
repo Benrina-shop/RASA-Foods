@@ -531,11 +531,13 @@
   </footer>
 
   <script src="supabase-config.js"></script>
+  <script src="customer-data.js"></script>
   <script>
     let PRODUCTS = [];
     async function initStore() {
       console.log('Initializing Store...');
       try {
+        await window.GogoCustomerData?.ready;
         if (typeof getSupabase !== 'function') return setTimeout(initStore, 200);
         var sb = getSupabase();
         if (!sb) return setTimeout(initStore, 200);
@@ -629,14 +631,16 @@
 
     let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
     function updateCartCount() { document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0)); }
-    function buyNow(id, e) {
+    window.addEventListener('customer-cart-changed', event => { cart = event.detail.cart; updateCartCount(); });
+    async function buyNow(id, e) {
       if (e) e.stopPropagation();
       const p = PRODUCTS.find(x => x.id == id);
       if (!p) return;
       const ex = cart.find(x => x.id == id);
       if (ex) ex.qty++; else cart.push({ ...p, qty: 1 });
-      localStorage.setItem('rasa-cart', JSON.stringify(cart));
+      if (window.GogoCustomerData) window.GogoCustomerData.saveCart(cart); else localStorage.setItem('rasa-cart', JSON.stringify(cart));
       updateCartCount();
+      await window.GogoCustomerData?.flush();
       window.location.href = 'checkout.html';
     }
     function addToCart(id, e) {
@@ -645,7 +649,7 @@
       if (!p) return;
       const ex = cart.find(x => x.id == id);
       if (ex) ex.qty++; else cart.push({ ...p, qty: 1 });
-      localStorage.setItem('rasa-cart', JSON.stringify(cart));
+      if (window.GogoCustomerData) window.GogoCustomerData.saveCart(cart); else localStorage.setItem('rasa-cart', JSON.stringify(cart));
       updateCartCount();
       showToast('🛒 Added to cart');
     }

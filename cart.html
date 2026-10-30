@@ -106,6 +106,7 @@
   </footer>
 
   <script src="supabase-config.js"></script>
+  <script src="customer-data.js"></script>
   <script>
   let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
 
@@ -174,11 +175,12 @@
   }
 
   function save() {
-    localStorage.setItem('rasa-cart', JSON.stringify(cart));
+    if (window.GogoCustomerData) window.GogoCustomerData.saveCart(cart); else localStorage.setItem('rasa-cart', JSON.stringify(cart));
     renderCart();
   }
 
   renderCart();
+  window.addEventListener('customer-cart-changed', event => { cart = event.detail.cart; renderCart(); });
   </script>
 </body>
 </html>

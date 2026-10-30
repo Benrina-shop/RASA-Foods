@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f8fafc">
+  <title>My Account | GOGO MART</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4 sm:p-6">
+  <main class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-9 shadow-xl">
+    <header class="text-center mb-8">
+      <img src="logo.png" alt="GOGO MART" class="w-16 h-16 object-contain mx-auto mb-3">
+      <h1 class="text-2xl sm:text-3xl font-black"><span class="text-blue-600">GOGO</span> MART</h1>
+      <p class="text-slate-500 mt-2">Your account and saved shopping data</p>
+    </header>
+    <section class="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-3">
+      <div><p class="text-xs uppercase tracking-wider text-slate-500 font-bold">Name</p><p id="account-name" class="font-semibold break-words">Loading...</p></div>
+      <div><p class="text-xs uppercase tracking-wider text-slate-500 font-bold">Email</p><p id="account-email" class="font-semibold break-words"></p></div>
+      <div><p class="text-xs uppercase tracking-wider text-slate-500 font-bold">Mobile Number</p><p id="account-phone" class="font-semibold break-words"></p></div>
+    </section>
+    <nav class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+      <a href="cart.html" class="rounded-xl border border-blue-200 p-4 text-center font-bold text-blue-700 hover:bg-blue-50">My Cart</a>
+      <a href="products.html?wishlist=1" class="rounded-xl border border-pink-200 p-4 text-center font-bold text-pink-700 hover:bg-pink-50">My Wishlist</a>
+    </nav>
+    <p id="account-message" role="status" class="text-sm text-center text-red-600 mt-4"></p>
+    <button id="signout-button" type="button" class="w-full mt-5 rounded-xl bg-slate-900 px-5 py-3 font-bold text-white hover:bg-slate-700">Sign Out</button>
+    <a href="index.html" class="block text-center text-sm text-slate-500 mt-5 hover:text-blue-600">Continue shopping</a>
+  </main>
+  <script src="supabase-config.js"></script>
+  <script src="customer-data.js"></script>
+  <script>
+    (async () => {
+      await window.GogoCustomerData.ready;
+      const user = window.GogoCustomerData.getUser();
+      if (!user) { location.href = 'sign-in.html'; return; }
+      document.getElementById('account-name').textContent = user.user_metadata?.full_name || 'Customer';
+      document.getElementById('account-email').textContent = user.email || '';
+      document.getElementById('account-phone').textContent = user.user_metadata?.phone || 'Not provided';
+    })();
+    document.getElementById('signout-button').addEventListener('click', async event => {
+      const button = event.currentTarget;
+      const message = document.getElementById('account-message');
+      button.disabled = true;
+      button.textContent = 'Signing out...';
+      try { await window.GogoCustomerData.signOut(); }
+      catch (error) { message.textContent = error.message || 'Could not sign out. Please retry.'; button.disabled = false; button.textContent = 'Sign Out'; }
+    });
+  </script>
+</body>
+</html>

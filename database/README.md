@@ -1,5 +1,26 @@
 # Shared product reaction counts
 
+## Customer accounts, carts and wishlists
+
+`customer-accounts.sql` creates private account cart and wishlist tables with
+row-level security. Run this SQL once in the Supabase SQL Editor for this store
+before enabling the updated storefront. GitHub deployment does not run SQL.
+Each signed-in customer can read and change only rows whose `user_id` matches
+their Supabase Auth user ID; deleting a product or Auth account cascades to its
+saved rows.
+
+Customer signup and password login use Supabase Auth. The current project
+requires email confirmation, so a new customer must confirm the email before
+signing in and syncing saved data. The required mobile number is stored in Auth
+user metadata alongside the name. It is collected for contact purposes and is
+not verified by an SMS code.
+
+To verify the setup, run the SQL, sign up with a test email and mobile number,
+confirm the email, add a product to the cart and wishlist, then sign in from a
+second browser profile. Both saved items should load. Clear site storage in the
+first profile, sign in again, and confirm the same account data returns. Signing
+out clears the local account cache from that browser.
+
 The storefront displays separate Like, Love and Wow totals. The SQL must be
 installed in the existing Supabase project; pushing to GitHub does not apply it.
 

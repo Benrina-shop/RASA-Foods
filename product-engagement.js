@@ -285,6 +285,20 @@
     refresh();
     window.dispatchEvent(new CustomEvent('product-preferences-changed', { detail: { id, isWishlist: true } }));
     announce(state.saved ? 'Added to your wishlist.' : 'Removed from your wishlist.');
+    if (window.GogoCustomerData?.getUser()) {
+      const requestedState = state.saved;
+      void window.GogoCustomerData.setWishlist(id, requestedState).catch(() => {
+        const latest = read(id);
+        latest.saved = !requestedState;
+        try {
+          if (!latest.saved && !latest.reaction) localStorage.removeItem(prefix + id);
+          else localStorage.setItem(prefix + id, JSON.stringify(latest));
+        } catch (_) {}
+        refresh();
+        window.dispatchEvent(new CustomEvent('product-preferences-changed', { detail: { id, isWishlist: true } }));
+        announce('Wishlist was not synced. Please try again.');
+      });
+    }
   }, true);
 
   document.addEventListener('keydown', event => {

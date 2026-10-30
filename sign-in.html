@@ -56,49 +56,36 @@
 
 <script src="supabase-config.js"></script>
 <script>
-  async function handleSignIn(e) {
-    e.preventDefault();
-    const btn = document.getElementById('signin-btn');
-    btn.textContent = 'Authenticating...';
-    btn.style.pointerEvents = 'none';
-    
-    if (typeof supabase === 'undefined' || !supabase) {
-        if (window.supabase) supabase = window.supabase.createClient(SB_URL, SB_KEY);
-        else { alert('System error. Refreshing...'); return location.reload(); }
+  document.getElementById('sign-in-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = document.getElementById('signin-btn');
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Signing in...';
+    let status = document.getElementById('signin-message');
+    if (!status) {
+      status = document.createElement('p');
+      status.id = 'signin-message';
+      status.className = 'text-sm text-center text-red-600';
+      status.setAttribute('role', 'status');
+      event.currentTarget.insertBefore(status, button);
     }
-
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value.trim();
-
+    status.textContent = '';
     try {
-      // 1. Check Admin
-      const { data: admin, error: e1 } = await supabase.from('admins').select('*').eq('email', email).eq('password_hash', pass);
-      if (admin && admin.length > 0) {
-        localStorage.setItem('isAdmin', 'true');
-        localStorage.setItem('adminUser', JSON.stringify(admin[0]));
-        return window.location.href = 'admin-dashboard.html';
-      }
-
-      // 2. Check Customer
-      const { data: cust, error: e2 } = await supabase.from('customers').select('*').eq('email', email);
-      if (cust && cust.length > 0) {
-        localStorage.setItem('isCustomer', 'true');
-        localStorage.setItem('customerUser', JSON.stringify(cust[0]));
-        window.location.href = 'index.html';
-      } else {
-        alert('Credentials not found. Please sign up or check details.');
-        btn.textContent = 'Sign In';
-        btn.style.pointerEvents = 'auto';
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Network error. Please try again.');
-      btn.textContent = 'Sign In';
-      btn.style.pointerEvents = 'auto';
+      const sb = getSupabase();
+      if (!sb) throw new Error('Account service is unavailable. Refresh and try again.');
+      const { error } = await sb.auth.signInWithPassword({
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      });
+      if (error) throw error;
+      location.href = 'account.html';
+    } catch (error) {
+      status.textContent = error.message || 'Could not sign in. Check your email and password.';
+      button.textContent = originalText;
+      button.disabled = false;
     }
-  }
-
-  document.getElementById('sign-in-form').onsubmit = handleSignIn;
+  });
 </script>
 </body>
 </html>
