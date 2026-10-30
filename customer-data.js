@@ -7,6 +7,7 @@
   const preferencePrefix = 'gogo-product-preference:v1:';
   const state = { user: null, client: null };
   let writes = Promise.resolve();
+  let pendingWrites = 0;
 
   function localCart() {
     try {
@@ -76,11 +77,12 @@
   }
 
   function enqueue(work) {
+    pendingWrites++;
     const job = writes.then(work);
     writes = job.catch(error => {
       console.error('Customer data sync failed:', error);
       announce('Your account data could not sync. Please check your connection and retry.');
-    });
+    }).finally(() => { pendingWrites--; });
     return job;
   }
 
@@ -192,10 +194,24 @@
     },
     async signOut() {
       if (!state.client) throw new Error('Account service unavailable.');
+      await writes;
       const { error } = await state.client.auth.signOut();
       if (error) throw error;
       await clearAccountCache();
       location.href = 'index.html';
     }
   };
+
+  // Wait for account data writes before same-tab navigation can unload their requests.
+  document.addEventListener('click', event => {
+    if (!pendingWrites || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href]');
+    if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+    let destination;
+    try { destination = new URL(link.href, location.href); } catch (_) { return; }
+    if (destination.origin !== location.origin || destination.href === location.href) return;
+    event.preventDefault();
+    const href = destination.href;
+    void writes.finally(() => location.assign(href));
+  }, true);
 })();
