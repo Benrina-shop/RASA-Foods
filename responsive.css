@@ -5,6 +5,7 @@
   /* Match the product grid edges to the mobile search bar. */
   #product-catalog-shell { padding-inline: 16px; }
   .catalog-container { padding-inline: 0; }
+  #best-sellers-section { padding-inline: 16px; }
   #products-grid, #bs-grid, #sale-grid { gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .prod-card { border-radius: 14px; }
   .prod-card > .p-5, .prod-card > .p-6 { padding: 10px; }

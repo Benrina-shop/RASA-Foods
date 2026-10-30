@@ -30,7 +30,12 @@ let categories=[{id:1,name:'Gifts',slug:'gifts',image_url:'logo.png'},{id:2,name
  const p=await context.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.goto('/products.html');await p.waitForSelector('.prod-card');
  assert.equal(await p.locator('#category-list').innerText(),'All Collections\nGifts');
- const home=await context.newPage();await home.goto('/index.html');await home.waitForSelector('#popular-cats-slider a');assert(!(await home.locator('#popular-cats-slider').innerText()).includes('Ghost'));
+ const home=await context.newPage();await home.setViewportSize({width:390,height:844});await home.goto('/index.html');await home.waitForSelector('#popular-cats-slider a');assert(!(await home.locator('#popular-cats-slider').innerText()).includes('Ghost'));
+ await home.waitForSelector('#bs-grid .prod-card');
+ const mobileSearchBounds=await home.locator('#nav-search-input-mob').boundingBox();
+ const mobileHomeGridBounds=await home.locator('#bs-grid').boundingBox();
+ assert(Math.abs(mobileSearchBounds.x-mobileHomeGridBounds.x)<=1,'home product grid left edge aligns with the mobile search bar');
+ assert(Math.abs((mobileSearchBounds.x+mobileSearchBounds.width)-(mobileHomeGridBounds.x+mobileHomeGridBounds.width))<=1,'home product grid right edge aligns with the mobile search bar');
  assert(!(await home.locator('.hero-bg').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('1542838132'),'do not render the hard-coded vegetable cover on initial page load');
  await home.waitForFunction(()=>getComputedStyle(document.querySelector('.hero-bg')).backgroundImage.includes('saved.test/admin-cover.jpg'));
  assert(!(await home.locator('.hero-bg').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('1542838132'),'do not flash the hard-coded vegetable cover before saved banners load');
