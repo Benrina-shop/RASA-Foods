@@ -33,7 +33,7 @@
 
   function applyWishlist(ids) {
     const keep = new Set((ids || []).map(String));
-    const all = new Set([...localWishlist(), ...Object.keys(localStorage)
+    const all = new Set([...keep, ...localWishlist(), ...Object.keys(localStorage)
       .filter(key => key.startsWith(preferencePrefix)).map(key => key.slice(preferencePrefix.length))]);
     all.forEach(id => {
       const key = preferencePrefix + id;
@@ -67,7 +67,7 @@
     const unique = [...new Set(ids.map(String))];
     if (unique.length) {
       const rows = unique.map(id => ({ user_id: state.user.id, product_id: id }));
-      const { error } = await state.client.from('customer_wishlist_items').upsert(rows, { onConflict: 'user_id,product_id', ignoreDuplicates: true });
+      const { error } = await state.client.from('customer_wishlist_items').upsert(rows, { onConflict: 'user_id,product_id' });
       if (error) throw error;
     }
     let query = state.client.from('customer_wishlist_items').delete().eq('user_id', state.user.id);
@@ -187,9 +187,14 @@
     async setWishlist(productId, saved) {
       if (state.user) {
         localStorage.setItem(cacheUserKey, state.user.id);
-        const ids = new Set(localWishlist());
-        if (saved) ids.add(String(productId)); else ids.delete(String(productId));
-        await enqueue(() => replaceRemoteWishlist([...ids]));
+        const userId = state.user.id;
+        await enqueue(async () => {
+          const query = state.client.from('customer_wishlist_items');
+          const result = saved
+            ? await query.upsert([{ user_id: userId, product_id: String(productId) }], { onConflict: 'user_id,product_id' })
+            : await query.delete().eq('user_id', userId).eq('product_id', String(productId));
+          if (result.error) throw result.error;
+        });
       }
     },
     async signOut() {
