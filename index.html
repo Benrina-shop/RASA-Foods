@@ -913,6 +913,7 @@
           <button onclick="goToAdSlide(${i})" class="w-2 h-2 rounded-full transition-all ${i === currentAdIndex ? 'bg-amber-400 w-5' : 'bg-white/40'}"></button>
         `).join('');
       }
+    }
 
     function setupRotatingCategoryProducts() {
       const section = document.getElementById('category-products-section');
@@ -959,7 +960,6 @@
       title.textContent = label;
       link.href = `products.html?cat=${encodeURIComponent(category.slug)}`;
       grid.innerHTML = renderProductCards(category.products.slice(0, 5));
-    }
     }
 
     function changeAdSlide(delta) {
