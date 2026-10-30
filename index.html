@@ -54,9 +54,9 @@
       border-radius: 3px
     }
 
-    
 
-    
+
+
 
     .nav-link {
       font-weight: 700;
@@ -211,6 +211,7 @@
       width: 100%;
       overflow: visible;
     }
+
     .cats-marquee-track {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -218,13 +219,18 @@
       gap: 1.25rem;
       width: 100%;
     }
+
     @media (max-width: 1023px) {
-      .cats-marquee-track { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cats-marquee-track {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
+
     @keyframes marqueeCats {
       0% {
         transform: translateX(0);
       }
+
       100% {
         transform: translateX(-50%);
       }
@@ -243,16 +249,21 @@
         <!-- Left: Brand Logo & Navigation Links Group -->
         <div class="flex items-center gap-3 lg:gap-5 shrink-0">
           <!-- Brand Logo with clear border separation -->
-          <a href="index.html" class="flex items-center gap-2.5 font-display text-xl sm:text-2xl font-bold shrink-0 hover:opacity-90 transition-opacity pr-4 sm:pr-5 border-r border-slate-300">
-            <img src="logo.png" alt="GOGO MART Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full shadow-sm border border-blue-400/30">
-            <span class="flex items-baseline gap-1.5"><span class="font-black tracking-tight" style="color:var(--accent)">GOGO</span> <span class="text-xs sm:text-sm font-bold tracking-widest text-slate-400 uppercase">MART</span></span>
+          <a href="index.html"
+            class="flex items-center gap-2.5 font-display text-xl sm:text-2xl font-bold shrink-0 hover:opacity-90 transition-opacity pr-4 sm:pr-5 border-r border-slate-300">
+            <img src="logo.png" alt="GOGO MART Logo"
+              class="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full shadow-sm border border-blue-400/30">
+            <span class="flex items-baseline gap-1.5"><span class="font-black tracking-tight"
+                style="color:var(--accent)">GOGO</span> <span
+                class="text-xs sm:text-sm font-bold tracking-widest text-slate-400 uppercase">MART</span></span>
           </a>
 
           <!-- Desktop Navigation Links -->
           <div class="hidden lg:flex items-center gap-1 lg:gap-1.5 pl-1">
             <a href="index.html" class="nav-link active">Home</a>
             <a href="products.html" class="nav-link">Products</a>
-            <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
+            <a href="products.html?wishlist=1" class="nav-link wishlist-link">&#129293; Wishlist (<span
+                data-wishlist-count>0</span>)</a>
             <a href="offers.html" class="nav-link">Offers</a>
             <a href="contact.html" class="nav-link">Contact</a>
           </div>
@@ -260,54 +271,83 @@
 
         <!-- Desktop Search Bar -->
         <div class="hidden sm:flex flex-1 max-w-md mx-4 relative" id="nav-search-container">
-          <form action="products.html" method="GET" class="w-full relative" onsubmit="return handleNavSearch(event, this)">
+          <form action="products.html" method="GET" class="w-full relative"
+            onsubmit="return handleNavSearch(event, this)">
             <div class="relative flex items-center w-full">
               <span class="absolute left-3.5 text-slate-400 pointer-events-none">
-                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </span>
-              <input type="text" name="q" id="nav-search-input" placeholder="Search Your Products" autocomplete="off" oninput="handleLiveSearch(this.value)" onfocus="handleLiveSearch(this.value)" class="nav-search-input w-full pl-9 pr-10 py-2 text-xs rounded-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-blue-500 outline-none text-slate-800 transition-all">
+              <input type="text" name="q" id="nav-search-input" placeholder="Search Your Products" autocomplete="off"
+                oninput="handleLiveSearch(this.value)" onfocus="handleLiveSearch(this.value)"
+                class="nav-search-input w-full pl-9 pr-10 py-2 text-xs rounded-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-blue-500 outline-none text-slate-800 transition-all">
               <button type="submit" class="absolute right-2 p-1 text-slate-400 hover:text-blue-600">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
               </button>
             </div>
           </form>
-          <div id="live-search-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[1000] max-h-96 overflow-y-auto divide-y divide-slate-100">
+          <div id="live-search-dropdown"
+            class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[1000] max-h-96 overflow-y-auto divide-y divide-slate-100">
             <div id="live-search-results" class="p-2 space-y-1"></div>
             <div id="live-search-footer" class="p-2 bg-slate-50 text-center border-t border-slate-100">
-              <a href="products.html" id="view-all-search-link" class="text-[11px] font-bold text-blue-600 hover:underline">View all results →</a>
+              <a href="products.html" id="view-all-search-link"
+                class="text-[11px] font-bold text-blue-600 hover:underline">View all results →</a>
             </div>
           </div>
         </div>
 
         <!-- Right Action Icons -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-          <a href="cart.html" class="relative p-2 sm:p-2.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:text-blue-600 shadow-sm transition-all">
-            <svg width="19" height="19" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-            <span id="cart-count" class="absolute -top-1 -right-1 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold bg-pink-500 shadow-md">0</span>
+          <a href="cart.html"
+            class="relative p-2 sm:p-2.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:text-blue-600 shadow-sm transition-all">
+            <svg width="19" height="19" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span id="cart-count"
+              class="absolute -top-1 -right-1 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold bg-pink-500 shadow-md">0</span>
           </a>
-          <button id="menu-toggle" class="lg:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none" aria-label="Open Navigation Menu">
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <button id="menu-toggle" class="lg:hidden p-2 text-slate-700 hover:text-blue-600 focus:outline-none"
+            aria-label="Open Navigation Menu">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
         </div>
       </div>
 
       <!-- Mobile Search Bar (Clean dedicated row underneath header) -->
       <div class="sm:hidden mt-2 pt-1" id="nav-search-container-mob">
-        <form action="products.html" method="GET" class="w-full relative" onsubmit="return handleNavSearch(event, this)">
+        <form action="products.html" method="GET" class="w-full relative"
+          onsubmit="return handleNavSearch(event, this)">
           <div class="relative flex items-center w-full">
             <span class="absolute left-3.5 text-slate-400 pointer-events-none">
-              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </span>
-            <input type="text" name="q" id="nav-search-input-mob" placeholder="Search Your Products..." autocomplete="off" oninput="handleLiveSearch(this.value, true)" onfocus="handleLiveSearch(this.value, true)" class="w-full pl-9 pr-9 py-2 text-xs rounded-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-blue-500 outline-none text-slate-800 shadow-sm transition-all">
+            <input type="text" name="q" id="nav-search-input-mob" placeholder="Search Your Products..."
+              autocomplete="off" oninput="handleLiveSearch(this.value, true)"
+              onfocus="handleLiveSearch(this.value, true)"
+              class="w-full pl-9 pr-9 py-2 text-xs rounded-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-blue-500 outline-none text-slate-800 shadow-sm transition-all">
             <button type="submit" class="absolute right-2.5 p-1 text-slate-400 hover:text-blue-600">
-              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </button>
           </div>
         </form>
-        <div id="live-search-dropdown-mob" class="hidden absolute left-4 right-4 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[1000] max-h-80 overflow-y-auto divide-y divide-slate-100">
+        <div id="live-search-dropdown-mob"
+          class="hidden absolute left-4 right-4 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[1000] max-h-80 overflow-y-auto divide-y divide-slate-100">
           <div id="live-search-results-mob" class="p-2 space-y-1"></div>
           <div class="p-2 bg-slate-50 text-center border-t border-slate-100">
-            <a href="products.html" id="view-all-search-link-mob" class="text-[11px] font-bold text-blue-600 hover:underline">View all results →</a>
+            <a href="products.html" id="view-all-search-link-mob"
+              class="text-[11px] font-bold text-blue-600 hover:underline">View all results →</a>
           </div>
         </div>
       </div>
@@ -323,14 +363,14 @@
     </div>
     <a href="index.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Home</a>
     <a href="products.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Products</a>
-          <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
+    <a href="products.html?wishlist=1" class="wishlist-link">&#129293; Wishlist (<span data-wishlist-count>0</span>)</a>
     <a href="offers.html" class="text-2xl font-bold text-slate-800 hover:text-pink-600">Offers</a>
     <a href="contact.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Contact</a>
     <a href="cart.html" class="text-2xl font-bold text-slate-800 hover:text-blue-600">Cart</a>
     <a href="admin-login.html" class="mt-4 text-xs font-medium text-slate-400 hover:text-slate-600">Staff</a>
   </div>
 
-  
+
   <!-- Popular Categories Section (Directly below Header) -->
   <section class="hero">
     <div class="hero-bg"></div>
@@ -342,7 +382,21 @@
             class="fu inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 bg-blue-50 border border-blue-200 text-blue-700 shadow-sm">
             <span class="w-2 h-2 rounded-full animate-ping bg-blue-500"></span>
             <span class="w-2 h-2 rounded-full bg-blue-600 -ml-4"></span>
-            TAP • SHOP • GOGO
+            TAP
+          </div>
+
+          <div
+            class="fu inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 bg-blue-50 border border-blue-200 text-blue-700 shadow-sm">
+            <span class="w-2 h-2 rounded-full animate-ping bg-blue-500"></span>
+            <span class="w-2 h-2 rounded-full bg-blue-600 -ml-4"></span>
+            SHOP
+          </div>
+
+          <div
+            class="fu inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 bg-blue-50 border border-blue-200 text-blue-700 shadow-sm">
+            <span class="w-2 h-2 rounded-full animate-ping bg-blue-500"></span>
+            <span class="w-2 h-2 rounded-full bg-blue-600 -ml-4"></span>
+            GOGO
           </div>
 
 
@@ -374,11 +428,13 @@
         <div class="lg:col-span-5 fu delay2">
           <div id="hero-ads-container"
             class="relative group w-full max-w-[520px] mx-auto lg:ml-auto rounded-[32px] overflow-hidden border border-slate-200/90 bg-white shadow-2xl shadow-blue-500/10">
-            <div id="hero-ad-slide" class="relative aspect-square overflow-hidden bg-slate-950 flex items-center justify-center">
-              <img id="ad-banner-bg" src="https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80"
-                alt="" class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none select-none">
+            <div id="hero-ad-slide"
+              class="relative aspect-square overflow-hidden bg-slate-950 flex items-center justify-center">
+              <img id="ad-banner-bg" src="https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80" alt=""
+                class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none select-none">
               <img id="ad-banner-img" src="https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80"
-                alt="Special Promo" class="relative w-full h-full object-contain p-2 transition-all duration-500 select-none">
+                alt="Special Promo"
+                class="relative w-full h-full object-contain p-2 transition-all duration-500 select-none">
               <div
                 class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent flex flex-col justify-end p-6 sm:p-8 text-white">
                 <span id="ad-banner-badge"
@@ -431,11 +487,17 @@
           <p class="text-sm text-slate-500 mt-1">Explore our most popular departments & trending selections</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories"
+            class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          <button onclick="scrollPopularCats(1)" aria-label="Next Categories"
+            class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
@@ -473,7 +535,8 @@
           <h2 class="font-display font-bold text-3xl sm:text-4xl text-slate-900">New Arrivals</h2>
           <div class="divider"></div>
         </div>
-        <a href="products.html" class="mb-5 text-sm font-bold text-blue-600 hover:text-pink-600 transition-colors">See All Products →</a>
+        <a href="products.html" class="mb-5 text-sm font-bold text-blue-600 hover:text-pink-600 transition-colors">See
+          All Products →</a>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6" id="new-arrivals-grid">
         <div class="col-span-full py-12 text-center text-slate-400 animate-pulse">Loading new arrivals...</div>
@@ -481,15 +544,18 @@
     </div>
   </section>
 
-  <section id="category-products-section" class="py-16 sm:py-20 px-4 sm:px-6 bg-slate-50/80 border-b border-slate-200/80 hidden">
+  <section id="category-products-section"
+    class="py-16 sm:py-20 px-4 sm:px-6 bg-slate-50/80 border-b border-slate-200/80 hidden">
     <div class="max-w-[1600px] mx-auto">
       <div class="flex justify-between items-end gap-4 mb-8 sm:mb-10">
         <div>
           <p class="text-xs font-bold tracking-[.25em] uppercase mb-2 text-blue-600">Browse Departments</p>
-          <h2 id="rotating-category-title" class="font-display font-bold text-3xl sm:text-4xl text-slate-900">Shop by Category</h2>
+          <h2 id="rotating-category-title" class="font-display font-bold text-3xl sm:text-4xl text-slate-900">Shop by
+            Category</h2>
           <div class="divider"></div>
         </div>
-        <a id="rotating-category-link" href="products.html" class="mb-5 text-sm font-bold text-blue-600 hover:text-pink-600 transition-colors">See Category →</a>
+        <a id="rotating-category-link" href="products.html"
+          class="mb-5 text-sm font-bold text-blue-600 hover:text-pink-600 transition-colors">See Category →</a>
       </div>
       <div id="rotating-category-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6"></div>
     </div>
@@ -508,7 +574,8 @@
       <a href="offers.html" class="hover:text-pink-600 transition-colors">Offers</a>
     </div>
     <div class="text-xs text-slate-400 uppercase tracking-widest">© 2026 GOGO MART. Your Trusted Online Store.</div>
-    <a href="admin-login.html" class="mt-4 inline-block text-[10px] text-slate-300 hover:text-slate-500 transition-colors">Staff</a>
+    <a href="admin-login.html"
+      class="mt-4 inline-block text-[10px] text-slate-300 hover:text-slate-500 transition-colors">Staff</a>
     <div id="toast" class="fixed bottom-6 right-6 z-50"></div>
   </footer>
 
@@ -818,7 +885,7 @@
                 startAdTimer();
                 return;
               }
-            } catch (err) {}
+            } catch (err) { }
           }
         }
       } catch (e) {
@@ -837,7 +904,7 @@
           renderHeroAd();
           startAdTimer();
           return;
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // No hard-coded sample ads or vegetable artwork; show only admin-saved ads.
@@ -1087,8 +1154,8 @@
     }
 
     // Realtime listeners in index.html
-      if (typeof onStoreUpdate === 'function') {
-      onStoreUpdate(function(event) {
+    if (typeof onStoreUpdate === 'function') {
+      onStoreUpdate(function (event) {
         if (event.type === 'CATEGORIES_CHANGED') {
           loadPopularCategories();
         }
@@ -1102,14 +1169,14 @@
 
     const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
     if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
-      subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function(event) {
+      subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function (event) {
         if (event.table === 'categories') { loadPopularCategories(); initStore(); }
         if (event.table === 'products') initStore();
       });
     }
 
     // Refresh storefront data without reloading the page.
-    setInterval(function() {
+    setInterval(function () {
       loadPopularCategories();
       initStore();
     }, 20000);
@@ -1117,7 +1184,7 @@
   </script>
   <script src="live-search.js"></script>
   <script src="live-marquee.js"></script>
-<script src="whatsapp-widget.js"></script>
+  <script src="whatsapp-widget.js"></script>
 </body>
 
 </html>
