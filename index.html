@@ -793,47 +793,52 @@
           .order('created_at', { ascending: false })
           .limit(500);
         if (error) throw error;
-        const availableReviews = (Array.isArray(data) ? data : [])
-          .filter(review => PRODUCTS.some(product => String(product.id) === String(review.product_id)));
-        const statsByProduct = new Map();
-        availableReviews.forEach(review => {
-          const rating = Number(review.rating);
-          if (!Number.isFinite(rating) || rating < 1 || rating > 5) return;
-          const key = String(review.product_id);
-          const stats = statsByProduct.get(key) || { sum: 0, count: 0 };
-          stats.sum += rating;
-          stats.count += 1;
-          statsByProduct.set(key, stats);
-        });
-        const topProducts = [...statsByProduct.entries()]
-          .map(([id, stats]) => ({ id, average: stats.sum / stats.count, count: stats.count }))
-          .sort((a, b) => b.average - a.average || b.count - a.count)
-          .slice(0, 4);
-        const topIds = new Set(topProducts.map(product => product.id));
-        const productById = new Map(PRODUCTS.map(product => [String(product.id), product]));
-        HOMEPAGE_REVIEWS = availableReviews
-          .filter(review => topIds.has(String(review.product_id)) && Number(review.rating) >= 1 && Number(review.rating) <= 5)
-          .map(review => ({
-            ...review,
-            productName: productById.get(String(review.product_id))?.name || 'Product',
-            productAverage: statsByProduct.get(String(review.product_id)).sum / statsByProduct.get(String(review.product_id)).count
-          }));
-        homepageReviewAverage = topProducts.length
-          ? topProducts.reduce((sum, product) => sum + product.average, 0) / topProducts.length
-          : 0;
-        homepageReviewStart = 0;
-        renderHomepageReviews();
-        startHomepageReviewShuffle();
+        rankHomepageReviews(data);
       } catch (error) {
         console.warn('Homepage reviews unavailable:', error);
-        HOMEPAGE_REVIEWS = [];
-        homepageReviewAverage = 0;
-        if (homepageReviewShuffleTimer) clearInterval(homepageReviewShuffleTimer);
-        homepageReviewShuffleTimer = null;
-        grid.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500">Customer reviews are temporarily unavailable.</div>';
-        document.getElementById('homepage-review-average').textContent = '—';
-        document.getElementById('homepage-review-count').textContent = 'Reviews unavailable';
+        const localReviews = PRODUCTS.flatMap(product => {
+          try {
+            const saved = JSON.parse(localStorage.getItem(`gogo-reviews-${product.id}`) || '[]');
+            return Array.isArray(saved) ? saved.map(review => ({ ...review, product_id: review.product_id || product.id })) : [];
+          } catch (_) { return []; }
+        });
+        rankHomepageReviews(localReviews);
       }
+    }
+
+    function rankHomepageReviews(reviews) {
+      const availableReviews = (Array.isArray(reviews) ? reviews : [])
+        .filter(review => PRODUCTS.some(product => String(product.id) === String(review.product_id)));
+      const statsByProduct = new Map();
+      availableReviews.forEach(review => {
+        const rating = Number(review.rating);
+        if (!Number.isFinite(rating) || rating < 1 || rating > 5) return;
+        const key = String(review.product_id);
+        const stats = statsByProduct.get(key) || { sum: 0, count: 0 };
+        stats.sum += rating;
+        stats.count += 1;
+        statsByProduct.set(key, stats);
+      });
+      const topProducts = [...statsByProduct.entries()]
+        .map(([id, stats]) => ({ id, average: stats.sum / stats.count, count: stats.count }))
+        .sort((a, b) => b.average - a.average || b.count - a.count)
+        .slice(0, 4);
+      const topIds = new Set(topProducts.map(product => product.id));
+      const productById = new Map(PRODUCTS.map(product => [String(product.id), product]));
+      HOMEPAGE_REVIEWS = availableReviews
+        .filter(review => topIds.has(String(review.product_id)) && Number(review.rating) >= 1 && Number(review.rating) <= 5)
+        .map((review, index) => ({
+          ...review,
+          id: review.id ?? `${review.product_id}-${review.created_at || ''}-${review.author_name || ''}-${index}`,
+          productName: productById.get(String(review.product_id))?.name || 'Product',
+          productAverage: statsByProduct.get(String(review.product_id)).sum / statsByProduct.get(String(review.product_id)).count
+        }));
+      homepageReviewAverage = topProducts.length
+        ? topProducts.reduce((sum, product) => sum + product.average, 0) / topProducts.length
+        : 0;
+      homepageReviewStart = 0;
+      renderHomepageReviews();
+      startHomepageReviewShuffle();
     }
 
     function escapeReviewText(value) {
@@ -922,6 +927,9 @@
     }
 
     window.addEventListener('resize', renderHomepageReviews);
+    window.addEventListener('storage', event => {
+      if (event.key && event.key.startsWith('gogo-reviews-')) loadHomepageReviews(true);
+    });
 
     let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
     function updateCartCount() { document.querySelectorAll('#cart-count').forEach(el => el.textContent = cart.reduce((s, i) => s + i.qty, 0)); }
@@ -1347,8 +1355,7 @@
 
     const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
     if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
-      subscribeToSupabaseRealtime(sbClient, ['categories', 'products', 'reviews'], function (event) {
-        if (event.table === 'reviews') { loadHomepageReviews(true); return; }
+      subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function (event) {
         if (event.table === 'categories') { loadPopularCategories(); initStore(); }
         if (event.table === 'products') initStore();
       });
