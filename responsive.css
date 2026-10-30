@@ -1,6 +1,6 @@
 /* Shared storefront card layout: names remain readable on touch screens. */
 .prod-card { min-width: 0; }
-.prod-card h3 { display: block; color: #0f172a; white-space: normal; overflow: visible; overflow-wrap: anywhere; -webkit-line-clamp: unset; line-height: 1.45; }
+.prod-card h3 { display: block; color: #0f172a; white-space: normal; overflow: visible; overflow-wrap: anywhere; line-height: 1.45; }
 @media (max-width: 640px) {
   /* Match the product grid edges to the mobile search bar. */
   #product-catalog-shell { padding-inline: 16px; }

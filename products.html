@@ -169,6 +169,7 @@
         }
 
         input[type="range"] {
+            appearance: none;
             -webkit-appearance: none;
             width: 100%;
             background: #e2e8f0;
@@ -179,6 +180,7 @@
         }
 
         input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
             -webkit-appearance: none;
             width: 18px;
             height: 18px;
@@ -724,7 +726,7 @@
             <img id="card-img-${p.id}" src="${p.image_url}" class="prod-card-img transition-opacity duration-300" alt="${p.name}">
             <div class="p-5">
                 <p class="text-[10px] uppercase font-bold text-blue-600 mb-1 tracking-wider">${p.category_slug}</p>
-                <h3 class="font-bold text-sm mb-3 text-slate-900 line-clamp-1">${p.name}</h3>
+                <h3 class="product-title font-bold text-sm mb-3 text-slate-900">${p.name}</h3>
                 <div class="flex items-baseline justify-between mb-3">
                     <div class="flex items-baseline gap-2">
                         <span class="font-black text-blue-600 text-base">${formatPrice(p.price)}</span>
