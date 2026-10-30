@@ -45,7 +45,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 ### 2.1. Home Page (`index.html`)
 - **Best Sellers** remains on the homepage.
 - **New Arrivals** follows Best Sellers and displays up to eight products chosen independently in `admin-new-arrivals.html`. Selection is stored as JSON in `categories.slug = system_new_arrivals`; product details continue to come from `products`.
-- **Popular Categories** follows New Arrivals and displays four unique category cards. The chosen set rotates every 30 minutes and is cached per browser; when possible, each rotation includes at least one category not shown in the previous set.
+- **Popular Categories** follows New Arrivals and displays four unique category cards. A new random set appears every five seconds without reloading the page; each set has no duplicate categories and differs from the preceding set.
 - Clicking a category opens the catalogue filtered to that category. Category data is read from Supabase `categories` and respects admin updates.
 - **Full-Width Hero Background Slideshow**:
   - Dynamically cycles high-resolution background covers (configured via `admin-banners.html`) every 5 seconds with smooth cross-fade animation.
@@ -180,7 +180,11 @@ All admin portal pages share a completely unified, sleek dark UI matching GOGO M
   - **Category Card Customization**: Custom display titles, optional subtitle tag badges (e.g. *"Hot Picks"*, *"Best Value"*), and card image upload/URL selector.
   - **Instant Supabase Cloud Storage**: Changes persist in `categories` under `slug: system_popular_categories` and immediately sync to the storefront category cards.
 
-### 4.5. Product & Inventory Manager (`admin-products.html`)
+### 4.5. Best Sellers Manager (`admin-best-sellers.html`)
+- Select, remove, and save up to eight homepage Best Sellers independently from New Arrivals.
+- Product details stay synchronized with the main Products manager; selections are stored as IDs in `categories.slug = system_best_sellers`.
+
+### 4.6. Product & Inventory Manager (`admin-products.html`)
 - Add, Edit, Archive, and Delete products.
 - **Multi-Photo Upload**: Supports uploading multiple photos directly to Supabase storage.
 - **Product Video Uploader**: Upload MP4/WebM video clips directly to product listings.
@@ -188,19 +192,19 @@ All admin portal pages share a completely unified, sleek dark UI matching GOGO M
 - **Pricing & Discounts**: Set regular selling price and higher comparison price (`old_price`) for automatic strike-through badge display.
 - Excludes system slugs (`system_*`) from category dropdowns.
 
-### 4.6. Hero Background Covers Manager (`admin-banners.html`)
+### 4.7. Hero Background Covers Manager (`admin-banners.html`)
 - Upload and manage full-width hero background cover photos.
 - Stored as JSON array in Supabase (`slug: system_cover_banner`) with instantaneous auto-swap on the home page hero section.
 
-### 4.7. Promo Ads Banner Manager (`admin-ads.html`)
+### 4.8. Promo Ads Banner Manager (`admin-ads.html`)
 - Manage interactive promotion slides displayed inside the home page hero right column.
 - Configure taglines, titles, descriptions, action button links, and multi-photo slide sets.
 
-### 4.8. Live Announcement Marquee Manager (`admin-marquee.html`)
+### 4.9. Live Announcement Marquee Manager (`admin-marquee.html`)
 - Create, reorder, toggle on/off, and delete scrolling announcements for the top ticker bar.
 - Custom tag badges (e.g., `HOT DEAL`, `ANNOUNCEMENT`, `NEW ARRIVAL`).
 
-### 4.9. Orders & Dispatch Processing (`admin-orders.html`)
+### 4.10. Orders & Dispatch Processing (`admin-orders.html`)
 - Filter orders by status: `Pending`, `Processing`, `Delivered`, `Cancelled`.
 - **Search & Filter**: Search orders by Customer Name, Order ID, or Phone Number.
 - **Order Details Modal**:
@@ -210,7 +214,7 @@ All admin portal pages share a completely unified, sleek dark UI matching GOGO M
 - **1-Click WhatsApp Order Confirmation Button**:
   - Automatically composes and opens a structured Sinhala/English WhatsApp message to the customer with their order summary, requesting delivery confirmation before dispatch.
 
-### 4.10. Marketing & Coupons Manager (`admin-offers.html`)
+### 4.11. Marketing & Coupons Manager (`admin-offers.html`)
 - Create and toggle promo coupon codes with customizable percentage discounts and expiration status.
 
 ---
@@ -273,6 +277,7 @@ Stores standard store product categories as well as system configurations:
   - `system_marquee_news`: Live top marquee ticker announcements (JSON array).
   - `system_popular_categories`: Featured category metadata and card images (JSON array).
   - `system_new_arrivals`: Ordered product IDs selected for the home page New Arrivals section (JSON array).
+  - `system_best_sellers`: Ordered product IDs selected for the home page Best Sellers section (JSON array).
 
 ---
 
@@ -289,7 +294,7 @@ Stores standard store product categories as well as system configurations:
 1. **Brand Identity Transition**: Modernized brand to **GOGO MART** with unified footer `"© 2026 GOGO MART. Your Trusted Online Store."` and refreshed color palette.
 2. **Homepage New Arrivals and Rotating Categories**:
    - Admins choose up to eight New Arrivals products independently from Best Sellers.
-   - Four unique category cards rotate every 30 minutes; adjacent rotations avoid showing the same full set when possible.
+   - Four unique category cards switch to a new random set every five seconds without page refresh.
 3. **Dedicated Admin Categories Manager (`admin-categories.html`)**:
    - Dropdown to select and link existing store categories.
    - Image upload, custom titles, tags, and cloud sync.

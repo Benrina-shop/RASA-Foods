@@ -457,19 +457,19 @@
       </div>
     </div>
   </section>
-  <section class="py-6 sm:py-8 bg-slate-50/80 border-b border-slate-200/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6">
-      <div class="flex items-center justify-between mb-4">
+  <section class="py-10 sm:py-14 px-4 sm:px-6 bg-slate-50/80 border-b border-slate-200/80">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
         <div>
-          <h2 class="font-display text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Popular Categories</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Explore our most popular departments & trending selections</p>
+          <h2 class="font-display text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Popular Categories</h2>
+          <p class="text-sm text-slate-500 mt-1">Explore our most popular departments & trending selections</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
       </div>
@@ -503,6 +503,7 @@
   <script src="customer-data.js"></script>
   <script>
     let PRODUCTS = [];
+    let BEST_SELLER_IDS = null;
     async function initStore() {
       console.log('Initializing Store...');
       try {
@@ -516,12 +517,27 @@
 
         console.log('Products fetched:', data.length);
         PRODUCTS = data;
+        await loadBestSellerSelection();
         render();
         await loadNewArrivals();
         updateCartCount();
       } catch (err) {
         console.error('Store init error:', err);
         document.getElementById('bs-grid').innerHTML = '<div class="col-span-full py-10 text-red-500 font-bold">⚠️ Connection Error. Please refresh.</div>';
+      }
+    }
+
+    async function loadBestSellerSelection() {
+      try {
+        const { data, error } = await getSupabase().from('categories')
+          .select('image_url').eq('slug', 'system_best_sellers').maybeSingle();
+        if (error) throw error;
+        if (!data) { BEST_SELLER_IDS = null; return; }
+        const parsed = JSON.parse(data.image_url || '[]');
+        BEST_SELLER_IDS = Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch (error) {
+        console.warn('Best sellers selection unavailable; using latest products:', error);
+        BEST_SELLER_IDS = null;
       }
     }
 
@@ -567,12 +583,15 @@
     function render() {
       const grid = document.getElementById('bs-grid');
       if (!grid) return;
-      if (PRODUCTS.length === 0) {
-        grid.innerHTML = '<div class="col-span-full py-20 text-center text-[var(--muted)]">No products found.</div>';
+      const visibleProducts = BEST_SELLER_IDS === null
+        ? PRODUCTS.slice(0, 8)
+        : BEST_SELLER_IDS.map(id => PRODUCTS.find(product => String(product.id) === id)).filter(Boolean);
+      if (visibleProducts.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-20 text-center text-[var(--muted)]">No best sellers selected yet.</div>';
         return;
       }
 
-      grid.innerHTML = PRODUCTS.slice(0, 8).map(p => `
+      grid.innerHTML = visibleProducts.map(p => `
     <div class="prod-card" onmouseenter="startHoverCarousel(${p.id})" onmouseleave="stopHoverCarousel(${p.id})" onclick="location.href='product-detail.html?id=${p.id}'">
       ${p.badge ? `<div class="badge ${p.badge_type === 'new' ? 'badge-new' : p.badge_type === 'pop' ? 'badge-pop' : ''}">${p.badge}</div>` : ''}
       <img id="card-img-${p.id}" src="${p.image_url}" class="prod-card-img transition-opacity duration-300" alt="${p.name}" loading="lazy">
@@ -910,6 +929,7 @@
           POPULAR_CATEGORIES = await loadStoreCategories();
           localStorage.setItem('gogo-popular-categories', JSON.stringify(POPULAR_CATEGORIES));
           renderPopularCategories();
+          startPopularCategoryRotation();
           return;
         }
       } catch (err) {
@@ -920,6 +940,7 @@
       if (local && Array.isArray(local) && local.length > 0) {
         POPULAR_CATEGORIES = local;
         renderPopularCategories();
+        startPopularCategoryRotation();
       }
     }
 
@@ -933,7 +954,7 @@
       }
 
       const cardHtml = (cat) => `
-        <a href="products.html?cat=${encodeURIComponent(cat.slug)}" class="group flex-shrink-0 w-36 sm:w-44 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-blue-400 transition-all text-left">
+        <a href="products.html?cat=${encodeURIComponent(cat.slug)}" class="group flex-shrink-0 w-52 sm:w-60 lg:w-64 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-blue-400 transition-all text-left">
           <div class="w-full aspect-square bg-slate-50 overflow-hidden relative flex items-center justify-center p-2">
             <img src="${cat.image_url || 'logo.png'}" alt="${cat.name}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
             <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900/80 text-white backdrop-blur-xs">
@@ -954,30 +975,27 @@
     function getRotatingCategories(categories, now = Date.now()) {
       const unique = [...new Map(categories.filter(cat => cat?.slug).map(cat => [cat.slug, cat])).values()];
       if (unique.length <= 4) return unique;
-      const key = 'gogo-category-rotation-v1';
-      const rotationMs = 30 * 60 * 1000;
-      const period = Math.floor(now / rotationMs);
-      let previous = null;
-      try { previous = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
-      if (previous?.period === period && Array.isArray(previous.slugs)) {
-        const saved = previous.slugs.map(slug => unique.find(cat => cat.slug === slug)).filter(Boolean);
-        if (saved.length === 4) return saved;
-      }
       const pool = [...unique];
-      let seed = (period ^ (period >>> 16)) >>> 0;
-      const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+      const random = () => Math.random();
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(random() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
-      const oldSlugs = new Set(previous?.slugs || []);
       const selected = pool.slice(0, 4);
-      if (selected.every(cat => oldSlugs.has(cat.slug))) {
+      const oldSlugs = new Set(selectedCategorySlugs);
+      if (selected.length && selected.every(cat => oldSlugs.has(cat.slug))) {
         const replacement = pool.find(cat => !oldSlugs.has(cat.slug));
-        if (replacement) selected[3] = replacement;
+        if (replacement) selected[selected.length - 1] = replacement;
       }
-      try { localStorage.setItem(key, JSON.stringify({ period, slugs: selected.map(cat => cat.slug) })); } catch (_) {}
+      selectedCategorySlugs = selected.map(cat => cat.slug);
       return selected;
+    }
+
+    let selectedCategorySlugs = [];
+    let categoryRotationTimer = null;
+    function startPopularCategoryRotation() {
+      if (categoryRotationTimer || POPULAR_CATEGORIES.length <= 4) return;
+      categoryRotationTimer = setInterval(renderPopularCategories, 5000);
     }
 
     function scrollPopularCats(dir) {
@@ -997,6 +1015,7 @@
           initStore();
         }
         if (event.type === 'NEW_ARRIVALS_CHANGED') loadNewArrivals();
+        if (event.type === 'BEST_SELLERS_CHANGED') { loadBestSellerSelection().then(render); }
       });
     }
 
@@ -1008,7 +1027,7 @@
       });
     }
 
-    // Background auto-refresh every 20 seconds
+    // Refresh storefront data without reloading the page.
     setInterval(function() {
       loadPopularCategories();
       initStore();
