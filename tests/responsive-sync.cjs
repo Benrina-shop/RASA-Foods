@@ -3,13 +3,13 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const root=path.resolve(__dirname,'..');
 const products=[{id:901,name:'Premium Gift Box with a long readable product name',price:14900,old_price:16000,stock:10,category_slug:'gifts',image_url:'logo.png',images:[],description:'Test product'}];
 let failCategoryDelete=false;
-let categories=[{id:1,name:'Gifts',slug:'gifts',image_url:'logo.png'},{id:2,name:'SYSTEM_POPULAR_CATEGORIES',slug:'system_popular_categories',image_url:'[{"name":"Ghost","slug":"ghost"}]'}];
+let categories=[{id:1,name:'Gifts',slug:'gifts',image_url:'logo.png'},{id:2,name:'SYSTEM_POPULAR_CATEGORIES',slug:'system_popular_categories',image_url:'[{"name":"Ghost","slug":"ghost"}]'},{id:3,name:'SYSTEM_COVER_BANNER',slug:'system_cover_banner',image_url:'["https://saved.test/admin-cover.jpg"]'}];
 (async()=>{
  const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.writeHead(404).end();return;}res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png'})[path.extname(file)]||'text/plain');fs.createReadStream(file).pipe(res)});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
  browser=await chromium.launch({channel:'chrome',headless:true});const context=await browser.newContext({baseURL:`http://127.0.0.1:${server.address().port}`});
- await context.addInitScript(product=>{localStorage.setItem('isAdmin','true');localStorage.setItem('rasa-cart',JSON.stringify([{...product,qty:1}]));},products[0]);
+ await context.addInitScript(product=>{localStorage.setItem('isAdmin','true');localStorage.setItem('rasa-cart',JSON.stringify([{...product,qty:1}]));localStorage.setItem('gogo-cover-banners',JSON.stringify(['https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80']));},products[0]);
  await context.route('**/*.supabase.co/**',async route=>{
   const req=route.request(),url=new URL(req.url());let data=[];
   if(url.pathname.includes('/storage/v1/object/')){
@@ -31,6 +31,10 @@ let categories=[{id:1,name:'Gifts',slug:'gifts',image_url:'logo.png'},{id:2,name
  await p.goto('/products.html');await p.waitForSelector('.prod-card');
  assert.equal(await p.locator('#category-list').innerText(),'All Collections\nGifts');
  const home=await context.newPage();await home.goto('/index.html');await home.waitForSelector('#popular-cats-slider a');assert(!(await home.locator('#popular-cats-slider').innerText()).includes('Ghost'));
+ assert(!(await home.locator('.hero-bg').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('1542838132'),'do not render the hard-coded vegetable cover on initial page load');
+ await home.waitForFunction(()=>getComputedStyle(document.querySelector('.hero-bg')).backgroundImage.includes('saved.test/admin-cover.jpg'));
+ assert(!(await home.locator('.hero-bg').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('1542838132'),'do not flash the hard-coded vegetable cover before saved banners load');
+ assert.equal(await home.evaluate(()=>localStorage.getItem('gogo-cover-banners')),'["https://saved.test/admin-cover.jpg"]');
  const admin=await context.newPage();await admin.goto('/admin-categories.html');await admin.waitForSelector('.category-card');
  // Exercise the real admin handlers with a test-only external Supabase API.
  await admin.evaluate(()=>{openModal();document.getElementById('cat-name').value='New Category';document.getElementById('cat-slug').value='new-category';});
@@ -83,6 +87,11 @@ let categories=[{id:1,name:'Gifts',slug:'gifts',image_url:'logo.png'},{id:2,name
     await p.locator('[onclick="openModal()"], [onclick="openModal(null)"]').first().click();
     const modal=p.locator('.modal > div').first();if(await modal.isVisible())assert(await modal.evaluate(el=>el.getBoundingClientRect().right<=innerWidth && el.getBoundingClientRect().left>=0));
    }
+  }
+  if(file==='admin-banners.html'){
+   await p.waitForSelector('#banners-grid img');
+   assert.equal(await p.locator('#banners-grid img').first().getAttribute('src'),'https://saved.test/admin-cover.jpg');
+   assert(!(await p.locator('#banners-grid').innerHTML()).includes('1542838132'));
   }
  }
  console.log('PASS all '+pages.length+' pages at '+width+'px');

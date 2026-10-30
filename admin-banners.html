@@ -133,12 +133,6 @@
   <script>
     if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
 
-    var DEFAULT_COVERS = [
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80',
-      'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=1800&q=80',
-      'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=1800&q=80'
-    ];
-
     var coverList = [];
     var previewIndex = 0;
     var previewTimer = null;
@@ -149,35 +143,29 @@
         var sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
           var { data } = await sb.from('categories').select('*').eq('slug', 'system_cover_banner').single();
-          if (data && data.image_url) {
-            try {
-              var parsed = JSON.parse(data.image_url);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                coverList = parsed;
-                renderGallery();
-                startPreviewSlideshow();
-                return;
-              }
-            } catch (e) {
-              coverList = [data.image_url];
-              renderGallery();
-              startPreviewSlideshow();
-              return;
+          if (data) {
+            var parsed = [];
+            try { parsed = JSON.parse(data.image_url || '[]'); } catch (e) {
+              if (data.image_url) parsed = [data.image_url];
             }
+            coverList = Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            localStorage.setItem('gogo-cover-banners', JSON.stringify(coverList));
+            renderGallery();
+            startPreviewSlideshow();
+            return;
           }
         }
       } catch (err) {
         console.warn('DB cover fetch fallback');
       }
 
-      // 2. Fallback to localStorage
+      // Keep actual admin uploads from the local cache; discard old seeded artwork.
       var local = JSON.parse(localStorage.getItem('gogo-cover-banners') || 'null');
-      if (local && Array.isArray(local) && local.length > 0) {
-        coverList = local;
-      } else {
-        coverList = DEFAULT_COVERS;
-        localStorage.setItem('gogo-cover-banners', JSON.stringify(coverList));
-      }
+      coverList = Array.isArray(local) ? local.filter(function(url) {
+        return url && !url.includes('photo-1542838132') &&
+          !url.includes('photo-1548741487') && !url.includes('photo-1558961363');
+      }) : [];
+      localStorage.setItem('gogo-cover-banners', JSON.stringify(coverList));
 
       renderGallery();
       startPreviewSlideshow();

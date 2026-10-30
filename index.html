@@ -95,7 +95,7 @@
     .hero-bg {
       position: absolute;
       inset: 0;
-      background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80');
+      background-image: none;
       background-size: cover;
       background-position: center;
       opacity: .18;
@@ -675,26 +675,27 @@
     let COVER_BANNERS = [];
     let currentCoverIndex = 0;
     let coverTimer = null;
+    const LEGACY_DEFAULT_COVERS = [
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80',
+      'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=1800&q=80',
+      'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=1800&q=80'
+    ];
 
     async function loadHeroCoverBanners() {
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sb) {
           const { data } = await sb.from('categories').select('*').eq('slug', 'system_cover_banner').single();
-          if (data && data.image_url) {
-            try {
-              const parsed = JSON.parse(data.image_url);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                COVER_BANNERS = parsed;
-                applyCoverBanner();
-                startCoverTimer();
-                return;
-              }
-            } catch (e) {
-              COVER_BANNERS = [data.image_url];
-              applyCoverBanner();
-              return;
+          if (data) {
+            let parsed = [];
+            try { parsed = JSON.parse(data.image_url || '[]'); } catch (e) {
+              if (data.image_url) parsed = [data.image_url];
             }
+            COVER_BANNERS = Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            localStorage.setItem('gogo-cover-banners', JSON.stringify(COVER_BANNERS));
+            applyCoverBanner();
+            startCoverTimer();
+            return;
           }
         }
       } catch (e) {
@@ -702,25 +703,20 @@
       }
 
       const local = JSON.parse(localStorage.getItem('gogo-cover-banners') || 'null');
-      if (local && Array.isArray(local) && local.length > 0) {
-        COVER_BANNERS = local;
-      } else {
-        COVER_BANNERS = [
-          'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1800&q=80',
-          'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=1800&q=80',
-          'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=1800&q=80'
-        ];
-        localStorage.setItem('gogo-cover-banners', JSON.stringify(COVER_BANNERS));
-      }
+      COVER_BANNERS = Array.isArray(local) ? local.filter(url => url && !LEGACY_DEFAULT_COVERS.includes(url)) : [];
+      localStorage.setItem('gogo-cover-banners', JSON.stringify(COVER_BANNERS));
 
       applyCoverBanner();
       startCoverTimer();
     }
 
     function applyCoverBanner() {
-      if (!COVER_BANNERS || COVER_BANNERS.length === 0) return;
-      if (currentCoverIndex >= COVER_BANNERS.length) currentCoverIndex = 0;
       const bgEl = document.querySelector('.hero-bg');
+      if (!COVER_BANNERS || COVER_BANNERS.length === 0) {
+        if (bgEl) bgEl.style.backgroundImage = 'none';
+        return;
+      }
+      if (currentCoverIndex >= COVER_BANNERS.length) currentCoverIndex = 0;
       if (bgEl) {
         bgEl.style.opacity = '0.05';
         setTimeout(() => {
@@ -780,34 +776,19 @@
       const localStr = localStorage.getItem('gogo-hero-ads');
       if (localStr !== null) {
         try {
-          HERO_ADS = JSON.parse(localStr) || [];
+          HERO_ADS = (JSON.parse(localStr) || []).filter(ad => {
+            const urls = [ad.image_url, ...(Array.isArray(ad.images) ? ad.images : [])];
+            return !urls.some(url => typeof url === 'string' && url.includes('photo-1542838132'));
+          });
+          localStorage.setItem('gogo-hero-ads', JSON.stringify(HERO_ADS));
           renderHeroAd();
           startAdTimer();
           return;
         } catch (e) {}
       }
 
-      // 3. Fallback defaults only on brand new clean install
-      HERO_ADS = [
-        {
-          tagline: 'FLASH OFFER • SAVE 30%',
-          title: 'Artisanal Chocolates & Crispy Shortbread',
-          desc: 'Handcrafted sweetness made from 100% natural ingredients.',
-          image_url: 'https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80',
-          images: ['https://images.unsplash.com/photo-1548741487-18d16a145e80?w=800&q=80', 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80'],
-          btn_text: 'Claim Offer',
-          btn_link: 'offers.html'
-        },
-        {
-          tagline: 'FRESH HARVEST • EXPRESS DELIVERY',
-          title: 'Finest Organic Pantry Essentials',
-          desc: 'Farm fresh spices, tea, and everyday organic goods at your doorstep.',
-          image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-          images: ['https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80'],
-          btn_text: 'Shop Now',
-          btn_link: 'products.html'
-        }
-      ];
+      // No hard-coded sample ads or vegetable artwork; show only admin-saved ads.
+      HERO_ADS = [];
       localStorage.setItem('gogo-hero-ads', JSON.stringify(HERO_ADS));
       renderHeroAd();
       startAdTimer();
