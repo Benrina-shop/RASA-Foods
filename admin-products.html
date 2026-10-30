@@ -564,6 +564,19 @@ document.getElementById('product-form').onsubmit = async (e) => {
 
         if (res.error) throw res.error;
 
+        // If this category has no custom card image, use the product image that
+        // was just uploaded so the Classification and Popular cards stay in sync.
+        if (productData.category_slug && productData.image_url) {
+            try {
+                const categoryImageUpdated = await syncCategoryImageFromProduct(sb, productData.category_slug, productData.image_url);
+                if (categoryImageUpdated && typeof notifyStoreUpdate === 'function') {
+                    notifyStoreUpdate('CATEGORIES_CHANGED', { action: 'image_update', slug: productData.category_slug });
+                }
+            } catch (imageSyncError) {
+                console.warn('Category card image sync failed:', imageSyncError);
+            }
+        }
+
         if (typeof notifyStoreUpdate === 'function') {
             notifyStoreUpdate('PRODUCTS_CHANGED', { action: id ? 'update' : 'add', id });
         }

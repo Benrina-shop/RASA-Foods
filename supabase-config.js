@@ -125,3 +125,38 @@ async function checkedStoreWrite(query) {
     if (!data || !data.length) throw new Error('No records changed. Check your access and refresh before retrying.');
     return data;
 }
+
+// Use the first saved product image as the category-card image when no
+// administrator-selected category image exists yet.
+async function syncCategoryImageFromProduct(sb, slug, imageUrl) {
+    if (!sb || !slug || !imageUrl || !/^https?:\/\//i.test(imageUrl)) return false;
+
+    const { data: category, error: categoryError } = await sb.from('categories')
+        .select('id, name, slug, image_url').eq('slug', slug).single();
+    if (categoryError) throw categoryError;
+    if (!category || (category.image_url && category.image_url !== 'logo.png')) return false;
+
+    const { data: systemRow, error: systemError } = await sb.from('categories')
+        .select('id, image_url').eq('slug', 'system_popular_categories').single();
+    if (systemError && systemError.code !== 'PGRST116') throw systemError;
+
+    let popular = [];
+    try { popular = JSON.parse(systemRow?.image_url || '[]'); } catch (_) {}
+    if (!Array.isArray(popular)) popular = [];
+    const entry = popular.find(item => item.slug === slug);
+    if (entry?.image_url && entry.image_url !== 'logo.png') return false;
+
+    await checkedStoreWrite(sb.from('categories').update({ image_url: imageUrl }).eq('id', category.id));
+    if (entry) entry.image_url = imageUrl;
+    else popular.push({ name: category.name, slug, subtitle: '', image_url: imageUrl });
+
+    const payload = {
+        name: 'SYSTEM_POPULAR_CATEGORIES',
+        slug: 'system_popular_categories',
+        image_url: JSON.stringify(popular)
+    };
+    if (systemRow) await checkedStoreWrite(sb.from('categories').update(payload).eq('id', systemRow.id));
+    else await checkedStoreWrite(sb.from('categories').insert(payload));
+    try { localStorage.setItem('gogo-popular-categories', JSON.stringify(popular)); } catch (_) {}
+    return true;
+}
