@@ -49,27 +49,24 @@ async function handleLogin(e) {
   btn.style.pointerEvents = 'none';
 
   const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('password').value.trim();
+  const pass = document.getElementById('password').value;
   
   try {
     if (typeof getSupabase !== 'function') return location.reload();
     var sb = getSupabase();
     if (!sb) return location.reload();
 
-    const { data, error } = await sb.from('admins').select('*').eq('email', email).eq('password_hash', pass).single();
-    
-    if (data) {
-      localStorage.setItem('isAdmin', 'true');
-      localStorage.setItem('adminUser', JSON.stringify(data));
-      location.href = 'admin-dashboard.html';
-    } else {
-      alert('Unauthorized access. Please check identity/key.');
-      btn.textContent = 'Authenticate';
-      btn.style.pointerEvents = 'auto';
+    const { error: signInError } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (signInError) throw signInError;
+    const { data: isAdmin, error: roleError } = await sb.rpc('is_admin');
+    if (roleError || isAdmin !== true) {
+      await sb.auth.signOut();
+      throw new Error('This account is not approved for the admin panel.');
     }
+    location.href = 'admin-dashboard.html';
   } catch (err) {
     console.error(err);
-    alert('System connection error.');
+    alert(err.message || 'Admin sign in failed.');
     btn.textContent = 'Authenticate';
     btn.style.pointerEvents = 'auto';
   }

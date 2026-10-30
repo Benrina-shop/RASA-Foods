@@ -126,7 +126,8 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 - **Automated Stock Deduction**:
   - When an order is placed, purchased item quantities are automatically deducted from the `products.stock` column in Supabase.
 - **Cash on Delivery (COD)**:
-  - 1-Click secure order placement saving records to `orders` and `order_items` tables.
+  - Guest orders are created atomically through the `place_store_order` RPC, which reads current product prices and stock from Supabase, then saves `orders` and `order_items`.
+  - The browser never directly reads or writes order tables. The receipt page retrieves an order through `get_store_order` using its ID and unguessable receipt token.
 
 ### 2.8. Post-Purchase Confirmation (`thank-you.html`)
 - **Transaction Receipt & Report**:
@@ -173,7 +174,10 @@ All admin portal pages share a completely unified, sleek dark UI matching GOGO M
 - **Typography & Sidebars**: Standardized 280px left navigation bar with consistent icons and active states.
 
 ### 4.2. Admin Authentication (`admin-login.html`)
-- Secure login portal with role-based session token storage and automatic redirect security guards.
+- Supabase Auth email/password sign-in; passwords are never compared against a browser-readable table.
+- Admin permissions come from the private `gogo_private.admin_users` allowlist and the database `is_admin()` check. `localStorage` flags are not an authorization source.
+- Admin pages use an Auth session guard; database RLS remains the actual access control for catalogue, orders, promo codes, and Storage uploads.
+- Create the first admin under Supabase Dashboard **Authentication -> Users**, then add it to the allowlist. See `database/README.md` and `database/admin-auth-hardening.sql`.
 - Redesigned with the unified Royal Blue & Slate aesthetic.
 
 ### 4.3. Global Performance Dashboard (`admin-dashboard.html`)

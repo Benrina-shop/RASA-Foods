@@ -22,11 +22,51 @@ function formatPrice(amount) {
     return 'Rs. ' + Number(amount).toLocaleString();
 }
 
-// Check if admin is logged in
+// The browser flag is only a UI hint; Supabase Auth plus RLS authorizes admin access.
+var _gogoAdminCheck = null;
 function checkAdmin() {
-    if (!localStorage.getItem('isAdmin')) {
-        window.location.href = 'admin-login.html';
-    }
+    if (_gogoAdminCheck) return _gogoAdminCheck;
+    _gogoAdminCheck = (async function() {
+        var sb = getSupabase();
+        if (!sb || !sb.auth) {
+            window.location.replace('admin-login.html');
+            return null;
+        }
+        var { data: userData, error: userError } = await sb.auth.getUser();
+        if (userError || !userData || !userData.user) {
+            localStorage.removeItem('isAdmin');
+            localStorage.removeItem('adminUser');
+            window.location.replace('admin-login.html');
+            return null;
+        }
+        var { data: adminAllowed, error: adminError } = await sb.rpc('is_admin');
+        if (adminError || adminAllowed !== true) {
+            localStorage.removeItem('isAdmin');
+            localStorage.removeItem('adminUser');
+            window.location.replace('admin-login.html');
+            return null;
+        }
+        localStorage.removeItem('isAdmin');
+        localStorage.removeItem('adminUser');
+        return userData.user;
+    })().catch(function(error) {
+        console.error('Admin session check failed:', error);
+        window.location.replace('admin-login.html');
+        return null;
+    });
+    return _gogoAdminCheck;
+}
+
+function requireAdmin() {
+    return checkAdmin();
+}
+
+async function logoutAdmin() {
+    var sb = getSupabase();
+    if (sb && sb.auth) await sb.auth.signOut();
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('adminUser');
+    window.location.replace('admin-login.html');
 }
 
 // ==========================================

@@ -255,6 +255,7 @@
 
     let subtotal = 0;
     let discountPercent = 0;
+    let appliedCoupon = '';
 
     function renderSummary() {
       const container = document.getElementById('order-items');
@@ -349,10 +350,12 @@
           msg.textContent = 'Invalid or expired code';
           msg.className = 'text-[10px] mt-1 font-bold uppercase tracking-wider text-red-500';
           discountPercent = 0;
+          appliedCoupon = '';
         } else {
           msg.textContent = `Applied: ${data.discount_percentage}% discount`;
           msg.className = 'text-[10px] mt-1 font-bold uppercase tracking-wider text-emerald-600';
           discountPercent = data.discount_percentage;
+          appliedCoupon = data.code;
         }
         updateTotals();
       } catch (e) { console.error(e); }
@@ -380,9 +383,6 @@
 
       try {
         const sb = getSupabase();
-        const discountAmount = (subtotal * discountPercent) / 100;
-        const finalTotal = (subtotal - discountAmount) + 399;
-
         const deliveryAddress = city ? `${address}, ${city}` : address;
         const formattedAddress = note ? `${deliveryAddress} [Special Note: ${note}]` : deliveryAddress;
 
@@ -393,47 +393,21 @@
           whatsapp_number: whatsapp || phone,
           shipping_address: formattedAddress,
           note: note || null,
-          total_amount: finalTotal,
           status: 'Pending'
         };
-
-        let { data: order, error: orderErr } = await sb.from('orders').insert(orderPayload).select().single();
-
-        if (orderErr && orderErr.message && orderErr.message.includes('note')) {
-          delete orderPayload.note;
-          const retry = await sb.from('orders').insert(orderPayload).select().single();
-          order = retry.data;
-          orderErr = retry.error;
-        }
-
+        const { data: order, error: orderErr } = await sb.rpc('place_store_order', {
+          p_customer: orderPayload,
+          p_items: cart.map(item => ({ id: item.id, qty: item.qty })),
+          p_coupon: appliedCoupon || null
+        });
         if (orderErr) throw orderErr;
-
-        const items = cart.map(i => ({
-          order_id: order.id,
-          product_id: i.id,
-          quantity: i.qty,
-          unit_price: i.price
-        }));
-
-        const { error: itemsErr } = await sb.from('order_items').insert(items);
-        if (itemsErr) throw itemsErr;
-
-        for (const item of cart) {
-          try {
-            const { data: currentP } = await sb.from('products').select('stock').eq('id', item.id).single();
-            if (currentP && currentP.stock !== undefined && currentP.stock !== null) {
-              const newStock = Math.max(0, currentP.stock - item.qty);
-              await sb.from('products').update({ stock: newStock }).eq('id', item.id);
-            }
-          } catch (stkErr) {
-            console.warn('Stock update skipped for item ' + item.id, stkErr);
-          }
-        }
 
         if (window.GogoCustomerData) window.GogoCustomerData.saveCart([]);
         else localStorage.removeItem('rasa-cart');
         await window.GogoCustomerData?.flush();
-        localStorage.setItem('rasa-last-order', JSON.stringify({ id: order.id, total: finalTotal }));
+        localStorage.setItem('rasa-last-order', JSON.stringify({
+          id: order.id, total: order.total_amount, access_token: order.access_token
+        }));
         location.href = 'thank-you.html';
 
       } catch (err) {

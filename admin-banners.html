@@ -133,7 +133,7 @@
 
   <script src="supabase-config.js"></script>
   <script>
-    if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
+    requireAdmin();
 
     var coverList = [];
     var previewIndex = 0;

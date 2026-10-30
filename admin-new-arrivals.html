@@ -53,7 +53,7 @@
   </main>
   <script src="responsive.js"></script>
   <script>
-    if (!localStorage.getItem('isAdmin')) location.href='admin-login.html';
+    requireAdmin();
     const SETTING_SLUG='system_new_arrivals';
     let products=[];
     let selectedIds=[];

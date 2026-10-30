@@ -171,9 +171,10 @@
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 hidden" id="ads-grid"></div>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script>
-    if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
+    requireAdmin();
 
     // ── CONFIG ──────────────────────────────────────────────────────────
     var SB_URL = 'https://yswekhygaebgvowdrmxk.supabase.co';
@@ -183,6 +184,14 @@
 
     var allAds = [];
     var selectedBannerImages = []; // strings: data:... or https://...
+
+    async function getAdminAccessToken() {
+      var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+      if (!sb) throw new Error('Admin authentication is unavailable. Please sign in again.');
+      var { data, error } = await sb.auth.getSession();
+      if (error || !data?.session?.access_token) throw new Error('Admin session expired. Please sign in again.');
+      return data.session.access_token;
+    }
 
     // ── FETCH ADS FROM SUPABASE ─────────────────────────────────────────
     async function initAds() {
@@ -221,14 +230,15 @@
 
     // ── SAVE ADS TO SUPABASE (direct REST PATCH) ────────────────────────
     async function saveAdsToSupabase() {
+      var accessToken = await getAdminAccessToken();
       var headers = {
         'apikey': SB_KEY,
-        'Authorization': 'Bearer ' + SB_KEY,
+        'Authorization': 'Bearer ' + accessToken,
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal'
       };
       var lookup = await fetch(SB_URL + '/rest/v1/categories?select=id&slug=eq.' + SYSTEM_SLUG, {
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Accept': 'application/json' }
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + accessToken, 'Accept': 'application/json' }
       });
       if (!lookup.ok) throw new Error('Could not check the promo ad record: ' + await lookup.text());
       var rows = await lookup.json();
@@ -247,6 +257,7 @@
     // ── UPLOAD IMAGE TO SUPABASE STORAGE ───────────────────────────────
     async function uploadImageToStorage(dataUrl) {
       try {
+        var accessToken = await getAdminAccessToken();
         // Convert data URL to blob
         var fetchRes = await fetch(dataUrl);
         var blob = await fetchRes.blob();
@@ -257,7 +268,7 @@
           method: 'POST',
           headers: {
             'apikey': SB_KEY,
-            'Authorization': 'Bearer ' + SB_KEY,
+            'Authorization': 'Bearer ' + accessToken,
             'Content-Type': blob.type,
             'x-upsert': 'true'
           },

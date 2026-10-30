@@ -154,7 +154,7 @@
 
   <script src="supabase-config.js"></script>
   <script>
-    if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
+    requireAdmin();
 
     var DEFAULT_NEWS = [
       { id: 1, text: '🔥 Special Flash Offer: Islandwide fast delivery for just Rs. 399 on all orders!', badge: 'HOT DEAL', active: true },

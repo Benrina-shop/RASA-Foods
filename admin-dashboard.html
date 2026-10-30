@@ -65,7 +65,7 @@
     </div>
     <div>
         <a href="index.html" class="nav-link mb-2">← View Site</a>
-        <button onclick="localStorage.removeItem('isAdmin'); location.href='admin-login.html'" class="nav-link w-full text-red-400 hover:text-red-300">Logout</button>
+        <button onclick="logoutAdmin()" class="nav-link w-full text-red-400 hover:text-red-300">Logout</button>
     </div>
   </div>
 
@@ -126,10 +126,12 @@
 
 <script src="supabase-config.js"></script>
 <script>
-// Security Check
-if (!localStorage.getItem('isAdmin')) location.href = 'admin-login.html';
-const admin = JSON.parse(localStorage.getItem('adminUser') || '{}');
-document.getElementById('admin-email').textContent = admin.email || 'Admin User';
+// Run admin data requests only after Supabase confirms the allowlisted role.
+requireAdmin().then(function(user) {
+  if (!user) return;
+  document.getElementById('admin-email').textContent = user.email || 'Admin User';
+  initDashboard();
+});
 
 async function initDashboard() {
   try {
@@ -172,7 +174,6 @@ async function initDashboard() {
   }
 }
 
-initDashboard();
 </script>
   <script src="responsive.js"></script>
 </body>

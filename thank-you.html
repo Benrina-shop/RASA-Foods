@@ -70,11 +70,15 @@ const lastOrder = JSON.parse(localStorage.getItem('rasa-last-order') || '{}');
 let fullOrderData = null;
 
 async function fetchOrderDetails() {
-  if (!lastOrder.id) return;
+  if (!lastOrder.id || !lastOrder.access_token) return;
   
   try {
     const sb = getSupabase();
-    const { data: order, error } = await sb.from('orders').select('*, order_items(*, products(*))').eq('id', lastOrder.id).single();
+    const { data: order, error } = await sb.rpc('get_store_order', {
+      p_order_id: String(lastOrder.id),
+      p_access_token: lastOrder.access_token
+    });
+    if (error) throw error;
     if (order) {
         fullOrderData = order;
         document.getElementById('display-total').textContent = formatPrice(order.total_amount);

@@ -1,5 +1,36 @@
 # Shared product reaction counts
 
+## Admin authentication and database access
+
+`admin-auth-hardening.sql` replaces the browser-side `admins` password check and
+`localStorage.isAdmin` authorization with Supabase Auth plus a private admin
+allowlist. Run it once in the SQL Editor for the Supabase project configured in
+`supabase-config.js`. The migration revokes storefront access to order records,
+limits catalogue writes and Storage uploads to approved admins, and adds secure
+RPCs for guest checkout and receipt lookup. Git deployment does not run SQL.
+
+Setup:
+
+1. In Supabase Dashboard, create the admin account under **Authentication →
+   Users** with the email and password the admin will use.
+2. Run `admin-auth-hardening.sql` in the SQL Editor as the project owner.
+3. Replace `YOUR_ADMIN_EMAIL` in the final commented SQL with that exact email,
+   uncomment and run the `INSERT` block. Add one row for each approved admin.
+4. Sign in at `admin-login.html`. The migration revokes access to the old
+   `public.admins` table and removes its legacy `password_hash` column.
+
+Keep the `gogo_private` schema out of **Project Settings → API → Exposed
+schemas**. Only the public RPC wrappers are called by the browser. Never put the
+Supabase service-role key in frontend files. The browser's admin guard controls
+navigation; database RLS and the private allowlist enforce access.
+
+The checkout RPC calculates prices and stock from database rows, writes the
+order atomically, and returns an unguessable receipt token. Receipt lookup
+requires both the order ID and that token. Existing orders receive tokens when
+the migration runs. Review the SQL assumptions against the project's existing
+`orders`, `order_items`, `products`, and `promo_codes` columns before running
+it. Existing RLS policies on the listed tables are replaced by this migration.
+
 ## Shared product reviews
 
 Run `product-reviews.sql` once in the Supabase SQL Editor for the project configured in `supabase-config.js`. It creates `public.reviews`, enables RLS, allows public review reads and inserts, and grants storefront roles access only to the public review columns. `author_email` is stored but excluded from storefront reads. Project owners/database operators can still access stored data.
