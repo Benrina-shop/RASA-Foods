@@ -789,20 +789,18 @@
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (!sb) throw new Error('Store connection unavailable');
         const { data, error } = await sb.from('reviews')
-          .select('*')
+          .select('id,product_id,author_name,rating,comment,images,created_at')
           .order('created_at', { ascending: false })
           .limit(500);
         if (error) throw error;
         rankHomepageReviews(data);
       } catch (error) {
         console.warn('Homepage reviews unavailable:', error);
-        const localReviews = PRODUCTS.flatMap(product => {
-          try {
-            const saved = JSON.parse(localStorage.getItem(`gogo-reviews-${product.id}`) || '[]');
-            return Array.isArray(saved) ? saved.map(review => ({ ...review, product_id: review.product_id || product.id })) : [];
-          } catch (_) { return []; }
-        });
-        rankHomepageReviews(localReviews);
+        rankHomepageReviews([]);
+        const grid = document.getElementById('homepage-review-grid');
+        const count = document.getElementById('homepage-review-count');
+        if (grid) grid.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500">Reviews are temporarily unavailable. Please try again later.</div>';
+        if (count) count.textContent = 'Reviews unavailable';
       }
     }
 
@@ -928,7 +926,7 @@
 
     window.addEventListener('resize', renderHomepageReviews);
     window.addEventListener('storage', event => {
-      if (event.key && event.key.startsWith('gogo-reviews-')) loadHomepageReviews(true);
+      if (event.key === 'gogo-reviews-sync') loadHomepageReviews(true);
     });
 
     let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');

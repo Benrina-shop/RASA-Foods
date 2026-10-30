@@ -49,8 +49,8 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 - **Best Sellers**: Displays up to eight products selected independently in `admin-best-sellers.html`. Selection is stored as product IDs in `categories.slug = system_best_sellers`; product details always come from `products`, so product edits appear automatically.
 - **New Arrivals**: Displays up to eight products selected independently in `admin-new-arrivals.html`. Selection is stored as product IDs in `categories.slug = system_new_arrivals`; product details always come from `products`.
 - **Browse Departments**: Groups current products by `category_slug`, shows up to five products from one category at a time, and switches category every ten seconds without reloading. Section heading and product-card labels use the matching display name from `categories.name`, with a readable slug fallback. Products use a four-column desktop grid, two columns on tablet, and one on mobile. Categories with no products are not shown.
-- **Customer Reviews**: Appears above the footer. It ranks products by average rating, shows reviews for the four highest-rated products, includes product names and ratings, supports responsive cards and arrow navigation, and shuffles reviews every five seconds. A cross-tab `localStorage` event refreshes the list when another tab saves a product review.
-- **Review data limitation**: A read-only check of the configured Supabase project returned `PGRST205` because `public.reviews` is not present. Product-detail reviews are saved under browser keys `gogo-reviews-<product-id>`; the homepage tries the database and falls back to those browser-local entries. Reviews are not shared across customers, browsers, or devices. No reviews-table SQL migration is included, and a Git push does not create or apply it. A shared review system needs a designed table and access policies, especially because the product form collects customer email addresses.
+- **Customer Reviews**: Appears above the footer. It reads shared Supabase review rows, ranks products by average rating, shows reviews for the four highest-rated products, includes product names and ratings, supports responsive cards and arrow navigation, and shuffles reviews every five seconds. A cross-tab storage signal refreshes the section after review submission.
+- **Review persistence and privacy**: `database/product-reviews.sql` creates `public.reviews`. Product-detail submissions save rating, full name, email, comment, compressed photos, and timestamp in Supabase. The public API can read review display fields but has no permission to read `author_email`. Photos are embedded in the row (up to five and 5 MB total), so the product foreign key's `ON DELETE CASCADE` permanently removes review data and photos when an admin deletes a product. Legacy `gogo-reviews-<product-id>` localStorage entries are not shared or auto-migrated. Apply the SQL in Supabase; a Git push does not apply it.
 - Clicking a category opens the catalogue filtered to that category. Category data is read from Supabase `categories` and respects admin updates.
 - **Full-Width Hero Background Slideshow**:
   - Dynamically cycles high-resolution background covers (configured via `admin-banners.html`) every 5 seconds with smooth cross-fade animation.
@@ -90,7 +90,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
   - ??? `Peace of Mind`
 - **Customer Feedback & Product Review System**:
   - 5-Star interactive star rating selector with average score calculation.
-  - Customer review submission with optional **Review Photo Attachment** (uploaded directly to Supabase storage `products` bucket). Review text is also saved in browser `localStorage` as `gogo-reviews-<product-id>`; the configured project currently has no `public.reviews` table, so review text is not globally shared through the database.
+  - Customer review submission with optional photo attachments. Rating, name, private email, comment, and compressed photo data are saved together in Supabase `public.reviews`; the email column is excluded from public API reads.
   - Review photo thumbnail gallery with clickable Lightbox Modal zoom-in preview.
 
 ### 2.4. Exclusive Offers Page (`offers.html`)
@@ -285,17 +285,18 @@ Stores standard store product categories as well as system configurations:
   - `system_best_sellers`: Ordered product IDs selected for the home page Best Sellers section (JSON array).
 
 
-### Reviews storage status
-- The frontend refers to `public.reviews`, but the configured Supabase project currently returns `PGRST205` for that table. It is not included in the checked-in SQL schema and no migration is provided yet.
-- Product review text currently falls back to browser-local `localStorage`; it is not a shared database table. The homepage uses these local entries when its database read fails, then calculates average product ratings and selects reviews from the top-rated products.
-- Do not describe the homepage average as a store-wide/customer-wide rating until a shared table, safe email access rules, and review read/insert policies are installed and verified.
+### Reviews storage and setup
+- `database/product-reviews.sql` creates the public reviews table with RLS and restricted column grants. Run it in the configured Supabase SQL Editor before customers submit reviews.
+- Storefront reads omit `author_email`; the submitted email is saved in the database but cannot be selected by anon/authenticated storefront roles. Database owners and project operators retain database-level access.
+- Review photos are resized and compressed, then kept in the review row. Product deletion cascades to review rows and photo bytes, so no separate Storage cleanup is needed.
+- Legacy browser-only review entries are not automatically migrated. Git deployment does not apply the SQL.
 
 ---
 
 ## 6. Storage Buckets (Supabase Storage)
 
 - **`products`**:
-  - Publicly accessible bucket storing product photos, review attachments, admin hero covers, category card images, and demo MP4 videos.
+  - Publicly accessible bucket storing product photos, admin hero covers, category card images, and demo MP4 videos. New customer review photos are stored in the review database rows so product deletion removes them with the review.
 
 ---
 
@@ -324,7 +325,8 @@ Stores standard store product categories as well as system configurations:
 14. **Checkout & Cart Mobile Ground-Up Restructure**: Auto-fits 100% viewport width without horizontal scroll or manual zoom-out, with order summary on top followed by delivery details.
 15. **Mobile Menu Drawer Fixes**: Unified slide-down drawer across all customer storefront pages.
 16. **Homepage Width and Category Sections**: Aligned home content to a shared 1,600px inner width, capped the hero promo card at 520px, rendered Popular Categories as responsive full-width cards, kept the initial set visible before five-second shuffling, and added the ten-second Browse Departments product rotation using category display names.
-17. **Homepage Customer Reviews**: Added a responsive review summary/cards section before the footer, ranking locally available reviews by product average and shuffling every five seconds. Confirmed the configured Supabase project does not currently have `public.reviews`; the homepage falls back to per-browser review data and documents that reviews are not globally shared.
+17. **Homepage Customer Reviews**: Added a responsive review summary/cards section before the footer, ranking reviews by product average and shuffling every five seconds. The configured project initially lacked `public.reviews`; the checked-in SQL setup now defines shared persistence and email-safe column access.
+18. **Shared Product Reviews**: Added Supabase persistence for customer name, email, rating, comment, compressed photos, and timestamp. Added RLS and restricted column grants so storefronts cannot read emails, cross-tab homepage refresh, and product-delete cascade cleanup for review/photo data. Legacy localStorage reviews are not automatically migrated.
 
 ---
 *Maintained by GOGO MART Core Engineering Team — Comprehensive Documentation Updated: October 2026.*

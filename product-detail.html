@@ -159,7 +159,12 @@ async function loadProduct() {
     const { data, error } = await sb.from('products').select('*').eq('id', id).single();
     if (error) throw error;
     PRODUCT = data;
-    await loadReviews(id);
+    try {
+      await loadReviews(id);
+    } catch (reviewError) {
+      console.error('Could not load shared reviews. Run database/product-reviews.sql:', reviewError);
+      REVIEWS = [];
+    }
     renderProduct();
     updateCartCount();
   } catch (err) {
@@ -665,26 +670,21 @@ function showToast(m) {
 let REVIEWS = [];
 let currentSelectedRating = 5;
 
-// Load reviews from Supabase or localStorage
+// Load shared reviews from Supabase. Customer email is intentionally excluded.
 async function loadReviews(prodId) {
-  try {
-    const sb = getSupabase();
-    if (sb) {
-      const { data, error } = await sb.from('reviews').select('*').eq('product_id', prodId).order('created_at', { ascending: false });
-      if (!error && data) {
-        REVIEWS = data;
-        return;
-      }
-    }
-  } catch (err) {
-    console.warn('Reviews table not available in DB, using local reviews', err);
-  }
+  const sb = getSupabase();
+  if (!sb) throw new Error('Store connection unavailable.');
+  const { data, error } = await sb.from('reviews')
+    .select('id,product_id,author_name,rating,comment,images,created_at')
+    .eq('product_id', prodId).order('created_at', { ascending: false });
+  if (error) throw error;
+  REVIEWS = Array.isArray(data) ? data : [];
+}
 
-  // Clear legacy seed dummy reviews from localStorage if they contain sample names
-  let local = JSON.parse(localStorage.getItem('gogo-reviews-' + prodId) || '[]');
-  local = local.filter(r => r.author_name !== 'Nimasha Fernando' && r.author_name !== 'Damith Bandara');
-  localStorage.setItem('gogo-reviews-' + prodId, JSON.stringify(local));
-  REVIEWS = local;
+function escapeReviewHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
 }
 
 function calcAvgRating() {
@@ -723,10 +723,10 @@ function renderReviewsList() {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-pink-500 text-white font-black text-xs flex items-center justify-center shadow-sm">
-              ${initials}
+              ${escapeReviewHtml(initials)}
             </div>
             <div>
-              <h5 class="font-bold text-sm text-slate-900">${r.author_name || 'Customer'}</h5>
+              <h5 class="font-bold text-sm text-slate-900">${escapeReviewHtml(r.author_name || 'Customer')}</h5>
               <p class="text-[11px] text-slate-400 font-medium">${d}</p>
             </div>
           </div>
@@ -734,12 +734,12 @@ function renderReviewsList() {
             ${renderStarRating(r.rating)}
           </div>
         </div>
-        <p class="text-slate-600 text-sm leading-relaxed">${r.comment}</p>
+        <p class="text-slate-600 text-sm leading-relaxed">${escapeReviewHtml(r.comment)}</p>
         ${(r.images && r.images.length > 0) ? `
           <div class="flex gap-2.5 overflow-x-auto pt-2 pb-1">
             ${r.images.map(imgUrl => `
-              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 cursor-pointer hover:opacity-90 hover:scale-105 transition-all shadow-sm" onclick="openPhotoModal('${imgUrl}')">
-                <img src="${imgUrl}" alt="Review photo" class="w-full h-full object-cover">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 cursor-pointer hover:opacity-90 hover:scale-105 transition-all shadow-sm" onclick="openPhotoModal(this.querySelector('img').src)">
+                <img src="${escapeReviewHtml(imgUrl)}" alt="Review photo" class="w-full h-full object-cover">
               </div>
             `).join('')}
           </div>
@@ -784,19 +784,51 @@ function updateStarPicker(val) {
 
 let reviewSelectedPhotos = []; // array of { file, dataUrl }
 
-function handleReviewPhotosSelect(event) {
+async function handleReviewPhotosSelect(event) {
   const files = Array.from(event.target.files || []);
+  event.target.value = '';
   if (!files.length) return;
+  if (files.length > 5 - reviewSelectedPhotos.length) {
+    alert('You can attach up to 5 photos to a review.');
+    return;
+  }
+  try {
+    const processed = [];
+    for (const file of files) {
+      if (!file.type.startsWith('image/') || file.size > 8 * 1024 * 1024) {
+        throw new Error('Choose image files smaller than 8 MB each.');
+      }
+      processed.push({ file, dataUrl: await compressReviewImage(file) });
+    }
+    const totalBytes = [...reviewSelectedPhotos, ...processed]
+      .reduce((sum, photo) => sum + Math.ceil(photo.dataUrl.length * 0.75), 0);
+    if (totalBytes > 5 * 1024 * 1024) throw new Error('Compressed review photos must total less than 5 MB.');
+    reviewSelectedPhotos.push(...processed);
+    renderReviewPhotoPreviews();
+  } catch (error) {
+    alert(error.message || 'Could not process the selected photos.');
+  }
+}
 
-  files.forEach(file => {
+function compressReviewImage(file) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      reviewSelectedPhotos.push({ file: file, dataUrl: e.target.result });
-      renderReviewPhotoPreviews();
+    reader.onerror = () => reject(new Error('Could not read the selected image.'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('The selected file is not a valid image.'));
+      image.onload = () => {
+        const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      image.src = reader.result;
     };
     reader.readAsDataURL(file);
   });
-  event.target.value = '';
 }
 
 function removeReviewPhoto(idx) {
@@ -820,7 +852,7 @@ function renderReviewPhotoPreviews() {
   container.classList.remove('hidden');
   container.innerHTML = reviewSelectedPhotos.map((item, idx) => `
     <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-300 bg-slate-100 shrink-0 shadow-sm">
-      <img src="${item.dataUrl}" class="w-full h-full object-cover">
+      <img src="${escapeReviewHtml(item.dataUrl)}" class="w-full h-full object-cover">
       <button type="button" onclick="removeReviewPhoto(${idx})" class="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold shadow">✕</button>
     </div>
   `).join('');
@@ -848,80 +880,36 @@ async function submitReview(e) {
   const comment = document.getElementById('r-comment').value.trim();
   const rating = Number(document.getElementById('r-rating').value || 5);
   const btn = document.getElementById('submit-review-btn');
-
-  if (!name || !email || !comment) {
+  if (!name || !email || !comment || rating < 1 || rating > 5) {
     alert('Please complete all required fields.');
     return;
   }
-
-  btn.textContent = 'Posting review...';
+  btn.textContent = 'Saving review...';
   btn.disabled = true;
-
-  // Process photos (upload to Supabase storage 'products' bucket if possible, or fallback to dataUrl)
-  const finalPhotoUrls = [];
-  const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-
-  for (const item of reviewSelectedPhotos) {
-    let photoUrl = item.dataUrl;
-    if (sb && sb.storage && item.file) {
-      try {
-        const ext = item.file.name.split('.').pop() || 'jpg';
-        const fn = `rev-${PRODUCT.id}-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-        const { data: upData, error: upErr } = await sb.storage.from('products').upload(fn, item.file);
-        if (!upErr) {
-          const { data: pubData } = sb.storage.from('products').getPublicUrl(fn);
-          if (pubData && pubData.publicUrl) photoUrl = pubData.publicUrl;
-        }
-      } catch (stErr) {
-        console.warn('Storage upload bypass, keeping base64');
-      }
-    }
-    finalPhotoUrls.push(photoUrl);
-  }
-
-  const newReview = {
-    id: Date.now(),
-    product_id: PRODUCT.id,
-    author_name: name,
-    author_email: email, // Saved securely, never displayed to public
-    rating: rating,
-    comment: comment,
-    images: finalPhotoUrls,
-    created_at: new Date().toISOString()
-  };
-
-  // 1. Try DB
   try {
-    if (sb) {
-      await sb.from('reviews').insert({
-        product_id: PRODUCT.id,
-        author_name: name,
-        author_email: email,
-        rating: rating,
-        comment: comment,
-        images: finalPhotoUrls
-      });
-    }
+    const sb = getSupabase();
+    if (!sb) throw new Error('Store connection unavailable. Please try again.');
+    const { data: savedReview, error } = await sb.from('reviews').insert({
+      product_id: PRODUCT.id,
+      author_name: name,
+      author_email: email,
+      rating,
+      comment,
+      images: reviewSelectedPhotos.map(photo => photo.dataUrl)
+    }).select('id,product_id,author_name,rating,comment,images,created_at').single();
+    if (error) throw error;
+    REVIEWS.unshift(savedReview);
+    try { localStorage.setItem('gogo-reviews-sync', `${PRODUCT.id}:${Date.now()}`); } catch (_) {}
+    showToast('Review saved. Thank you!');
+    reviewSelectedPhotos = [];
+    renderProduct();
+    setTimeout(() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
   } catch (err) {
-    console.warn('DB insert bypassed, storing locally', err);
+    console.error('Review save failed:', err);
+    alert(`Review was not saved: ${err.message || 'Please check your connection and try again.'}`);
+    btn.textContent = 'Submit Review';
+    btn.disabled = false;
   }
-
-  // 2. Local persistence
-  REVIEWS.unshift(newReview);
-  localStorage.setItem('gogo-reviews-' + PRODUCT.id, JSON.stringify(REVIEWS));
-
-  showToast('✅ Review submitted with photos! Thank you.');
-  reviewSelectedPhotos = [];
-  btn.textContent = 'Submit Review';
-  btn.disabled = false;
-
-  // Re-render
-  renderProduct();
-
-  // Scroll to reviews
-  setTimeout(() => {
-    document.getElementById('reviews-section').scrollIntoView({ behavior: 'smooth' });
-  }, 100);
 }
 
 loadProduct();
