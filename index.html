@@ -617,6 +617,8 @@
     let HOMEPAGE_REVIEWS = [];
     let homepageReviewStart = 0;
     let homepageReviewsLoaded = false;
+    let homepageReviewShuffleTimer = null;
+    let homepageReviewAverage = 0;
     let CATEGORY_ROTATION = [];
     let currentRotatingCategory = '';
     let rotatingCategoryTimer = null;
@@ -637,6 +639,7 @@
         await loadBestSellerSelection();
         render();
         await loadNewArrivals();
+        await loadHomepageReviews();
         updateCartCount();
       } catch (err) {
         console.error('Store init error:', err);
@@ -777,8 +780,8 @@
         </div>`).join('');
     }
 
-    async function loadHomepageReviews() {
-      if (homepageReviewsLoaded) return;
+    async function loadHomepageReviews(force = false) {
+      if (homepageReviewsLoaded && !force) return;
       homepageReviewsLoaded = true;
       const grid = document.getElementById('homepage-review-grid');
       if (!grid) return;
@@ -786,14 +789,47 @@
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (!sb) throw new Error('Store connection unavailable');
         const { data, error } = await sb.from('reviews')
-          .select('id, author_name, rating, comment, created_at')
+          .select('id, product_id, author_name, rating, comment, created_at')
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(500);
         if (error) throw error;
-        HOMEPAGE_REVIEWS = Array.isArray(data) ? data : [];
+        const availableReviews = (Array.isArray(data) ? data : [])
+          .filter(review => PRODUCTS.some(product => String(product.id) === String(review.product_id)));
+        const statsByProduct = new Map();
+        availableReviews.forEach(review => {
+          const rating = Number(review.rating);
+          if (!Number.isFinite(rating) || rating < 1 || rating > 5) return;
+          const key = String(review.product_id);
+          const stats = statsByProduct.get(key) || { sum: 0, count: 0 };
+          stats.sum += rating;
+          stats.count += 1;
+          statsByProduct.set(key, stats);
+        });
+        const topProducts = [...statsByProduct.entries()]
+          .map(([id, stats]) => ({ id, average: stats.sum / stats.count, count: stats.count }))
+          .sort((a, b) => b.average - a.average || b.count - a.count)
+          .slice(0, 4);
+        const topIds = new Set(topProducts.map(product => product.id));
+        const productById = new Map(PRODUCTS.map(product => [String(product.id), product]));
+        HOMEPAGE_REVIEWS = availableReviews
+          .filter(review => topIds.has(String(review.product_id)) && Number(review.rating) >= 1 && Number(review.rating) <= 5)
+          .map(review => ({
+            ...review,
+            productName: productById.get(String(review.product_id))?.name || 'Product',
+            productAverage: statsByProduct.get(String(review.product_id)).sum / statsByProduct.get(String(review.product_id)).count
+          }));
+        homepageReviewAverage = topProducts.length
+          ? topProducts.reduce((sum, product) => sum + product.average, 0) / topProducts.length
+          : 0;
+        homepageReviewStart = 0;
         renderHomepageReviews();
+        startHomepageReviewShuffle();
       } catch (error) {
         console.warn('Homepage reviews unavailable:', error);
+        HOMEPAGE_REVIEWS = [];
+        homepageReviewAverage = 0;
+        if (homepageReviewShuffleTimer) clearInterval(homepageReviewShuffleTimer);
+        homepageReviewShuffleTimer = null;
         grid.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500">Customer reviews are temporarily unavailable.</div>';
         document.getElementById('homepage-review-average').textContent = '—';
         document.getElementById('homepage-review-count').textContent = 'Reviews unavailable';
@@ -824,11 +860,11 @@
         return;
       }
 
-      const average = HOMEPAGE_REVIEWS.reduce((sum, review) => sum + Number(review.rating || 0), 0) / HOMEPAGE_REVIEWS.length;
+      const average = homepageReviewAverage;
       averageEl.textContent = average.toFixed(1);
       starsEl.textContent = '★'.repeat(Math.round(average)) + '☆'.repeat(5 - Math.round(average));
       starsEl.setAttribute('aria-label', `${average.toFixed(1)} out of 5 stars`);
-      countEl.textContent = `Based on ${HOMEPAGE_REVIEWS.length} recent review${HOMEPAGE_REVIEWS.length === 1 ? '' : 's'}`;
+      countEl.textContent = `Top rated products · ${HOMEPAGE_REVIEWS.length} review${HOMEPAGE_REVIEWS.length === 1 ? '' : 's'}`;
 
       const perView = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
       const shownCount = Math.min(perView, HOMEPAGE_REVIEWS.length);
@@ -850,9 +886,10 @@
               <div class="w-11 h-11 rounded-full bg-gradient-to-br from-blue-600 to-pink-500 text-white font-black text-xs flex items-center justify-center shrink-0">${escapeReviewText(initials)}</div>
               <div class="min-w-0"><h3 class="font-bold text-sm text-slate-900 truncate">${escapeReviewText(author)}</h3><p class="text-xs text-slate-500">${escapeReviewText(date)}</p></div>
             </div>
-            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">Customer</span>
+            <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full shrink-0">${escapeReviewText(review.productAverage.toFixed(1))} avg</span>
           </div>
           <div class="text-amber-500 tracking-wider" aria-label="${rating} out of 5 stars">${'★'.repeat(rating)}<span class="text-slate-300">${'★'.repeat(5 - rating)}</span></div>
+          <a href="product-detail.html?id=${encodeURIComponent(review.product_id)}" class="text-xs font-bold text-blue-600 hover:text-pink-600">${escapeReviewText(review.productName)}</a>
           <p class="text-sm text-slate-600 leading-relaxed line-clamp-4">${escapeReviewText(review.comment)}</p>
         </article>`;
       }).join('');
@@ -863,6 +900,25 @@
       const perView = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
       homepageReviewStart = (homepageReviewStart + direction * perView + HOMEPAGE_REVIEWS.length) % HOMEPAGE_REVIEWS.length;
       renderHomepageReviews();
+    }
+
+    function startHomepageReviewShuffle() {
+      if (homepageReviewShuffleTimer) clearInterval(homepageReviewShuffleTimer);
+      if (HOMEPAGE_REVIEWS.length < 2) return;
+      homepageReviewShuffleTimer = setInterval(() => {
+        const perView = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
+        const visibleCount = Math.min(perView, HOMEPAGE_REVIEWS.length);
+        const previousIds = HOMEPAGE_REVIEWS.slice(0, visibleCount).map(review => review.id).join(',');
+        for (let i = HOMEPAGE_REVIEWS.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [HOMEPAGE_REVIEWS[i], HOMEPAGE_REVIEWS[j]] = [HOMEPAGE_REVIEWS[j], HOMEPAGE_REVIEWS[i]];
+        }
+        if (HOMEPAGE_REVIEWS.slice(0, visibleCount).map(review => review.id).join(',') === previousIds) {
+          HOMEPAGE_REVIEWS.push(HOMEPAGE_REVIEWS.shift());
+        }
+        homepageReviewStart = 0;
+        renderHomepageReviews();
+      }, 5000);
     }
 
     window.addEventListener('resize', renderHomepageReviews);
@@ -908,7 +964,6 @@
     // Initialize components after all declarations
     window.addEventListener('DOMContentLoaded', () => {
       initStore();
-      loadHomepageReviews();
       loadPopularCategories();
       loadHeroCoverBanners();
       loadHeroAds();
@@ -1292,7 +1347,8 @@
 
     const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
     if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
-      subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function (event) {
+      subscribeToSupabaseRealtime(sbClient, ['categories', 'products', 'reviews'], function (event) {
+        if (event.table === 'reviews') { loadHomepageReviews(true); return; }
         if (event.table === 'categories') { loadPopularCategories(); initStore(); }
         if (event.table === 'products') initStore();
       });
