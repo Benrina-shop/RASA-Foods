@@ -1,4 +1,4 @@
-﻿# GOGO MART — Complete System Documentation & Architecture Guide
+# GOGO MART � Complete System Documentation & Architecture Guide
 
 Welcome to the official, full-scope system documentation for **GOGO MART** (formerly RASA Foods). This document contains an exhaustive breakdown of the web application's frontend pages, admin management portals, modular JavaScript subsystems, database schemas, and all modern features developed and enhanced.
 
@@ -8,7 +8,7 @@ Welcome to the official, full-scope system documentation for **GOGO MART** (form
 
 - **Platform Name**: GOGO MART
 - **Tagline**: *Your Trusted Online Store.*
-- **Official Brand Footer**: `© 2026 GOGO MART. Your Trusted Online Store.`
+- **Official Brand Footer**: `� 2026 GOGO MART. Your Trusted Online Store.`
 - **Official WhatsApp Support Number**: `+94 71 128 9934` (`94711289934`)
 - **Flat Delivery Fee**: `Rs. 399` across Sri Lanka
 - **Default Currency**: Sri Lankan Rupee (`Rs.`) with thousands separator (e.g. `Rs. 1,450`)
@@ -32,7 +32,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 ### Product Reactions & Wishlist
 
 - `product-engagement.js` and `product-engagement.css` provide **Like**, **Love**, and **Wow**, each with its own shared count, plus a separate **Add to Wishlist** button on home, catalogue, offers, and product-detail views. All customer-facing labels are in English.
-- Counts appear in a compact **Love · Like · Wow** row above a pill-shaped **React** button. Clicking or tapping React opens the three reaction choices; selecting one closes the picker and updates the button. Escape, outside click, or moving focus away closes it. Large counts use compact notation, with exact totals in accessible labels/tooltips. Wishlist has a separate heart/bookmark icon button.
+- Counts appear in a compact **Love � Like � Wow** row above a pill-shaped **React** button. Clicking or tapping React opens the three reaction choices; selecting one closes the picker and updates the button. Escape, outside click, or moving focus away closes it. Large counts use compact notation, with exact totals in accessible labels/tooltips. Wishlist has a separate heart/bookmark icon button.
 - Each product allows one reaction per browser identity. Selecting it again removes it; selecting another replaces it. Counts come from Supabase, update after a confirmed write, and refresh every 15 seconds while the page is visible or on window focus. Wishlist membership is independent of reactions and cart contents, including for out-of-stock products.
 - **Wishlist** navigation opens `products.html?wishlist=1`. The catalogue checkbox filters saved products using current catalogue data and supports existing search/category/price filters. Products removed from the catalogue are not displayed.
 - Wishlist preferences are cached under `gogo-product-preference:v1:<product-id>` and synchronize to `customer_wishlist_items` for signed-in customers. Guest wishlist choices remain in that browser until an account signs in and merges them. The reaction owner token is a cryptographically random UUID stored as `gogo-reaction-visitor:v1`; only its SHA-256 hash is stored in the private reaction table. Browsers can read public totals and manage their own reaction without a customer login. This is guest-browser identity, not one verified vote per person: another browser or cleared storage creates a new identity. Old local-only reactions are not automatically published; a new explicit selection submits a shared reaction.
@@ -43,14 +43,10 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 - Browser verification: install Playwright and `@electric-sql/pglite` in the test environment, then run `node tests/product-engagement.cjs`. `PLAYWRIGHT_CHANNEL=msedge` can select installed Edge; `PLAYWRIGHT_MODULE_PATH` can point to an existing Playwright package. The test uses product API fixtures and the actual reaction SQL in local PostgreSQL, without production writes. It covers separate counts across independent browsers, reaction changes/removal, persistence, cross-page/tab synchronization, wishlist, cart, mobile, and network/storage errors. `node tests/product-reactions-db.cjs` separately checks SQL idempotency, validation, permissions, RLS, and product-delete cleanup.
 
 ### 2.1. Home Page (`index.html`)
-- **Popular Categories Infinite Marquee Slider (NEW)**:
-  - Positioned directly below the navigation header.
-  - Displays high-resolution category cards with photo thumbnails, category names, custom subtitle tags (e.g., *"Hot Picks"*, *"Great Value"*), and forward arrow cues.
-  - **Smooth Infinite Marquee Animation**: Slowly and continuously scrolls left-to-right (`animation: marqueeCats 32s linear infinite`) with left and right gradient fade masks (`mask-image`).
-  - **Interactive Hover Pause**: Automatically pauses animation whenever customer hovers over or touches a card.
-  - **Manual Nav Controls**: Left/Right circular buttons to jump forward/backwards smoothly.
-  - **Instant Click Redirection**: Clicking any category card navigates directly to `products.html?cat={slug}`, pre-filtering and displaying items belonging to that category.
-  - **Direct High-Speed REST Synchronization**: Pulls live category configurations from Supabase `categories` table (`slug: system_popular_categories`) via direct REST API with `localStorage` caching for zero loading delay.
+- **Best Sellers** remains on the homepage.
+- **New Arrivals** follows Best Sellers and displays up to eight products chosen independently in `admin-new-arrivals.html`. Selection is stored as JSON in `categories.slug = system_new_arrivals`; product details continue to come from `products`.
+- **Popular Categories** follows New Arrivals and displays four unique category cards. The chosen set rotates every 30 minutes and is cached per browser; when possible, each rotation includes at least one category not shown in the previous set.
+- Clicking a category opens the catalogue filtered to that category. Category data is read from Supabase `categories` and respects admin updates.
 - **Full-Width Hero Background Slideshow**:
   - Dynamically cycles high-resolution background covers (configured via `admin-banners.html`) every 5 seconds with smooth cross-fade animation.
 - **Interactive Promo Ads Card (Multi-Image Auto-Rotating)**:
@@ -63,7 +59,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 - **Hover Slideshow on Product Cards**:
   - Hovering mouse over any product card automatically loops through all additional product images (1.2s intervals), previewing different angles without leaving the catalogue.
 - **Featured Bestsellers & New Arrivals**:
-  - Instant database queries retrieving highest-rated and newly launched items.
+  - Best Sellers use the existing product catalogue; New Arrivals use the separately managed `system_new_arrivals` selection.
 - **Integrated Direct Navigation**:
   - Clean sticky 2-row mobile navbar with responsive slide-out drawer menu (`#mob-menu`).
 
@@ -75,7 +71,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
   - **"Add To Cart"** with reactive badge animation and count updater.
   - **"Buy Now"** for instant 1-click checkout redirection.
 - **Real-Time Inventory Badges**:
-  - Live indicators: `In Stock`, `Only X Left` (when stock ≤ 5), or `Out of Stock` with automatic button disabling.
+  - Live indicators: `In Stock`, `Only X Left` (when stock = 5), or `Out of Stock` with automatic button disabling.
 
 ### 2.3. Product Details Page (`product-detail.html`)
 - **Touch Gesture Mobile Image Gallery**:
@@ -84,9 +80,9 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 - **Product Video Demonstration**:
   - HD video playback container for products with attached demo videos (`.mp4` / `.webm`), giving customers a 360-degree real-world view before purchasing.
 - **Trust Guarantee Badges**:
-  - 💎 `Quality Products`
-  - 🏷️ `Best Prices`
-  - 🛡️ `Peace of Mind`
+  - ?? `Quality Products`
+  - ??? `Best Prices`
+  - ??? `Peace of Mind`
 - **Customer Verified Feedback & Review System**:
   - 5-Star interactive star rating selector with average score calculation.
   - Customer review submission with optional **Review Photo Attachment** (uploaded directly to Supabase storage `products` bucket).
@@ -108,7 +104,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 
 ### 2.6. Cart & Shopping Basket (`cart.html`)
 - **Mobile 100% Fluid Layout**:
-  - Clean single-column layout on mobile screens with compact quantity adjusters (`+` / `−`), line prices, and remove buttons.
+  - Clean single-column layout on mobile screens with compact quantity adjusters (`+` / `-`), line prices, and remove buttons.
   - Summary box showing subtotal, standard `Rs. 399` express delivery fee, and net total.
   - **"Proceed to Checkout"** button linking directly to delivery details.
 
@@ -164,7 +160,7 @@ GOGO MART is built as an ultra-fast, user-friendly, responsive e-commerce web pl
 ## 4. Administrative Control Ecosystem (Admin Portal)
 
 ### 4.1. Unified Admin Design System (NEW)
-All admin portal pages share a completely unified, sleek dark UI matching GOGO MART’s signature identity:
+All admin portal pages share a completely unified, sleek dark UI matching GOGO MART�s signature identity:
 - **Background**: Deep Slate Navy (`#0f172a`)
 - **Surfaces & Cards**: Slate (`#1e293b` & `#334155`)
 - **Primary Accent**: GOGO Royal Blue (`#2563eb` / `#3b82f6` with pink/amber highlights)
@@ -179,10 +175,10 @@ All admin portal pages share a completely unified, sleek dark UI matching GOGO M
 - Recent sales chart, latest order stream, and low-stock warnings.
 
 ### 4.4. Popular Categories Manager (`admin-categories.html`) (NEW)
-- Dedicated management portal for the home page’s Popular Categories section:
+- Dedicated management portal for the home page�s Popular Categories section:
   - **Existing Store Category Selector**: Dropdown to select from existing store product categories (e.g. *Snacks, Bakery, Beverages, Mens*), auto-filling the name and target slug.
   - **Category Card Customization**: Custom display titles, optional subtitle tag badges (e.g. *"Hot Picks"*, *"Best Value"*), and card image upload/URL selector.
-  - **Instant Supabase Cloud Storage**: Changes persist in `categories` under `slug: system_popular_categories` and immediately sync to the live storefront marquee.
+  - **Instant Supabase Cloud Storage**: Changes persist in `categories` under `slug: system_popular_categories` and immediately sync to the storefront category cards.
 
 ### 4.5. Product & Inventory Manager (`admin-products.html`)
 - Add, Edit, Archive, and Delete products.
@@ -235,7 +231,7 @@ All admin portal pages share a completely unified, sleek dark UI matching GOGO M
 | `video_url` | `text` | URL of uploaded demo video (optional) |
 | `stock` | `integer` | Current warehouse quantity available |
 | `badge` | `text` | Optional marketing badge (e.g. "HOT DEAL") |
-| `is_new` | `boolean` | Flag for New Arrivals section |
+| `is_new` | `boolean` | Legacy flag; homepage New Arrivals are managed by `system_new_arrivals` |
 | `created_at` | `timestamptz` | Record creation timestamp |
 
 ### Table: `orders`
@@ -275,7 +271,8 @@ Stores standard store product categories as well as system configurations:
 - **System Slugs**:
   - `system_cover_banner`: Full-width hero background cover banner images (JSON array).
   - `system_marquee_news`: Live top marquee ticker announcements (JSON array).
-  - `system_popular_categories`: Featured popular category cards displayed in the home page marquee (JSON array).
+  - `system_popular_categories`: Featured category metadata and card images (JSON array).
+  - `system_new_arrivals`: Ordered product IDs selected for the home page New Arrivals section (JSON array).
 
 ---
 
@@ -289,11 +286,10 @@ Stores standard store product categories as well as system configurations:
 ## 7. Version History & Comprehensive Milestone Log
 
 ### Complete Enhancements Summary (October 2026):
-1. **Brand Identity Transition**: Modernized brand to **GOGO MART** with unified footer `"© 2026 GOGO MART. Your Trusted Online Store."` and refreshed color palette.
-2. **Popular Categories Infinite Marquee Slider**:
-   - Continuous slow infinite marquee loop with hover-pause functionality.
-   - 1-click customer filtering redirecting straight to matching catalogue products.
-   - High-speed REST API synchronization with fallback handling.
+1. **Brand Identity Transition**: Modernized brand to **GOGO MART** with unified footer `"� 2026 GOGO MART. Your Trusted Online Store."` and refreshed color palette.
+2. **Homepage New Arrivals and Rotating Categories**:
+   - Admins choose up to eight New Arrivals products independently from Best Sellers.
+   - Four unique category cards rotate every 30 minutes; adjacent rotations avoid showing the same full set when possible.
 3. **Dedicated Admin Categories Manager (`admin-categories.html`)**:
    - Dropdown to select and link existing store categories.
    - Image upload, custom titles, tags, and cloud sync.
@@ -313,4 +309,4 @@ Stores standard store product categories as well as system configurations:
 15. **Mobile Menu Drawer Fixes**: Unified slide-down drawer across all customer storefront pages.
 
 ---
-*Maintained by GOGO MART Core Engineering Team — Comprehensive Documentation Updated: October 2026.*
+*Maintained by GOGO MART Core Engineering Team � Comprehensive Documentation Updated: October 2026.*

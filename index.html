@@ -218,7 +218,7 @@
       align-items: center;
       gap: 1rem;
       width: max-content;
-      animation: marqueeCats 32s linear infinite;
+      animation: none;
     }
     .cats-marquee-wrapper:hover .cats-marquee-track {
       animation-play-state: paused;
@@ -334,31 +334,6 @@
 
   
   <!-- Popular Categories Section (Directly below Header) -->
-  <section class="py-6 sm:py-8 bg-slate-50/80 border-b border-slate-200/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="font-display text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Popular Categories</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Explore our most popular departments & trending selections</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-          </button>
-          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Popular Categories Infinite Marquee Slider -->
-      <div class="cats-marquee-wrapper py-2">
-        <div id="popular-cats-slider" class="cats-marquee-track">
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="hero">
     <div class="hero-bg"></div>
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full pt-10 sm:pt-20 pb-16">
@@ -467,46 +442,42 @@
     </div>
   </section>
 
-  <section id="contact" class="py-24 px-6 bg-gradient-to-b from-blue-50/50 via-pink-50/30 to-white">
-    <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-      <div class="fu">
-        <p class="text-xs font-bold tracking-[.25em] uppercase mb-2 text-blue-600">Inquiries & Support</p>
-        <h2 class="font-display font-bold text-4xl mb-4 text-slate-900">Get in Touch</h2>
-        <div class="divider"></div>
-        <p class="text-slate-600 mb-10">Have questions about an order or bulk inquiries? Our friendly support team is
-          always ready to help.</p>
-        <div class="space-y-4">
-          <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <span class="text-2xl p-2 rounded-xl bg-blue-50 text-blue-600">📍</span>
-            <div>
-              <div class="text-[10px] uppercase font-bold text-slate-400">Location</div>
-              <div class="text-sm font-bold text-slate-800">Colombo, Sri Lanka</div>
-            </div>
-          </div>
-          <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <span class="text-2xl p-2 rounded-xl bg-pink-50 text-pink-600">📧</span>
-            <div>
-              <div class="text-[10px] uppercase font-bold text-slate-400">Email</div>
-              <div class="text-sm font-bold text-slate-800">hello@gogomart.lk</div>
-            </div>
-          </div>
+  <section id="new-arrivals-section" class="py-16 sm:py-20 px-4 sm:px-6 bg-white border-y border-slate-100">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex justify-between items-end gap-4 mb-8 sm:mb-10">
+        <div>
+          <p class="text-xs font-bold tracking-[.25em] uppercase mb-2 text-pink-600">Just Added</p>
+          <h2 class="font-display font-bold text-3xl sm:text-4xl text-slate-900">New Arrivals</h2>
+          <div class="divider"></div>
+        </div>
+        <a href="products.html" class="mb-5 text-sm font-bold text-blue-600 hover:text-pink-600 transition-colors">See All Products →</a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6" id="new-arrivals-grid">
+        <div class="col-span-full py-12 text-center text-slate-400 animate-pulse">Loading new arrivals...</div>
+      </div>
+    </div>
+  </section>
+  <section class="py-6 sm:py-8 bg-slate-50/80 border-b border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-display text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Popular Categories</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Explore our most popular departments & trending selections</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
       </div>
-      <div class="bg-white p-10 rounded-3xl border border-slate-200 shadow-xl shadow-blue-500/5 fu delay1">
-        <form class="space-y-4" onsubmit="event.preventDefault(); alert('Message sent!'); this.reset();">
-          <input type="text" placeholder="Your Name"
-            class="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-blue-500 focus:bg-white text-sm text-slate-900 transition-all"
-            required>
-          <input type="email" placeholder="Your Email"
-            class="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-blue-500 focus:bg-white text-sm text-slate-900 transition-all"
-            required>
-          <textarea placeholder="How can we help you?" rows="4"
-            class="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-blue-500 focus:bg-white text-sm text-slate-900 transition-all"
-            required></textarea>
-          <button
-            class="w-full py-4 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-lg shadow-blue-500/25 transition-all">Send
-            Message</button>
-        </form>
+
+      <!-- Four rotating, non-duplicated category cards -->
+      <div class="cats-marquee-wrapper py-2">
+        <div id="popular-cats-slider" class="cats-marquee-track">
+        </div>
       </div>
     </div>
   </section>
@@ -546,6 +517,7 @@
         console.log('Products fetched:', data.length);
         PRODUCTS = data;
         render();
+        await loadNewArrivals();
         updateCartCount();
       } catch (err) {
         console.error('Store init error:', err);
@@ -625,6 +597,48 @@
       </div>
     </div>
   `).join('');
+    }
+
+    async function loadNewArrivals() {
+      const grid = document.getElementById('new-arrivals-grid');
+      if (!grid) return;
+      try {
+        const sb = getSupabase();
+        const { data: config, error: configError } = await sb.from('categories')
+          .select('image_url').eq('slug', 'system_new_arrivals').maybeSingle();
+        if (configError) throw configError;
+        const productIds = config?.image_url ? JSON.parse(config.image_url) : [];
+        const arrivals = Array.isArray(productIds)
+          ? productIds.map(id => PRODUCTS.find(product => String(product.id) === String(id))).filter(Boolean)
+          : [];
+        grid.innerHTML = arrivals.length
+          ? renderProductCards(arrivals)
+          : '<div class="col-span-full py-12 text-center text-slate-400">New arrivals will appear here soon.</div>';
+      } catch (error) {
+        console.error('New arrivals load error:', error);
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400">New arrivals are temporarily unavailable.</div>';
+      }
+    }
+
+    function renderProductCards(products) {
+      return products.map(p => `
+        <div class="prod-card" onclick="location.href='product-detail.html?id=${p.id}'">
+          ${p.badge ? `<div class="badge ${p.badge_type === 'new' ? 'badge-new' : p.badge_type === 'pop' ? 'badge-pop' : ''}">${p.badge}</div>` : ''}
+          <img id="arrival-card-img-${p.id}" src="${p.image_url}" class="prod-card-img transition-opacity duration-300" alt="${p.name}" loading="lazy">
+          <div class="p-5">
+            <p class="text-[10px] uppercase text-blue-600 font-bold mb-1 tracking-wider">${p.category_slug}</p>
+            <h3 class="font-bold text-sm mb-2 text-slate-900 line-clamp-1">${p.name}</h3>
+            <div class="flex items-baseline justify-between mt-3 mb-3">
+              <span class="font-black text-blue-600 text-base">${formatPrice(p.price)}</span>
+              ${p.old_price && Number(p.old_price) > Number(p.price) ? `<span class="text-[10px] line-through text-slate-400">${formatPrice(p.old_price)}</span>` : ''}
+            </div>
+            ${ProductEngagement.render(p)}
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <button onclick="addToCart(${p.id},event)" class="py-2 px-2 rounded-xl border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold text-xs flex items-center justify-center gap-1 transition-all">Add To Cart</button>
+              <button onclick="buyNow(${p.id},event)" class="py-2 px-2 rounded-xl bg-gradient-to-r from-blue-600 to-pink-500 text-white font-bold text-xs flex items-center justify-center gap-1">Buy Now</button>
+            </div>
+          </div>
+        </div>`).join('');
     }
 
     let cart = JSON.parse(localStorage.getItem('rasa-cart') || '[]');
@@ -933,26 +947,48 @@
         </a>
       `;
 
-      // Multiply list if items count is small to ensure continuous smooth infinite marquee loop
-      let list = [...POPULAR_CATEGORIES];
-      while (list.length < 8) {
-        list = list.concat(POPULAR_CATEGORIES);
-      }
+      const selected = getRotatingCategories(POPULAR_CATEGORIES);
+      container.innerHTML = selected.map(cardHtml).join('');
+    }
 
-      // Render duplicate sets for seamless infinite loop (-50% translateX)
-      const content = list.map(cardHtml).join('');
-      container.innerHTML = content + content;
+    function getRotatingCategories(categories, now = Date.now()) {
+      const unique = [...new Map(categories.filter(cat => cat?.slug).map(cat => [cat.slug, cat])).values()];
+      if (unique.length <= 4) return unique;
+      const key = 'gogo-category-rotation-v1';
+      const rotationMs = 30 * 60 * 1000;
+      const period = Math.floor(now / rotationMs);
+      let previous = null;
+      try { previous = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
+      if (previous?.period === period && Array.isArray(previous.slugs)) {
+        const saved = previous.slugs.map(slug => unique.find(cat => cat.slug === slug)).filter(Boolean);
+        if (saved.length === 4) return saved;
+      }
+      const pool = [...unique];
+      let seed = (period ^ (period >>> 16)) >>> 0;
+      const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      const oldSlugs = new Set(previous?.slugs || []);
+      const selected = pool.slice(0, 4);
+      if (selected.every(cat => oldSlugs.has(cat.slug))) {
+        const replacement = pool.find(cat => !oldSlugs.has(cat.slug));
+        if (replacement) selected[3] = replacement;
+      }
+      try { localStorage.setItem(key, JSON.stringify({ period, slugs: selected.map(cat => cat.slug) })); } catch (_) {}
+      return selected;
     }
 
     function scrollPopularCats(dir) {
       const container = document.getElementById('popular-cats-slider');
       if (container) {
-        container.scrollBy({ left: dir * 260, behavior: 'smooth' });
+        container.parentElement.scrollBy({ left: dir * 260, behavior: 'smooth' });
       }
     }
 
     // Realtime listeners in index.html
-    if (typeof onStoreUpdate === 'function') {
+      if (typeof onStoreUpdate === 'function') {
       onStoreUpdate(function(event) {
         if (event.type === 'CATEGORIES_CHANGED') {
           loadPopularCategories();
@@ -960,13 +996,14 @@
         if (event.type === 'PRODUCTS_CHANGED') {
           initStore();
         }
+        if (event.type === 'NEW_ARRIVALS_CHANGED') loadNewArrivals();
       });
     }
 
     const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
     if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
       subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function(event) {
-        if (event.table === 'categories') loadPopularCategories();
+        if (event.table === 'categories') { loadPopularCategories(); initStore(); }
         if (event.table === 'products') initStore();
       });
     }
