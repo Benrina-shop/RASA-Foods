@@ -221,38 +221,27 @@
 
     // ── SAVE ADS TO SUPABASE (direct REST PATCH) ────────────────────────
     async function saveAdsToSupabase() {
+      var headers = {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      };
+      var lookup = await fetch(SB_URL + '/rest/v1/categories?select=id&slug=eq.' + SYSTEM_SLUG, {
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Accept': 'application/json' }
+      });
+      if (!lookup.ok) throw new Error('Could not check the promo ad record: ' + await lookup.text());
+      var rows = await lookup.json();
+      var existing = Array.isArray(rows) ? rows[0] : null;
+      var response = await fetch(SB_URL + '/rest/v1/categories' + (existing ? '?id=eq.' + existing.id : ''), {
+        method: existing ? 'PATCH' : 'POST',
+        headers: headers,
+        body: JSON.stringify(existing
+          ? { image_url: JSON.stringify(allAds) }
+          : { name: 'SYSTEM_PROMO_ADS', slug: SYSTEM_SLUG, image_url: JSON.stringify(allAds) })
+      });
+      if (!response.ok) throw new Error('Could not save promo ads: ' + await response.text());
       localStorage.setItem('gogo-hero-ads', JSON.stringify(allAds));
-      try {
-        var res = await fetch(SB_URL + '/rest/v1/categories?slug=eq.' + SYSTEM_SLUG, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SB_KEY,
-            'Authorization': 'Bearer ' + SB_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ image_url: JSON.stringify(allAds) })
-        });
-        if (!res.ok) {
-          var errText = await res.text();
-          console.warn('PATCH failed:', res.status, errText);
-          // If row doesn't exist yet, INSERT it
-          if (res.status === 404 || errText.includes('0 rows')) {
-            await fetch(SB_URL + '/rest/v1/categories', {
-              method: 'POST',
-              headers: {
-                'apikey': SB_KEY,
-                'Authorization': 'Bearer ' + SB_KEY,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-              },
-              body: JSON.stringify({ name: 'SYSTEM_PROMO_ADS', slug: SYSTEM_SLUG, image_url: JSON.stringify(allAds) })
-            });
-          }
-        }
-      } catch(err) {
-        console.warn('saveAdsToSupabase error:', err);
-      }
     }
 
     // ── UPLOAD IMAGE TO SUPABASE STORAGE ───────────────────────────────
@@ -281,7 +270,7 @@
       } catch(e) {
         console.warn('uploadImageToStorage error:', e);
       }
-      return dataUrl; // fallback: keep data URL (may be too large for DB but better than failing silently)
+      throw new Error('Promo image upload failed. The ad was not saved because images must be stored in Supabase Storage.');
     }
 
     // ── RENDER ADS GRID ────────────────────────────────────────────────
@@ -406,42 +395,41 @@
       document.getElementById('upload-progress').classList.remove('hidden');
       document.getElementById('save-btn').disabled = true;
 
-      // Upload any local base64 images to Supabase Storage
-      var uploadedImages = [];
-      for (var i = 0; i < selectedBannerImages.length; i++) {
-        var imgSrc = selectedBannerImages[i];
-        if (imgSrc.startsWith('data:')) {
-          var publicUrl = await uploadImageToStorage(imgSrc);
-          uploadedImages.push(publicUrl);
-        } else {
-          uploadedImages.push(imgSrc); // already a remote URL
+      try {
+        // Upload local photos before saving the ad row.
+        var uploadedImages = [];
+        for (var i = 0; i < selectedBannerImages.length; i++) {
+          var imgSrc = selectedBannerImages[i];
+          if (imgSrc.startsWith('data:')) uploadedImages.push(await uploadImageToStorage(imgSrc));
+          else uploadedImages.push(imgSrc);
         }
+
+        var adData = {
+          id: id ? Number(id) : Date.now(),
+          tagline: document.getElementById('ad-tagline').value.trim(),
+          title: document.getElementById('ad-title').value.trim(),
+          desc: document.getElementById('ad-desc').value.trim(),
+          image_url: uploadedImages[0],
+          images: uploadedImages,
+          btn_text: document.getElementById('ad-btn-text').value.trim() || 'Claim Offer',
+          btn_link: document.getElementById('ad-btn-link').value.trim() || 'offers.html',
+          is_active: true
+        };
+
+        if (id) allAds = allAds.map(function(x) { return x.id == id ? adData : x; });
+        else allAds.unshift(adData);
+
+        await saveAdsToSupabase();
+
+        closeModal();
+        renderAds();
+      } catch (error) {
+        console.error('Ad save failed:', error);
+        alert(error.message || 'Ad could not be saved.');
+      } finally {
+        document.getElementById('upload-progress').classList.add('hidden');
+        document.getElementById('save-btn').disabled = false;
       }
-
-      var adData = {
-        id: id ? Number(id) : Date.now(),
-        tagline: document.getElementById('ad-tagline').value.trim(),
-        title: document.getElementById('ad-title').value.trim(),
-        desc: document.getElementById('ad-desc').value.trim(),
-        image_url: uploadedImages[0],
-        images: uploadedImages,
-        btn_text: document.getElementById('ad-btn-text').value.trim() || 'Claim Offer',
-        btn_link: document.getElementById('ad-btn-link').value.trim() || 'offers.html',
-        is_active: true
-      };
-
-      if (id) {
-        allAds = allAds.map(function(x) { return x.id == id ? adData : x; });
-      } else {
-        allAds.unshift(adData);
-      }
-
-      await saveAdsToSupabase();
-
-      document.getElementById('upload-progress').classList.add('hidden');
-      document.getElementById('save-btn').disabled = false;
-      closeModal();
-      renderAds();
     };
 
     // ── DELETE AD ──────────────────────────────────────────────────────

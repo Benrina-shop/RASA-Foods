@@ -676,7 +676,7 @@ async function loadReviews(prodId) {
   if (!sb) throw new Error('Store connection unavailable.');
   const { data, error } = await sb.from('reviews')
     .select('id,product_id,author_name,rating,comment,images,created_at')
-    .eq('product_id', prodId).order('created_at', { ascending: false });
+    .eq('product_id', prodId).order('created_at', { ascending: false }).limit(20);
   if (error) throw error;
   REVIEWS = Array.isArray(data) ? data : [];
 }
@@ -788,8 +788,8 @@ async function handleReviewPhotosSelect(event) {
   const files = Array.from(event.target.files || []);
   event.target.value = '';
   if (!files.length) return;
-  if (files.length > 5 - reviewSelectedPhotos.length) {
-    alert('You can attach up to 5 photos to a review.');
+  if (files.length > 3 - reviewSelectedPhotos.length) {
+    alert('You can attach up to 3 photos to a review.');
     return;
   }
   try {
@@ -802,7 +802,7 @@ async function handleReviewPhotosSelect(event) {
     }
     const totalBytes = [...reviewSelectedPhotos, ...processed]
       .reduce((sum, photo) => sum + Math.ceil(photo.dataUrl.length * 0.75), 0);
-    if (totalBytes > 5 * 1024 * 1024) throw new Error('Compressed review photos must total less than 5 MB.');
+    if (totalBytes > 350 * 1024) throw new Error('Compressed review photos must total less than 350 KB.');
     reviewSelectedPhotos.push(...processed);
     renderReviewPhotoPreviews();
   } catch (error) {

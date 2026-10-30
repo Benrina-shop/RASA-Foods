@@ -4,7 +4,7 @@
 
 Run `product-reviews.sql` once in the Supabase SQL Editor for the project configured in `supabase-config.js`. It creates `public.reviews`, enables RLS, allows public review reads and inserts, and grants storefront roles access only to the public review columns. `author_email` is stored but excluded from storefront reads. Project owners/database operators can still access stored data.
 
-Product detail reviews save rating, full name, email, comment, photos, and timestamp in Supabase. Photos are resized and compressed in the browser, then stored in the review row (up to five photos and 5 MB total). A product foreign key with `ON DELETE CASCADE` permanently removes its reviews and embedded photo data when the admin deletes the product. The homepage reads the shared rows and refreshes when another tab submits a review. Reviews saved only in the old `gogo-reviews-<product-id>` localStorage keys are legacy browser-only entries and are not automatically migrated. Git deployment does not run SQL; apply the SQL in Supabase before accepting reviews.
+Product detail reviews save rating, full name, email, comment, photos, and timestamp in Supabase. Photos are resized and compressed in the browser, then stored in the review row (up to three photos and 350 KB total). Product detail pages fetch at most 20 reviews; the homepage reads up to 100 reviews without selecting photo data. A product foreign key with `ON DELETE CASCADE` permanently removes its reviews and embedded photo data when the admin deletes the product. The homepage reads the shared rows and refreshes when another tab submits a review. Reviews saved only in the old `gogo-reviews-<product-id>` localStorage keys are legacy browser-only entries and are not automatically migrated. The review SQL limits new photo rows to 512 KB. Re-run the updated SQL in Supabase to apply the tighter limit to an existing setup. Git deployment does not run SQL.
 ## Customer accounts, carts and wishlists
 
 `customer-accounts.sql` creates private account cart and wishlist tables with
@@ -99,3 +99,7 @@ Supabase deployment still require verification in the deployed project.
 Design references: [Supabase database functions](https://supabase.com/docs/guides/database/functions),
 [row-level security](https://supabase.com/docs/guides/database/postgres/row-level-security),
 and [PostgreSQL binary/hash functions](https://www.postgresql.org/docs/current/functions-binarystring.html).
+
+## Storefront egress controls
+
+Customer catalogue pages do not poll Supabase. Local and Realtime change notifications are debounced for three seconds, and Realtime payloads for products/categories include only the row ID. Product listing pages select card fields rather than descriptions, galleries, or video. Homepage review queries omit photos. Admin image/video/banner uploads must succeed in Storage before the URL is saved in a database row; upload failures are surfaced and do not fall back to storing base64 in the database.

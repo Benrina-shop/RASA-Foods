@@ -11,10 +11,19 @@ create table if not exists public.reviews (
   rating smallint not null check (rating between 1 and 5),
   comment text not null check (length(btrim(comment)) between 1 and 3000),
   images jsonb not null default '[]'::jsonb
-    check (jsonb_typeof(images) = 'array' and jsonb_array_length(images) <= 5),
+    check (jsonb_typeof(images) = 'array' and jsonb_array_length(images) <= 3),
   created_at timestamptz not null default now(),
-  constraint reviews_images_size_limit check (pg_column_size(images) <= 6 * 1024 * 1024)
+  constraint reviews_images_size_limit check (pg_column_size(images) <= 512 * 1024)
 );
+
+-- Tighten the limits when this script is re-run on a table created earlier.
+-- NOT VALID preserves existing rows while enforcing the limit on new reviews.
+alter table public.reviews drop constraint if exists reviews_images_check;
+alter table public.reviews add constraint reviews_images_check
+  check (jsonb_typeof(images) = 'array' and jsonb_array_length(images) <= 3) not valid;
+alter table public.reviews drop constraint if exists reviews_images_size_limit;
+alter table public.reviews add constraint reviews_images_size_limit
+  check (pg_column_size(images) <= 512 * 1024) not valid;
 
 create index if not exists reviews_product_created_idx
   on public.reviews (product_id, created_at desc);

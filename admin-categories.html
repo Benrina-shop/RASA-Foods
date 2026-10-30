@@ -514,11 +514,18 @@
       renderGrid();
     }
 
+    // Debounce local and Realtime notifications so bursts trigger one read.
+    let categoryAdminRefreshTimer = null;
+    function scheduleCategoryAdminRefresh() {
+      clearTimeout(categoryAdminRefreshTimer);
+      categoryAdminRefreshTimer = setTimeout(loadCategories, 3000);
+    }
+
     // Realtime listeners
     if (typeof onStoreUpdate === 'function') {
       onStoreUpdate(function(event) {
         if (event.type === 'CATEGORIES_CHANGED' || event.type === 'PRODUCTS_CHANGED') {
-          loadCategories();
+          scheduleCategoryAdminRefresh();
         }
       });
     }
@@ -526,7 +533,7 @@
     const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
     if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
       subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function() {
-        loadCategories();
+        scheduleCategoryAdminRefresh();
       });
     }
 

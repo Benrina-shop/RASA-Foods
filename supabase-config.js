@@ -82,7 +82,11 @@ function subscribeToSupabaseRealtime(sb, tables, callback) {
         var chanName = 'gogo-rt-' + Math.random().toString(36).substring(7);
         var ch = sb.channel(chanName);
         tables.forEach(function(tbl) {
-            ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, function(payload) {
+            // Storefronts only need the change notification to reload their data;
+            // never send large description/images/video columns over Realtime.
+            var realtimeConfig = { event: '*', schema: 'public', table: tbl };
+            if (tbl === 'products' || tbl === 'categories') realtimeConfig.select = ['id'];
+            ch = ch.on('postgres_changes', realtimeConfig, function(payload) {
                 callback({ source: 'supabase', table: tbl, payload: payload, timestamp: Date.now() });
             });
         });

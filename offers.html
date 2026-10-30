@@ -167,7 +167,8 @@ async function initOffers() {
     const sb = getSupabase();
     
     // Fetch Products on Sale
-    const { data: prods } = await sb.from('products').select('*');
+    const { data: prods } = await sb.from('products')
+      .select('id,name,price,old_price,category_slug,image_url,stock,created_at');
     PRODUCTS = prods || [];
     renderDiscounts();
 

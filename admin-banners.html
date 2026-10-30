@@ -196,38 +196,31 @@
       if (!files.length) return;
 
       var sb = typeof getSupabase === 'function' ? getSupabase() : null;
-
-      for (var file of files) {
-        var base64Url = await readFileAsDataURL(file);
-        var finalUrl = base64Url;
-
-        // Try upload to Supabase storage 'products' bucket if available
-        if (sb && sb.storage) {
-          try {
-            var ext = file.name.split('.').pop() || 'jpg';
-            var fn = 'cover-' + Date.now() + '-' + Math.random().toString(36).substring(7) + '.' + ext;
-            var upRes = await sb.storage.from('products').upload(fn, file);
-            if (!upRes.error) {
-              var { data: pubData } = sb.storage.from('products').getPublicUrl(fn);
-              if (pubData && pubData.publicUrl) finalUrl = pubData.publicUrl;
-            }
-          } catch (e) {
-            console.warn('Storage upload fallback to data URL');
-          }
-        }
-        coverList.push(finalUrl);
+      if (!sb?.storage) {
+        alert('Storage connection unavailable. Cover images were not saved.');
+        event.target.value = '';
+        return;
       }
 
-      await saveCovers();
-      event.target.value = '';
-    }
-
-    function readFileAsDataURL(file) {
-      return new Promise((resolve) => {
-        var r = new FileReader();
-        r.onload = (e) => resolve(e.target.result);
-        r.readAsDataURL(file);
-      });
+      var uploadedUrls = [];
+      try {
+        for (var file of files) {
+          var ext = file.name.split('.').pop() || 'jpg';
+          var fn = 'cover-' + Date.now() + '-' + Math.random().toString(36).substring(7) + '.' + ext;
+          var upRes = await sb.storage.from('products').upload(fn, file);
+          if (upRes.error) throw upRes.error;
+          var { data: pubData } = sb.storage.from('products').getPublicUrl(fn);
+          if (!pubData?.publicUrl) throw new Error('Could not create a public URL for the uploaded cover.');
+          uploadedUrls.push(pubData.publicUrl);
+        }
+        coverList.push(...uploadedUrls);
+        await saveCovers();
+      } catch (error) {
+        console.error('Cover upload failed:', error);
+        alert('Cover upload failed. No base64 image was saved: ' + error.message);
+      } finally {
+        event.target.value = '';
+      }
     }
 
     async function deleteCover(idx) {
@@ -238,27 +231,21 @@
     }
 
     async function saveCovers() {
-      localStorage.setItem('gogo-cover-banners', JSON.stringify(coverList));
-
       // Save to Supabase categories row with slug 'system_cover_banner'
-      try {
-        var sb = typeof getSupabase === 'function' ? getSupabase() : null;
-        if (sb) {
-          var payload = {
-            name: 'SYSTEM_COVER_BANNER',
-            slug: 'system_cover_banner',
-            image_url: JSON.stringify(coverList)
-          };
-          var { data: exist } = await sb.from('categories').select('id').eq('slug', 'system_cover_banner').single();
-          if (exist) {
-            await sb.from('categories').update(payload).eq('id', exist.id);
-          } else {
-            await sb.from('categories').insert(payload);
-          }
-        }
-      } catch (err) {
-        console.warn('Supabase save bypass');
-      }
+      var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+      if (!sb) throw new Error('Store connection unavailable.');
+      var payload = {
+        name: 'SYSTEM_COVER_BANNER',
+        slug: 'system_cover_banner',
+        image_url: JSON.stringify(coverList)
+      };
+      var { data: exist, error: findError } = await sb.from('categories').select('id').eq('slug', 'system_cover_banner').maybeSingle();
+      if (findError) throw findError;
+      var result = exist
+        ? await sb.from('categories').update(payload).eq('id', exist.id)
+        : await sb.from('categories').insert(payload);
+      if (result.error) throw result.error;
+      localStorage.setItem('gogo-cover-banners', JSON.stringify(coverList));
 
       renderGallery();
       startPreviewSlideshow();

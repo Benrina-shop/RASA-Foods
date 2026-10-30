@@ -797,11 +797,18 @@
             setTimeout(() => t.remove(), 2500);
         }
 
+        // Debounce duplicate broadcast and realtime updates into one catalogue read.
+        let catalogueRefreshTimer = null;
+        function scheduleCatalogueRefresh() {
+            clearTimeout(catalogueRefreshTimer);
+            catalogueRefreshTimer = setTimeout(initPage, 3000);
+        }
+
         // Realtime store listeners
         if (typeof onStoreUpdate === 'function') {
             onStoreUpdate(function (event) {
                 if (event.type === 'PRODUCTS_CHANGED' || event.type === 'CATEGORIES_CHANGED') {
-                    initPage();
+                    scheduleCatalogueRefresh();
                 }
             });
         }
@@ -809,12 +816,9 @@
         const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
         if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
             subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function () {
-                initPage();
+                scheduleCatalogueRefresh();
             });
         }
-
-        // Silent background polling every 15 seconds
-        //setInterval(initPage, 15000);
 
         initPage();
     </script>

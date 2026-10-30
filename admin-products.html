@@ -280,6 +280,24 @@ function renderTable() {
 let selectedVideoFile = null;
 let currentVideoData = null; // can be data URL, remote URL, or Supabase public URL
 
+async function uploadProductAsset(sb, file, dataUrl, prefix, originalName = '') {
+    let uploadFile = file;
+    if (!uploadFile && dataUrl?.startsWith('data:')) {
+        const response = await fetch(dataUrl);
+        if (!response.ok) throw new Error('Could not read the existing media file.');
+        uploadFile = await response.blob();
+    }
+    if (!uploadFile) throw new Error('No product media file was selected.');
+    const ext = (originalName || uploadFile.name || '').split('.').pop() ||
+        (uploadFile.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+    const fileName = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+    const { error } = await sb.storage.from('products').upload(fileName, uploadFile);
+    if (error) throw error;
+    const { data } = sb.storage.from('products').getPublicUrl(fileName);
+    if (!data?.publicUrl) throw new Error('Could not create a public product media URL.');
+    return data.publicUrl;
+}
+
 function handleVideoSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -501,37 +519,24 @@ document.getElementById('product-form').onsubmit = async (e) => {
         // 2. Handle Image Uploads
         const uploadedUrls = [];
         for (const item of selectedFiles) {
-            if (item.existing) {
+            if (item.existing && !item.preview.startsWith('data:')) {
                 uploadedUrls.push(item.preview);
             } else {
-                const ext = item.file.name.split('.').pop();
-                const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-                const { data, error } = await sb.storage.from('products').upload(fileName, item.file);
-                if (error) {
-                    console.warn('Storage upload fallback to base64 data URL', error);
-                    uploadedUrls.push(item.preview);
-                } else {
-                    const { data: urlData } = sb.storage.from('products').getPublicUrl(fileName);
-                    uploadedUrls.push(urlData.publicUrl);
+                try {
+                    uploadedUrls.push(await uploadProductAsset(sb, item.file, item.preview, 'product-image', item.file?.name));
+                } catch (error) {
+                    throw new Error('Product image upload failed. The product was not saved: ' + error.message);
                 }
             }
         }
 
         // 2.1 Handle Video Upload
         let finalVideoUrl = currentVideoData || null;
-        if (selectedVideoFile) {
+        if (selectedVideoFile || currentVideoData?.startsWith('data:')) {
             try {
-                const vExt = selectedVideoFile.name.split('.').pop() || 'mp4';
-                const vFileName = `video-${Date.now()}-${Math.random().toString(36).substring(7)}.${vExt}`;
-                const { data: vData, error: vError } = await sb.storage.from('products').upload(vFileName, selectedVideoFile);
-                if (!vError) {
-                    const { data: vUrlData } = sb.storage.from('products').getPublicUrl(vFileName);
-                    if (vUrlData && vUrlData.publicUrl) {
-                        finalVideoUrl = vUrlData.publicUrl;
-                    }
-                }
-            } catch (vErr) {
-                console.warn('Video upload storage bypass, keeping local/data format', vErr);
+                finalVideoUrl = await uploadProductAsset(sb, selectedVideoFile, currentVideoData, 'product-video', selectedVideoFile?.name || 'video.mp4');
+            } catch (error) {
+                throw new Error('Product video upload failed. The product was not saved: ' + error.message);
             }
         }
 
@@ -609,10 +614,15 @@ async function deleteProduct(id) {
 function editProduct(id) { openModal(id); }
 
 // Realtime listeners
+let productAdminRefreshTimer = null;
+function scheduleProductAdminRefresh() {
+    clearTimeout(productAdminRefreshTimer);
+    productAdminRefreshTimer = setTimeout(initPage, 3000);
+}
 if (typeof onStoreUpdate === 'function') {
     onStoreUpdate(function(event) {
         if (event.type === 'PRODUCTS_CHANGED' || event.type === 'CATEGORIES_CHANGED') {
-            initPage();
+            scheduleProductAdminRefresh();
         }
     });
 }
@@ -620,7 +630,7 @@ if (typeof onStoreUpdate === 'function') {
 const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
 if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
     subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function() {
-        initPage();
+        scheduleProductAdminRefresh();
     });
 }
 

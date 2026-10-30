@@ -107,7 +107,9 @@
     const productIds = [...new Set(accountCart.map(item => String(item.id)))];
     let products = [];
     if (productIds.length) {
-      const result = await state.client.from('products').select('*').in('id', productIds);
+      const result = await state.client.from('products')
+        .select('id,name,price,category_slug,image_url')
+        .in('id', productIds);
       if (result.error) throw result.error;
       products = result.data || [];
     }

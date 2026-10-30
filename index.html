@@ -793,9 +793,9 @@
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
         if (!sb) throw new Error('Store connection unavailable');
         const { data, error } = await sb.from('reviews')
-          .select('id,product_id,author_name,rating,comment,images,created_at')
+          .select('id,product_id,author_name,rating,comment,created_at')
           .order('created_at', { ascending: false })
-          .limit(500);
+          .limit(100);
         if (error) throw error;
         rankHomepageReviews(data);
       } catch (error) {
@@ -1341,15 +1341,20 @@
       if (POPULAR_CATEGORIES.length > 4) renderPopularCategories();
     }
 
+    // Debounce storage events and realtime notifications into one set of queries.
+    let homepageStoreRefreshTimer = null;
+    function scheduleHomepageStoreRefresh() {
+      clearTimeout(homepageStoreRefreshTimer);
+      homepageStoreRefreshTimer = setTimeout(() => {
+        loadPopularCategories();
+        initStore();
+      }, 3000);
+    }
+
     // Realtime listeners in index.html
     if (typeof onStoreUpdate === 'function') {
       onStoreUpdate(function (event) {
-        if (event.type === 'CATEGORIES_CHANGED') {
-          loadPopularCategories();
-        }
-        if (event.type === 'PRODUCTS_CHANGED') {
-          initStore();
-        }
+        if (event.type === 'CATEGORIES_CHANGED' || event.type === 'PRODUCTS_CHANGED') scheduleHomepageStoreRefresh();
         if (event.type === 'NEW_ARRIVALS_CHANGED') loadNewArrivals();
         if (event.type === 'BEST_SELLERS_CHANGED') { loadBestSellerSelection().then(render); }
       });
@@ -1358,16 +1363,9 @@
     const sbClient = typeof getSupabase === 'function' ? getSupabase() : null;
     if (sbClient && typeof subscribeToSupabaseRealtime === 'function') {
       subscribeToSupabaseRealtime(sbClient, ['categories', 'products'], function (event) {
-        if (event.table === 'categories') { loadPopularCategories(); initStore(); }
-        if (event.table === 'products') initStore();
+        if (event.table === 'categories' || event.table === 'products') scheduleHomepageStoreRefresh();
       });
     }
-
-    // Refresh storefront data without reloading the page.
-    //  setInterval(function () {
-    //   loadPopularCategories();
-    //   initStore();
-    // }, 20000);
 
   </script>
   <script src="live-search.js"></script>
