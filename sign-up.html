@@ -74,7 +74,8 @@
 <script>
   document.getElementById('sign-up-form').addEventListener('submit', async event => {
     event.preventDefault();
-    const button = event.currentTarget.querySelector('button[type="submit"]');
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
     const originalText = button.textContent;
     const message = document.getElementById('signup-message');
     const name = document.getElementById('full-name').value.trim();
@@ -98,7 +99,7 @@
       if (data.session) location.href = 'account.html';
       else {
         message.textContent = 'Account created. Check your email and confirm it, then sign in to load your saved cart and wishlist.';
-        event.currentTarget.reset();
+        form.reset();
         button.textContent = originalText;
         button.disabled = false;
       }
