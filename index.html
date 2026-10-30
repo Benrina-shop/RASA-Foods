@@ -517,6 +517,7 @@
   <script>
     let PRODUCTS = [];
     let BEST_SELLER_IDS = null;
+    let CATEGORY_NAME_BY_SLUG = new Map();
     let CATEGORY_ROTATION = [];
     let currentRotatingCategory = '';
     let rotatingCategoryTimer = null;
@@ -533,10 +534,10 @@
 
         console.log('Products fetched:', data.length);
         PRODUCTS = data;
+        await setupRotatingCategoryProducts();
         await loadBestSellerSelection();
         render();
         await loadNewArrivals();
-        setupRotatingCategoryProducts();
         updateCartCount();
       } catch (err) {
         console.error('Store init error:', err);
@@ -613,7 +614,7 @@
       ${p.badge ? `<div class="badge ${p.badge_type === 'new' ? 'badge-new' : p.badge_type === 'pop' ? 'badge-pop' : ''}">${p.badge}</div>` : ''}
       <img id="card-img-${p.id}" src="${p.image_url}" class="prod-card-img transition-opacity duration-300" alt="${p.name}" loading="lazy">
       <div class="p-5">
-        <p class="text-[10px] uppercase text-blue-600 font-bold mb-1 tracking-wider">${p.category_slug}</p>
+        <p class="text-[10px] uppercase text-blue-600 font-bold mb-1 tracking-wider">${CATEGORY_NAME_BY_SLUG.get(p.category_slug) || p.category_slug}</p>
         <h3 class="font-bold text-sm mb-2 text-slate-900 line-clamp-1">${p.name}</h3>
         <div class="flex items-baseline justify-between mt-3 mb-3">
           <span class="font-black text-blue-600 text-base">${formatPrice(p.price)}</span>
@@ -662,7 +663,7 @@
           ${p.badge ? `<div class="badge ${p.badge_type === 'new' ? 'badge-new' : p.badge_type === 'pop' ? 'badge-pop' : ''}">${p.badge}</div>` : ''}
           <img id="arrival-card-img-${p.id}" src="${p.image_url}" class="prod-card-img transition-opacity duration-300" alt="${p.name}" loading="lazy">
           <div class="p-5">
-            <p class="text-[10px] uppercase text-blue-600 font-bold mb-1 tracking-wider">${p.category_slug}</p>
+            <p class="text-[10px] uppercase text-blue-600 font-bold mb-1 tracking-wider">${CATEGORY_NAME_BY_SLUG.get(p.category_slug) || p.category_slug}</p>
             <h3 class="font-bold text-sm mb-2 text-slate-900 line-clamp-1">${p.name}</h3>
             <div class="flex items-baseline justify-between mt-3 mb-3">
               <span class="font-black text-blue-600 text-base">${formatPrice(p.price)}</span>
@@ -913,9 +914,17 @@
       }
     }
 
-    function setupRotatingCategoryProducts() {
+    async function setupRotatingCategoryProducts() {
       const section = document.getElementById('category-products-section');
       if (!section) return;
+      let categoryNames = new Map();
+      try {
+        const categories = await loadStoreCategories();
+        categoryNames = new Map(categories.map(category => [category.slug, category.name]));
+        CATEGORY_NAME_BY_SLUG = categoryNames;
+      } catch (error) {
+        console.warn('Category names unavailable:', error);
+      }
       const grouped = new Map();
       PRODUCTS.forEach(product => {
         const slug = String(product.category_slug || '').trim();
@@ -924,7 +933,11 @@
         grouped.get(slug).push(product);
       });
       CATEGORY_ROTATION = [...grouped.entries()]
-        .map(([slug, products]) => ({ slug, products }))
+        .map(([slug, products]) => ({
+          slug,
+          name: categoryNames.get(slug) || products[0]?.category_name || slug.replace(/[-_]+/g, ' '),
+          products
+        }))
         .filter(category => category.products.length > 0);
       if (CATEGORY_ROTATION.length === 0) {
         section.classList.add('hidden');
@@ -954,8 +967,7 @@
         category = choices[Math.floor(Math.random() * choices.length)] || CATEGORY_ROTATION[0];
       }
       currentRotatingCategory = category.slug;
-      const label = category.products[0]?.category_name || category.slug.replace(/[-_]+/g, ' ');
-      title.textContent = label;
+      title.textContent = category.name;
       link.href = `products.html?cat=${encodeURIComponent(category.slug)}`;
       grid.innerHTML = renderProductCards(category.products.slice(0, 5));
     }
@@ -982,6 +994,7 @@
 
     // Popular Categories Slider Logic
     let POPULAR_CATEGORIES = [];
+    let hasRenderedInitialPopularCategories = false;
 
     async function loadPopularCategories() {
       const container = document.getElementById('popular-cats-slider');
@@ -1032,7 +1045,14 @@
         </a>
       `;
 
-      const selected = getRotatingCategories(POPULAR_CATEGORIES);
+      const uniqueCategories = [...new Map(POPULAR_CATEGORIES
+        .filter(cat => cat?.slug)
+        .map(cat => [cat.slug, cat])).values()];
+      const selected = hasRenderedInitialPopularCategories
+        ? getRotatingCategories(uniqueCategories)
+        : uniqueCategories.slice(0, 4);
+      hasRenderedInitialPopularCategories = true;
+      selectedCategorySlugs = selected.map(cat => cat.slug);
       container.innerHTML = selected.map(cardHtml).join('');
     }
 
