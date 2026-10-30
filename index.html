@@ -425,6 +425,31 @@
     </div>
   </section>
 
+  <section class="py-10 sm:py-14 px-4 sm:px-6 bg-slate-50/80 border-b border-slate-200/80">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="font-display text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Popular Categories</h2>
+          <p class="text-sm text-slate-500 mt-1">Explore our most popular departments & trending selections</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Four rotating, non-duplicated category cards -->
+      <div class="cats-marquee-wrapper py-2">
+        <div id="popular-cats-slider" class="cats-marquee-track">
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="best-sellers-section" class="py-24 px-6 bg-white border-y border-slate-100">
     <div class="max-w-7xl mx-auto">
       <div class="flex justify-between items-end mb-12">
@@ -457,31 +482,6 @@
       </div>
     </div>
   </section>
-  <section class="py-10 sm:py-14 px-4 sm:px-6 bg-slate-50/80 border-b border-slate-200/80">
-    <div class="max-w-7xl mx-auto">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h2 class="font-display text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Popular Categories</h2>
-          <p class="text-sm text-slate-500 mt-1">Explore our most popular departments & trending selections</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="scrollPopularCats(-1)" aria-label="Previous Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-          </button>
-          <button onclick="scrollPopularCats(1)" aria-label="Next Categories" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-400 shadow-xs flex items-center justify-center transition-all">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Four rotating, non-duplicated category cards -->
-      <div class="cats-marquee-wrapper py-2">
-        <div id="popular-cats-slider" class="cats-marquee-track">
-        </div>
-      </div>
-    </div>
-  </section>
-
   <footer class="py-16 px-6 border-t border-slate-200 bg-slate-50 text-center">
     <div class="flex items-center justify-center gap-3 mb-4">
       <img src="logo.png" alt="GOGO MART"
