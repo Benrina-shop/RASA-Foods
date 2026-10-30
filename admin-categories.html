@@ -133,7 +133,7 @@
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Category Card Image</label>
           <div class="flex gap-2 mb-2">
-            <input type="file" id="cat-file-input" accept="image/*" class="hidden" onchange="uploadCatFile(event)">
+            <input type="file" id="cat-file-input" accept="image/*" class="hidden" onchange="queueCategoryImageUpload(event)">
             <button type="button" onclick="document.getElementById('cat-file-input').click()" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold text-white shrink-0">Upload Image</button>
             <input type="url" id="cat-img" placeholder="Or paste image URL" class="w-full bg-[#0b1120] border border-[var(--border)] p-2.5 rounded-xl text-white outline-none focus:border-blue-500 text-xs">
           </div>
@@ -301,6 +301,20 @@
       document.getElementById('cat-modal').style.display = 'flex';
     }
 
+    let pendingCategoryImageUpload = null;
+    let categoryImageUploadFailed = false;
+
+    function queueCategoryImageUpload(e) {
+      categoryImageUploadFailed = false;
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.disabled = true;
+      pendingCategoryImageUpload = uploadCatFile(e).finally(() => {
+        pendingCategoryImageUpload = null;
+        saveBtn.disabled = false;
+      });
+      return pendingCategoryImageUpload;
+    }
+
     async function uploadCatFile(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -312,32 +326,23 @@
 
       try {
         const sb = typeof getSupabase === 'function' ? getSupabase() : null;
-        if (sb) {
-          const ext = file.name.split('.').pop();
-          const fileName = 'cat_' + Date.now() + '.' + ext;
-          const { error: upErr } = await sb.storage.from('products').upload(fileName, file);
-          if (!upErr) {
-            const { data: pubData } = sb.storage.from('products').getPublicUrl(fileName);
-            if (pubData && pubData.publicUrl) {
-              setPreviewUrl(pubData.publicUrl);
-              btn.textContent = 'Uploaded!';
-              setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 1200);
-              return;
-            }
-          }
-        }
+        if (!sb) throw new Error('Store connection unavailable.');
+        const ext = (file.name.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
+        const fileName = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        const { error } = await sb.storage.from('products').upload(fileName, file);
+        if (error) throw error;
+        const { data } = sb.storage.from('products').getPublicUrl(fileName);
+        if (!data || !data.publicUrl) throw new Error('Could not get the uploaded image URL.');
+        setPreviewUrl(data.publicUrl);
+        btn.textContent = 'Uploaded!';
       } catch (err) {
-        console.warn('Storage upload error', err);
+        categoryImageUploadFailed = true;
+        console.warn('Category image upload error:', err);
+        alert('Category image was not uploaded. Please try again or paste a public image URL before saving.');
+      } finally {
+        e.target.value = '';
+        setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 1200);
       }
-
-      // Local Base64 Fallback
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        setPreviewUrl(evt.target.result);
-        btn.textContent = originalText;
-        btn.disabled = false;
-      };
-      reader.readAsDataURL(file);
     }
 
     function setPreviewUrl(url) {
@@ -351,12 +356,18 @@
 
     document.getElementById('cat-img').addEventListener('input', function() {
       if (this.value) {
+        categoryImageUploadFailed = false;
         setPreviewUrl(this.value);
       }
     });
 
     async function saveCategory(e) {
       e.preventDefault();
+      if (pendingCategoryImageUpload) await pendingCategoryImageUpload;
+      if (categoryImageUploadFailed) {
+        alert('Upload the category image again or paste a public image URL before saving.');
+        return;
+      }
       const saveBtn = document.getElementById('save-btn');
       if (categoryWriteInProgress) return;
       categoryWriteInProgress = true;

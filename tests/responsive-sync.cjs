@@ -12,6 +12,10 @@ let categories=[{id:1,name:'Gifts',slug:'gifts',image_url:'logo.png'},{id:2,name
  await context.addInitScript(product=>{localStorage.setItem('isAdmin','true');localStorage.setItem('rasa-cart',JSON.stringify([{...product,qty:1}]));},products[0]);
  await context.route('**/*.supabase.co/**',async route=>{
   const req=route.request(),url=new URL(req.url());let data=[];
+  if(url.pathname.includes('/storage/v1/object/')){
+   await new Promise(resolve=>setTimeout(resolve,150));
+   return route.fulfill({json:{Key:url.pathname.split('/').slice(-2).join('/')}});
+  }
   const table=url.pathname.split('/').pop();
   if(table==='categories' && req.method()==='DELETE' && failCategoryDelete) return route.fulfill({status:403,json:{message:'Test denied delete'}});
   let rows=table==='categories'?categories:table==='products'?products:[];
@@ -30,13 +34,20 @@ let categories=[{id:1,name:'Gifts',slug:'gifts',image_url:'logo.png'},{id:2,name
  const admin=await context.newPage();await admin.goto('/admin-categories.html');await admin.waitForSelector('.category-card');
  // Exercise the real admin handlers with a test-only external Supabase API.
  await admin.evaluate(()=>{openModal();document.getElementById('cat-name').value='New Category';document.getElementById('cat-slug').value='new-category';});
+ await admin.locator('#cat-file-input').setInputFiles({name:'category.jpg',mimeType:'image/jpeg',buffer:Buffer.from([255,216,255,217])});
  await admin.evaluate(()=>saveCategory({preventDefault(){}}));
+ const uploadedCategoryImage=categories.find(c=>c.slug==='new-category').image_url;
+ assert.match(uploadedCategoryImage,/\/storage\/v1\/object\/public\/products\/cat_/,'wait for the category image upload and persist its public URL');
+ assert.equal(JSON.parse(categories.find(c=>c.slug==='system_popular_categories').image_url).find(c=>c.slug==='new-category').image_url,uploadedCategoryImage);
  await p.waitForFunction(()=>document.getElementById('category-list').textContent.includes('New Category'));
  await home.waitForFunction(()=>document.getElementById('popular-cats-slider').textContent.includes('New Category'));
+ assert.equal(await home.locator('a[href="products.html?cat=new-category"] img').first().getAttribute('src'),uploadedCategoryImage);
  products[0].category_slug='new-category';
  await admin.evaluate(()=>{const i=CATEGORIES.findIndex(c=>c.slug==='new-category');editCategory(i);document.getElementById('cat-name').value='Renamed Category';document.getElementById('cat-slug').value='renamed-category';});
  await admin.evaluate(()=>saveCategory({preventDefault(){}}));
  assert.equal(products[0].category_slug,'renamed-category');
+ assert.equal(categories.find(c=>c.slug==='renamed-category').image_url,uploadedCategoryImage);
+ assert.equal(JSON.parse(categories.find(c=>c.slug==='system_popular_categories').image_url).find(c=>c.slug==='renamed-category').image_url,uploadedCategoryImage);
  await p.waitForFunction(()=>document.getElementById('category-list').textContent.includes('Renamed Category'));
  admin.on('dialog',d=>d.accept());
  failCategoryDelete=true;
