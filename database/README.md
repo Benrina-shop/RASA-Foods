@@ -17,18 +17,18 @@ restricted by RLS to their owning Auth user. Project owners and anyone with
 database-owner/service-role access can still read database rows; RLS does not
 hide data from the project operator or protect against a modified frontend.
 
-Phone signup verifies the number with an SMS OTP; phone/password login uses the
-verified Auth phone number. Before using it, enable **Authentication → Sign In
-/ Providers → Phone** in Supabase and configure an SMS provider such as Twilio,
-Vonage, or MessageBird. SMS delivery can incur provider charges. Existing
-email-based customers can still sign in with email, then verify their phone
-from **My Account** to enable phone login without changing the Auth user ID or
-losing that account's cart and wishlist.
+Phone/password signup and login use Supabase Auth. To avoid OTP, disable phone
+confirmation in **Authentication → Sign In / Providers → Phone**. Keep the Phone
+provider enabled; an SMS provider is not needed when confirmation is disabled.
+Unverified phone numbers can be used as login identifiers, so customers must
+enter a number they control. Existing email accounts remain separate and can
+continue to sign in with email; a new phone account has a different user ID and
+will not automatically share the old account's cart or wishlist.
 
-To verify the setup, configure the SQL and SMS provider, register with a test
-mobile number, confirm the SMS code, save the profile, and add products to the
-cart and wishlist. Then sign in from a second browser profile. The profile and
-saved items should load from Supabase. Signing out clears the local account
+To verify the setup, configure the SQL and disable phone confirmation, register
+with a test mobile number, save the profile, and add products to the cart and
+wishlist. Sign out and sign in again from a second browser profile. The profile
+and saved items should load from Supabase. Signing out clears the local account
 cache from that browser.
 
 The storefront displays separate Like, Love and Wow totals. The SQL must be
