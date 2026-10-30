@@ -482,6 +482,21 @@
       </div>
     </div>
   </section>
+
+  <section id="category-products-section" class="py-16 sm:py-20 px-4 sm:px-6 bg-slate-50/80 border-b border-slate-200/80 hidden">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex justify-between items-end gap-4 mb-8 sm:mb-10">
+        <div>
+          <p class="text-xs font-bold tracking-[.25em] uppercase mb-2 text-blue-600">Browse Departments</p>
+          <h2 id="rotating-category-title" class="font-display font-bold text-3xl sm:text-4xl text-slate-900">Shop by Category</h2>
+          <div class="divider"></div>
+        </div>
+        <a id="rotating-category-link" href="products.html" class="mb-5 text-sm font-bold text-blue-600 hover:text-pink-600 transition-colors">See Category →</a>
+      </div>
+      <div id="rotating-category-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 sm:gap-6"></div>
+    </div>
+  </section>
+
   <footer class="py-16 px-6 border-t border-slate-200 bg-slate-50 text-center">
     <div class="flex items-center justify-center gap-3 mb-4">
       <img src="logo.png" alt="GOGO MART"
@@ -504,6 +519,9 @@
   <script>
     let PRODUCTS = [];
     let BEST_SELLER_IDS = null;
+    let CATEGORY_ROTATION = [];
+    let currentRotatingCategory = '';
+    let rotatingCategoryTimer = null;
     async function initStore() {
       console.log('Initializing Store...');
       try {
@@ -520,6 +538,7 @@
         await loadBestSellerSelection();
         render();
         await loadNewArrivals();
+        setupRotatingCategoryProducts();
         updateCartCount();
       } catch (err) {
         console.error('Store init error:', err);
@@ -894,6 +913,53 @@
           <button onclick="goToAdSlide(${i})" class="w-2 h-2 rounded-full transition-all ${i === currentAdIndex ? 'bg-amber-400 w-5' : 'bg-white/40'}"></button>
         `).join('');
       }
+
+    function setupRotatingCategoryProducts() {
+      const section = document.getElementById('category-products-section');
+      if (!section) return;
+      const grouped = new Map();
+      PRODUCTS.forEach(product => {
+        const slug = String(product.category_slug || '').trim();
+        if (!slug) return;
+        if (!grouped.has(slug)) grouped.set(slug, []);
+        grouped.get(slug).push(product);
+      });
+      CATEGORY_ROTATION = [...grouped.entries()]
+        .map(([slug, products]) => ({ slug, products }))
+        .filter(category => category.products.length > 0);
+      if (CATEGORY_ROTATION.length === 0) {
+        section.classList.add('hidden');
+        if (rotatingCategoryTimer) clearInterval(rotatingCategoryTimer);
+        rotatingCategoryTimer = null;
+        return;
+      }
+      section.classList.remove('hidden');
+      if (!CATEGORY_ROTATION.some(category => category.slug === currentRotatingCategory)) {
+        currentRotatingCategory = '';
+      }
+      renderRotatingCategoryProducts(true);
+      if (rotatingCategoryTimer) clearInterval(rotatingCategoryTimer);
+      rotatingCategoryTimer = CATEGORY_ROTATION.length > 1
+        ? setInterval(() => renderRotatingCategoryProducts(true), 10000)
+        : null;
+    }
+
+    function renderRotatingCategoryProducts(rotate = false) {
+      const title = document.getElementById('rotating-category-title');
+      const link = document.getElementById('rotating-category-link');
+      const grid = document.getElementById('rotating-category-grid');
+      if (!title || !link || !grid || CATEGORY_ROTATION.length === 0) return;
+      let category = CATEGORY_ROTATION.find(item => item.slug === currentRotatingCategory);
+      if (rotate || !category) {
+        const choices = CATEGORY_ROTATION.filter(item => item.slug !== currentRotatingCategory);
+        category = choices[Math.floor(Math.random() * choices.length)] || CATEGORY_ROTATION[0];
+      }
+      currentRotatingCategory = category.slug;
+      const label = category.products[0]?.category_name || category.slug.replace(/[-_]+/g, ' ');
+      title.textContent = label;
+      link.href = `products.html?cat=${encodeURIComponent(category.slug)}`;
+      grid.innerHTML = renderProductCards(category.products.slice(0, 5));
+    }
     }
 
     function changeAdSlide(delta) {
