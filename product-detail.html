@@ -171,7 +171,15 @@ async function loadProduct() {
     updateCartCount();
   } catch (err) {
     console.error(err);
-    document.getElementById('product-container').innerHTML = '<div class="py-20 text-center text-red-500 font-bold">⚠️ Data sync failure. <a href="products.html" class="underline">Catalogue Home</a></div>';
+    const container = document.getElementById('product-container');
+    const errorCode = err && err.code ? ` (${String(err.code).replace(/[<>"'&]/g, '')})` : '';
+    const errorMessage = err && err.message ? String(err.message).replace(/[<>"'&]/g, '') : 'Please check your connection and try again.';
+    const isMissingProduct = err && err.code === 'PGRST116';
+    container.innerHTML = `<div class="py-20 px-4 text-center">
+      <p class="font-bold ${isMissingProduct ? 'text-slate-600' : 'text-red-500'}">${isMissingProduct ? 'This product is unavailable or may have been removed.' : `⚠️ Data sync failure${errorCode}.`}</p>
+      ${!isMissingProduct ? `<p class="mt-2 text-sm text-slate-500">${errorMessage}</p>` : ''}
+      <a href="products.html" class="mt-4 inline-block underline text-blue-600">Catalogue Home</a>
+    </div>`;
   }
 }
 
