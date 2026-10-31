@@ -421,7 +421,7 @@ async function openModal(id = null) {
 
     if (id) {
         const { data: p, error } = await getSupabase().from('products')
-            .select('id,name,category_slug,price,old_price,image_url,stock,description,images,video_url')
+            .select('id,name,category_slug,price,old_price,image_url,stock,description,images')
             .eq('id', id).single();
         if (error || !p) {
             alert('Could not load this product for editing: ' + (error?.message || 'Product not found.'));

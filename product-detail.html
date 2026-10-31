@@ -157,7 +157,7 @@ async function loadProduct() {
     if (!sb) return setTimeout(loadProduct, 200);
 
     const { data, error } = await sb.from('products')
-      .select('id,name,description,price,old_price,category_slug,image_url,images,video_url,stock,badge')
+      .select('id,name,description,price,old_price,category_slug,image_url,images,stock,badge')
       .eq('id', id).single();
     if (error) throw error;
     PRODUCT = data;
